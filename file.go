@@ -77,13 +77,12 @@ func (file *File) Display(position Position) (cursor Position) {
 	return
 }
 
-func (file *File) InsertAfter(r rune) {
+func (file *File) Insert(r rune) {
 	p := &file.Position
-	if len(file.Data) <= p.Line {
-		line := []rune{}
-		file.Data = append(file.Data, line)
+	if p.Line == len(file.Data) {
+		file.Data = append(file.Data, []rune{})
 	}
-	if len(file.Data[p.Line]) <= p.Col {
+	if p.Col == len(file.Data[p.Line]) {
 		file.Data[p.Line] = append(file.Data[p.Line], r)
 	} else {
 		line := file.Data[p.Line]
@@ -91,4 +90,41 @@ func (file *File) InsertAfter(r rune) {
 		file.Data[p.Line] = line
 	}
 	p.Col += 1
+}
+
+func (file *File) MoveLeft() {
+	p := &file.Position
+	if p.Col > 0 {
+		p.Col--
+	}
+}
+
+func (file *File) MoveRight() {
+	p := &file.Position
+	line := file.Data[p.Line]
+	if p.Col < len(line) {
+		p.Col++
+	}
+}
+
+func (file *File) MoveUp() {
+	p := &file.Position
+	if p.Line > 0 {
+		p.Line--
+	}
+	line := file.Data[p.Line]
+	if p.Col > len(line) {
+		p.Col = len(line)
+	}
+}
+
+func (file *File) MoveDown() {
+	p := &file.Position
+	if p.Line < len(file.Data)-1 {
+		p.Line++
+	}
+	line := file.Data[p.Line]
+	if p.Col > len(line) {
+		p.Col = len(line)
+	}
 }

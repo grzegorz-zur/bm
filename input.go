@@ -10,12 +10,20 @@ type Input struct {
 
 func (input *Input) Key(event tb.Event) (err error) {
 	if event.Ch != 0 {
-		input.InsertAfter(event.Ch)
+		input.Insert(event.Ch)
 		return
 	}
 	switch event.Key {
 	case tb.KeyCtrlQ:
 		input.Quit()
+	case tb.KeyArrowLeft:
+		input.MoveLeft()
+	case tb.KeyArrowRight:
+		input.MoveRight()
+	case tb.KeyArrowUp:
+		input.MoveUp()
+	case tb.KeyArrowDown:
+		input.MoveDown()
 	}
 	return
 }
