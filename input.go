@@ -24,6 +24,8 @@ func (input *Input) Key(event tb.Event) (err error) {
 		input.MoveUp()
 	case tb.KeyArrowDown:
 		input.MoveDown()
+	case tb.KeyDelete:
+		input.Delete()
 	}
 	return
 }
