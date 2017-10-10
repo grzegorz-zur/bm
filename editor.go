@@ -3,6 +3,7 @@ package bm
 import (
 	tb "github.com/nsf/termbox-go"
 	"github.com/pkg/errors"
+	"log"
 )
 
 type Editor struct {
@@ -73,6 +74,8 @@ func (editor *Editor) Listen() (err error) {
 		err = editor.Key(event)
 	case tb.EventError:
 		err = errors.Wrap(event.Err, "event poll failed")
+	default:
+		log.Printf("%+v\n", event)
 	}
 	return
 }
@@ -91,7 +94,7 @@ func (editor *Editor) Display() {
 	return
 }
 
-func (editor *Editor) Quit() {
+func (editor *Editor) Quit() (err error) {
 	editor.exit = true
 	return
 }

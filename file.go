@@ -45,6 +45,20 @@ func OpenFile(path string) (file *File, err error) {
 	return
 }
 
+func (file *File) Write() (err error) {
+	f, err := os.Create(file.Path)
+	if err != nil {
+		err = errors.Wrapf(err, "cannot write file: %s", file.Path)
+		return
+	}
+	for _, runes := range file.Data {
+		line := string(runes) + "\n"
+		bytes := []byte(line)
+		f.Write(bytes)
+	}
+	return
+}
+
 func (file *File) Resize(size Size) {
 	file.Window.Bottom = file.Window.Top + size.Lines
 	file.Window.Right = file.Window.Left + size.Cols
