@@ -51,8 +51,11 @@ func (file *File) Write() (err error) {
 		err = errors.Wrapf(err, "cannot write file: %s", file.Path)
 		return
 	}
-	for _, runes := range file.Data {
-		line := string(runes) + "\n"
+	for i, runes := range file.Data {
+		line := string(runes)
+		if i+1 < len(file.Data) {
+			line += "\n"
+		}
 		bytes := []byte(line)
 		f.Write(bytes)
 	}
@@ -100,10 +103,7 @@ func (file *File) MoveLeft() {
 
 func (file *File) MoveRight() {
 	p := &file.Position
-	line := file.Data[p.Line]
-	if p.Col < len(line) {
-		p.Col++
-	}
+	p.Col++
 }
 
 func (file *File) MoveUp() {
@@ -111,53 +111,93 @@ func (file *File) MoveUp() {
 	if p.Line > 0 {
 		p.Line--
 	}
-	line := file.Data[p.Line]
-	if p.Col > len(line) {
-		p.Col = len(line)
-	}
 }
 
 func (file *File) MoveDown() {
 	p := &file.Position
-	if p.Line < len(file.Data)-1 {
-		p.Line++
-	}
-	line := file.Data[p.Line]
-	if p.Col > len(line) {
-		p.Col = len(line)
-	}
+	p.Line++
 }
 
 func (file *File) Insert(r rune) {
-	p := &file.Position
-	if p.Line == len(file.Data) {
-		file.Data = append(file.Data, []rune{})
-	}
-	if p.Col == len(file.Data[p.Line]) {
-		file.Data[p.Line] = append(file.Data[p.Line], r)
+	if file.empty() {
+		file.extend()
 	} else {
-		line := file.Data[p.Line]
-		line = append(line[:p.Col], append([]rune{r}, line[p.Col:]...)...)
-		file.Data[p.Line] = line
+		file.shiftRight()
 	}
+	file.extend()
+	p := &file.Position
+	file.Data[p.Line][p.Col] = r
 	p.Col += 1
 }
 
 func (file *File) Delete() {
-	p := &file.Position
-	if p.Line < len(file.Data) {
-		line := file.Data[p.Line]
-		if len(line) == 0 {
-			file.Data = append(file.Data[:p.Line], file.Data[p.Line+1:]...)
-			if p.Line == len(file.Data) {
-				p.Line = len(file.Data) - 1
-			}
-		} else if p.Col < len(file.Data[p.Line]) {
-			line = append(line[:p.Col], line[p.Col+1:]...)
-			file.Data[p.Line] = line
-			if p.Col > len(line) {
-				p.Col = len(line)
-			}
-		}
+	switch {
+	case file.empty():
+		return
+	case file.emptyLine():
+		file.DeleteLine()
+	case file.emptyChar():
+		return
+	default:
+		file.DeleteChar()
 	}
+}
+
+func (file *File) DeleteChar() {
+	p := &file.Position
+	line := &file.Data[p.Line]
+	rest := (*line)[p.Col+1:]
+	*line = append((*line)[:p.Col], rest...)
+}
+
+func (file *File) DeleteLine() {
+	p := &file.Position
+	data := &file.Data
+	rest := (*data)[p.Line+1:]
+	*data = append(*data, rest...)
+}
+
+func (file *File) empty() bool {
+	p := &file.Position
+	return p.Line >= len(file.Data) ||
+		p.Col >= len(file.Data[p.Line])
+}
+
+func (file *File) emptyLine() bool {
+	p := &file.Position
+	line := &file.Data[p.Line]
+	return len(*line) == 0
+}
+
+func (file *File) emptyChar() bool {
+	p := &file.Position
+	return p.Col >= len(file.Data[p.Line])
+}
+
+func (file *File) extend() {
+	file.extendLine()
+	file.extendCol()
+}
+
+func (file *File) extendLine() {
+	p := &file.Position
+	data := &file.Data
+	for p.Line >= len(*data) {
+		*data = append(*data, []rune{})
+	}
+}
+
+func (file *File) extendCol() {
+	p := &file.Position
+	line := &file.Data[p.Line]
+	for p.Col >= len(*line) {
+		*line = append(*line, ' ')
+	}
+}
+
+func (file *File) shiftRight() {
+	p := &file.Position
+	line := &file.Data[p.Line]
+	rest := append([]rune{' '}, (*line)[p.Col:]...)
+	*line = append((*line)[:p.Col], rest...)
 }

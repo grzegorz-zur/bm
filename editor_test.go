@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	PartSeparator    = regexp.MustCompile("\\n?—+\\n")
-	CommandSeparator = regexp.MustCompile("\\s+")
+	Terminator = regexp.MustCompile("\n?—+\n")
+	WhiteChars = regexp.MustCompile("\\s+")
 )
 
 func TestEditor(t *testing.T) {
@@ -49,18 +49,20 @@ func testCase(file string) func(t *testing.T) {
 		}
 
 		text := string(data)
-		parts := PartSeparator.Split(text, -1)
-		if len(parts) != 3 {
+		parts := Terminator.Split(text, -1)
+		if len(parts) != 4 {
 			t.Fatalf("invalid test file %s", file)
 		}
-		t.Logf("parts %v", parts)
 
 		before := parts[0]
 		commands := []string{}
 		if strings.Trim(parts[1], " ") != "" {
-			commands = CommandSeparator.Split(parts[1], -1)
+			commands = WhiteChars.Split(parts[1], -1)
 		}
 		after := parts[2]
+		t.Logf("before `%s`", before)
+		t.Logf("commands: %v", commands)
+		t.Logf("after `%s`", after)
 
 		temp, err := ioutil.TempFile("", file+"_")
 		if err != nil {
@@ -82,7 +84,6 @@ func testCase(file string) func(t *testing.T) {
 		}
 		defer editor.Close()
 
-		t.Logf("running commands: %v", commands)
 		err = interpret(t, editor, commands)
 		if err != nil {
 			t.Fatal(err)
@@ -106,15 +107,31 @@ func testCase(file string) func(t *testing.T) {
 
 func interpret(t *testing.T, editor *Editor, commands []string) (err error) {
 	for _, cmd := range commands {
-		t.Logf("running command: \"%s\"", cmd)
+		t.Logf("event: \"%s\"", cmd)
+		var event tb.Event
 		switch {
 		case len(cmd) == 1:
 			runes := []rune(cmd)
-			event := tb.Event{Ch: runes[0]}
-			err = editor.Key(event)
+			event = tb.Event{Ch: runes[0]}
+		case cmd == "left":
+			event = tb.Event{Key: tb.KeyArrowLeft}
+		case cmd == "right":
+			event = tb.Event{Key: tb.KeyArrowRight}
+		case cmd == "up":
+			event = tb.Event{Key: tb.KeyArrowUp}
+		case cmd == "down":
+			event = tb.Event{Key: tb.KeyArrowDown}
+		case cmd == "enter":
+			event = tb.Event{Key: tb.KeyEnter}
+		case cmd == "backspace":
+			event = tb.Event{Key: tb.KeyBackspace}
+		case cmd == "delete":
+			event = tb.Event{Key: tb.KeyDelete}
 		default:
 			err = errors.Errorf("cannot interpret command \"%s\"", cmd)
+			return
 		}
+		err = editor.Key(event)
 	}
 	return
 }

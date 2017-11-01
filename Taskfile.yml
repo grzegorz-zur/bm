@@ -1,0 +1,51 @@
+default:
+    deps: [build]
+
+clean:
+    cmds:
+        - go clean ./...
+
+fmt:
+    cmds:
+        - go fmt ./...
+    sources:
+        - '**.go'
+
+test:
+    cmds:
+        - go test ./...
+    deps: [fmt]
+    sources:
+        - '**.go'
+        - 'test/**'
+
+race:
+    cmds:
+        - go test -race ./...
+    deps: [fmt]
+    sources:
+        - '**.go'
+        - 'test/**'
+
+cover:
+    cmds:
+        - go test -cover ./...
+    deps: [fmt]
+    sources:
+        - '**.go'
+        - 'test/**'
+
+build:
+    cmds:
+        - go build ./cmd/bm
+    deps: [fmt]
+    sources:
+        - '**.go'
+    generates:
+        - bm
+
+install:
+    cmds:
+        - go install ./cmd/bm
+    deps: [build]
+
