@@ -130,6 +130,25 @@ func (file *File) Insert(r rune) {
 	p.Col += 1
 }
 
+func (file *File) SplitLine() {
+	if file.empty() {
+		file.extend()
+		file.DeleteChar()
+	}
+	p := &file.Position
+	data := &file.Data
+	above := (*data)[:p.Line]
+	line := &(*data)[p.Line]
+	below := (*data)[p.Line+1:]
+	upper := (*line)[:p.Col]
+	lower := (*line)[p.Col:]
+	*data = append(above, upper)
+	*data = append(*data, lower)
+	*data = append(*data, below...)
+	p.Line += 1
+	p.Col = 0
+}
+
 func (file *File) Delete() {
 	switch {
 	case file.empty():

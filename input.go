@@ -14,8 +14,6 @@ func (input *Input) Key(event tb.Event) (err error) {
 		return
 	}
 	switch event.Key {
-	case tb.KeyCtrlQ: // TODO remove
-		input.Quit()
 	case tb.KeyArrowLeft:
 		input.MoveLeft()
 	case tb.KeyArrowRight:
@@ -24,8 +22,14 @@ func (input *Input) Key(event tb.Event) (err error) {
 		input.MoveUp()
 	case tb.KeyArrowDown:
 		input.MoveDown()
+	case tb.KeyEnter:
+		input.SplitLine()
 	case tb.KeyDelete:
 		input.Delete()
+	case tb.KeyCtrlQ: // TODO remove
+		input.Quit()
+	case tb.KeyCtrlW: // TODO remove
+		input.Write()
 	}
 	return
 }
