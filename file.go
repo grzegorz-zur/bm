@@ -62,35 +62,65 @@ func (file *File) Write() (err error) {
 	return
 }
 
-func (file *File) Resize(size Size) {
-	file.Window.Bottom = file.Window.Top + size.Lines
-	file.Window.Right = file.Window.Left + size.Cols
-	if file.Position.Line > file.Window.Bottom {
-		file.Position.Line = file.Window.Bottom
+func (file *File) AdjustWindow() {
+	p := &file.Position
+	w := &file.Window
+	height := w.Bottom - w.Top
+	width := w.Right - w.Left
+
+	switch {
+	case p.Line < w.Top:
+		w.Top = p.Line
+		w.Bottom = w.Top + height
+	case p.Line > w.Bottom:
+		w.Bottom = p.Line
+		w.Top = w.Bottom - height
 	}
-	if file.Position.Col > file.Window.Right {
-		file.Position.Col = file.Window.Right
+
+	switch {
+	case p.Col < w.Left:
+		w.Left = p.Col
+		w.Right = w.Left + width
+	case p.Col > w.Right:
+		w.Right = p.Col
+		w.Left = w.Right - width
+	}
+}
+
+func (file *File) Resize(size Size) {
+	p := &file.Position
+	w := &file.Window
+	w.Bottom = w.Top + size.Lines - 1
+	w.Right = w.Left + size.Cols - 1
+	if p.Line > w.Bottom {
+		p.Line = w.Bottom
+	}
+	if p.Col > w.Right {
+		p.Col = w.Right
 	}
 	return
 }
 
 func (file *File) Display(position Position) (cursor Position) {
-	for line := file.Window.Top; line <= file.Window.Bottom; line++ {
+	w := file.Window
+	for line := w.Top; line <= w.Bottom; line++ {
 		if line >= len(file.Data) {
 			break
 		}
 		runes := file.Data[line]
-		absLine := position.Line + line
-		for col := file.Window.Left; col <= file.Window.Right; col++ {
+		screenLine := position.Line + line - w.Top
+		for col := w.Left; col <= w.Right; col++ {
 			if col >= len(runes) {
 				break
 			}
 			symbol := runes[col]
-			absCol := position.Col + col
-			tb.SetCell(absCol, absLine, symbol, tb.ColorDefault, tb.ColorDefault)
+			screenCol := position.Col + col - w.Left
+			tb.SetCell(screenCol, screenLine, symbol, tb.ColorDefault, tb.ColorDefault)
 		}
 	}
-	cursor = file.Position
+	p := file.Position
+	cursor.Line = p.Line - w.Top
+	cursor.Col = p.Col - w.Left
 	return
 }
 
@@ -99,11 +129,13 @@ func (file *File) MoveLeft() {
 	if p.Col > 0 {
 		p.Col--
 	}
+	file.AdjustWindow()
 }
 
 func (file *File) MoveRight() {
 	p := &file.Position
 	p.Col++
+	file.AdjustWindow()
 }
 
 func (file *File) MoveUp() {
@@ -111,11 +143,13 @@ func (file *File) MoveUp() {
 	if p.Line > 0 {
 		p.Line--
 	}
+	file.AdjustWindow()
 }
 
 func (file *File) MoveDown() {
 	p := &file.Position
 	p.Line++
+	file.AdjustWindow()
 }
 
 func (file *File) Insert(r rune) {
