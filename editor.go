@@ -31,7 +31,7 @@ type Bounds struct {
 }
 
 func Open(path string) (editor *Editor, err error) {
-	file, err := OpenFile(path)
+	file, err := Read(path)
 	editor = &Editor{
 		File: file,
 	}
@@ -63,6 +63,7 @@ func (editor *Editor) Run() (err error) {
 			err = errors.Wrap(err, "event poll failed")
 			editor.Quit()
 		}
+		editor.Scroll()
 	}
 	return
 }

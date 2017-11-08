@@ -15,7 +15,7 @@ type File struct {
 	Position Position
 }
 
-func OpenFile(path string) (file *File, err error) {
+func Read(path string) (file *File, err error) {
 	file = &File{
 		Path: path,
 	}
@@ -62,7 +62,7 @@ func (file *File) Write() (err error) {
 	return
 }
 
-func (file *File) AdjustWindow() {
+func (file *File) Scroll() {
 	p := &file.Position
 	w := &file.Window
 	height := w.Bottom - w.Top
@@ -129,13 +129,11 @@ func (file *File) MoveLeft() {
 	if p.Col > 0 {
 		p.Col--
 	}
-	file.AdjustWindow()
 }
 
 func (file *File) MoveRight() {
 	p := &file.Position
 	p.Col++
-	file.AdjustWindow()
 }
 
 func (file *File) MoveUp() {
@@ -143,13 +141,11 @@ func (file *File) MoveUp() {
 	if p.Line > 0 {
 		p.Line--
 	}
-	file.AdjustWindow()
 }
 
 func (file *File) MoveDown() {
 	p := &file.Position
 	p.Line++
-	file.AdjustWindow()
 }
 
 func (file *File) Insert(r rune) {
