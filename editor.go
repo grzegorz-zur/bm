@@ -10,7 +10,9 @@ type Editor struct {
 	Size
 	*File
 	Mode
-	exit bool
+	Normal *Normal
+	Input  *Input
+	exit   bool
 }
 
 type Position struct {
@@ -35,10 +37,13 @@ func Open(path string) (editor *Editor, err error) {
 	editor = &Editor{
 		File: file,
 	}
-	input := &Input{
+	editor.Normal = &Normal{
 		Editor: editor,
 	}
-	editor.Mode = input
+	editor.Input = &Input{
+		Editor: editor,
+	}
+	editor.Switch(editor.Normal)
 	return
 }
 
@@ -65,6 +70,11 @@ func (editor *Editor) Run() (err error) {
 		}
 		editor.Scroll()
 	}
+	return
+}
+
+func (editor *Editor) Switch(mode Mode) (err error) {
+	editor.Mode = mode
 	return
 }
 

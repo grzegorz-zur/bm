@@ -8,28 +8,26 @@ type Input struct {
 	*Editor
 }
 
-func (input *Input) Key(event tb.Event) (err error) {
+func (mode *Input) Key(event tb.Event) (err error) {
 	if event.Ch != 0 {
-		input.Insert(event.Ch)
+		mode.Insert(event.Ch)
 		return
 	}
 	switch event.Key {
+	case tb.KeyEsc:
+		mode.Switch(mode.Editor.Normal)
 	case tb.KeyArrowLeft:
-		input.MoveLeft()
+		mode.MoveLeft()
 	case tb.KeyArrowRight:
-		input.MoveRight()
+		mode.MoveRight()
 	case tb.KeyArrowUp:
-		input.MoveUp()
+		mode.MoveUp()
 	case tb.KeyArrowDown:
-		input.MoveDown()
+		mode.MoveDown()
 	case tb.KeyEnter:
-		input.SplitLine()
+		mode.SplitLine()
 	case tb.KeyDelete:
-		input.Delete()
-	case tb.KeyCtrlQ: // TODO remove
-		input.Quit()
-	case tb.KeyCtrlW: // TODO remove
-		input.Write()
+		mode.Delete()
 	}
 	return
 }

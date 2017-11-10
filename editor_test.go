@@ -113,6 +113,8 @@ func interpret(t *testing.T, editor *Editor, commands []string) (err error) {
 		case len(cmd) == 1:
 			runes := []rune(cmd)
 			event = tb.Event{Ch: runes[0]}
+		case cmd == "escape":
+			event = tb.Event{Key: tb.KeyEsc}
 		case cmd == "left":
 			event = tb.Event{Key: tb.KeyArrowLeft}
 		case cmd == "right":
@@ -121,6 +123,8 @@ func interpret(t *testing.T, editor *Editor, commands []string) (err error) {
 			event = tb.Event{Key: tb.KeyArrowUp}
 		case cmd == "down":
 			event = tb.Event{Key: tb.KeyArrowDown}
+		case cmd == "space":
+			event = tb.Event{Key: tb.KeySpace}
 		case cmd == "enter":
 			event = tb.Event{Key: tb.KeyEnter}
 		case cmd == "backspace":
