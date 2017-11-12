@@ -32,6 +32,10 @@ type Bounds struct {
 	Right  int
 }
 
+func (editor *Editor) ApplyFileOp(op FileOp) {
+	*editor.File = op(*editor.File)
+}
+
 func Open(path string) (editor *Editor, err error) {
 	file, err := Read(path)
 	editor = &Editor{

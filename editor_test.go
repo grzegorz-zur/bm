@@ -60,9 +60,9 @@ func testCase(file string) func(t *testing.T) {
 			commands = WhiteChars.Split(parts[1], -1)
 		}
 		after := parts[2]
-		t.Logf("before `%s`", before)
+		t.Logf("before\n`%s`", before)
 		t.Logf("commands: %v", commands)
-		t.Logf("after `%s`", after)
+		t.Logf("after\n`%s`", after)
 
 		temp, err := ioutil.TempFile("", file+"_")
 		if err != nil {
@@ -100,14 +100,16 @@ func testCase(file string) func(t *testing.T) {
 		}
 		result := string(data)
 		if result != after {
-			t.Errorf("comparison failed\nexpected\n\"%s\"\nfound\n\"%s\"", after, result)
+			t.Errorf("comparison failed")
+			t.Errorf("expected\n%s", after)
+			t.Errorf("found\n%s", result)
 		}
 	}
 }
 
 func interpret(t *testing.T, editor *Editor, commands []string) (err error) {
 	for _, cmd := range commands {
-		t.Logf("event: \"%s\"", cmd)
+		t.Logf("event: %s", cmd)
 		var event tb.Event
 		switch {
 		case len(cmd) == 1:
@@ -132,7 +134,7 @@ func interpret(t *testing.T, editor *Editor, commands []string) (err error) {
 		case cmd == "delete":
 			event = tb.Event{Key: tb.KeyDelete}
 		default:
-			err = errors.Errorf("cannot interpret command \"%s\"", cmd)
+			err = errors.Errorf("cannot interpret command %s", cmd)
 			return
 		}
 		err = editor.Key(event)

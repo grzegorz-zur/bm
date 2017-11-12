@@ -15,6 +15,18 @@ type File struct {
 	Position Position
 }
 
+type FileOp func(f File) (file File)
+
+type Move func(f File) (p Position)
+
+func ApplyMove(m Move) FileOp {
+	return func(f File) (file File) {
+		file = f
+		file.Position = m(f)
+		return
+	}
+}
+
 func Read(path string) (file *File, err error) {
 	file = &File{
 		Path: path,
@@ -158,25 +170,6 @@ func (file *File) Insert(r rune) {
 	p := &file.Position
 	file.Data[p.Line][p.Col] = r
 	p.Col += 1
-}
-
-func (file *File) SplitLine() {
-	if file.empty() {
-		file.extend()
-		file.DeleteChar()
-	}
-	p := &file.Position
-	data := &file.Data
-	above := (*data)[:p.Line]
-	line := &(*data)[p.Line]
-	below := (*data)[p.Line+1:]
-	upper := (*line)[:p.Col]
-	lower := (*line)[p.Col:]
-	*data = append(above, upper)
-	*data = append(*data, lower)
-	*data = append(*data, below...)
-	p.Line += 1
-	p.Col = 0
 }
 
 func (file *File) Delete() {
