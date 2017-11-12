@@ -17,16 +17,6 @@ type File struct {
 
 type FileOp func(f File) (file File)
 
-type Move func(f File) (p Position)
-
-func ApplyMove(m Move) FileOp {
-	return func(f File) (file File) {
-		file = f
-		file.Position = m(f)
-		return
-	}
-}
-
 func Read(path string) (file *File, err error) {
 	file = &File{
 		Path: path,
@@ -134,30 +124,6 @@ func (file *File) Display(position Position) (cursor Position) {
 	cursor.Line = p.Line - w.Top
 	cursor.Col = p.Col - w.Left
 	return
-}
-
-func (file *File) MoveLeft() {
-	p := &file.Position
-	if p.Col > 0 {
-		p.Col--
-	}
-}
-
-func (file *File) MoveRight() {
-	p := &file.Position
-	p.Col++
-}
-
-func (file *File) MoveUp() {
-	p := &file.Position
-	if p.Line > 0 {
-		p.Line--
-	}
-}
-
-func (file *File) MoveDown() {
-	p := &file.Position
-	p.Line++
 }
 
 func (file *File) Insert(r rune) {

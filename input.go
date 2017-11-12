@@ -11,23 +11,24 @@ type Input struct {
 func (mode *Input) Key(event tb.Event) (err error) {
 	if event.Ch != 0 {
 		mode.Insert(event.Ch)
-		return
 	}
+
 	switch event.Key {
 	case tb.KeyEsc:
 		mode.Switch(mode.Editor.Normal)
 	case tb.KeyArrowLeft:
-		mode.MoveLeft()
+		mode.ApplyFileOp(MoveOp(Left))
 	case tb.KeyArrowRight:
-		mode.MoveRight()
+		mode.ApplyFileOp(MoveOp(Right))
 	case tb.KeyArrowUp:
-		mode.MoveUp()
+		mode.ApplyFileOp(MoveOp(Up))
 	case tb.KeyArrowDown:
-		mode.MoveDown()
+		mode.ApplyFileOp(MoveOp(Down))
 	case tb.KeyEnter:
 		mode.ApplyFileOp(Split)
 	case tb.KeyDelete:
 		mode.Delete()
 	}
+
 	return
 }
