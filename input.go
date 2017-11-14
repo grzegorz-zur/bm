@@ -10,7 +10,7 @@ type Input struct {
 
 func (mode *Input) Key(event tb.Event) (err error) {
 	if event.Ch != 0 {
-		mode.Insert(event.Ch)
+		mode.ApplyFileOp(InsertRune(event.Ch))
 	}
 
 	switch event.Key {

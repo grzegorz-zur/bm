@@ -126,18 +126,6 @@ func (file *File) Display(position Position) (cursor Position) {
 	return
 }
 
-func (file *File) Insert(r rune) {
-	if file.empty() {
-		file.extend()
-	} else {
-		file.shiftRight()
-	}
-	file.extend()
-	p := &file.Position
-	file.Data[p.Line][p.Col] = r
-	p.Col += 1
-}
-
 func (file *File) Delete() {
 	switch {
 	case file.empty():
@@ -201,11 +189,4 @@ func (file *File) extendCol() {
 	for p.Col >= len(*line) {
 		*line = append(*line, ' ')
 	}
-}
-
-func (file *File) shiftRight() {
-	p := &file.Position
-	line := &file.Data[p.Line]
-	rest := append([]rune{' '}, (*line)[p.Col:]...)
-	*line = append((*line)[:p.Col], rest...)
 }
