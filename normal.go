@@ -22,7 +22,7 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 
 	switch event.Key {
 	case tb.KeySpace:
-		mode.Switch(mode.Editor.Input)
+		mode.SwitchMode(mode.Editor.Input)
 	case tb.KeyArrowLeft:
 		mode.ApplyFileOp(MoveOp(Left))
 	case tb.KeyArrowRight:
@@ -32,7 +32,7 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 	case tb.KeyArrowDown:
 		mode.ApplyFileOp(MoveOp(Down))
 	case tb.KeyDelete:
-		mode.Delete()
+		mode.ApplyFileOp(DeleteRune)
 	case tb.KeyCtrlQ:
 		mode.Quit()
 	case tb.KeyCtrlW:

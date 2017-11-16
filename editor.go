@@ -47,7 +47,7 @@ func Open(path string) (editor *Editor, err error) {
 	editor.Input = &Input{
 		Editor: editor,
 	}
-	editor.Switch(editor.Normal)
+	editor.SwitchMode(editor.Normal)
 	return
 }
 
@@ -77,9 +77,8 @@ func (editor *Editor) Run() (err error) {
 	return
 }
 
-func (editor *Editor) Switch(mode Mode) (err error) {
+func (editor *Editor) SwitchMode(mode Mode) {
 	editor.Mode = mode
-	return
 }
 
 func (editor *Editor) Listen() (err error) {

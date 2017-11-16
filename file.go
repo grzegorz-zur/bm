@@ -15,7 +15,7 @@ type File struct {
 	Position Position
 }
 
-type FileOp func(f File) (file File)
+type FileOp func(File) File
 
 func Read(path string) (file *File, err error) {
 	file = &File{
@@ -126,33 +126,6 @@ func (file *File) Display(position Position) (cursor Position) {
 	return
 }
 
-func (file *File) Delete() {
-	switch {
-	case file.empty():
-		return
-	case file.emptyLine():
-		file.DeleteLine()
-	case file.emptyChar():
-		return
-	default:
-		file.DeleteChar()
-	}
-}
-
-func (file *File) DeleteChar() {
-	p := &file.Position
-	line := &file.Data[p.Line]
-	rest := (*line)[p.Col+1:]
-	*line = append((*line)[:p.Col], rest...)
-}
-
-func (file *File) DeleteLine() {
-	p := &file.Position
-	data := &file.Data
-	rest := (*data)[p.Line+1:]
-	*data = append(*data, rest...)
-}
-
 func (file *File) empty() bool {
 	p := &file.Position
 	return p.Line >= len(file.Data) ||
@@ -168,25 +141,4 @@ func (file *File) emptyLine() bool {
 func (file *File) emptyChar() bool {
 	p := &file.Position
 	return p.Col >= len(file.Data[p.Line])
-}
-
-func (file *File) extend() {
-	file.extendLine()
-	file.extendCol()
-}
-
-func (file *File) extendLine() {
-	p := &file.Position
-	data := &file.Data
-	for p.Line >= len(*data) {
-		*data = append(*data, []rune{})
-	}
-}
-
-func (file *File) extendCol() {
-	p := &file.Position
-	line := &file.Data[p.Line]
-	for p.Col >= len(*line) {
-		*line = append(*line, ' ')
-	}
 }

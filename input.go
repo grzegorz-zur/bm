@@ -15,7 +15,7 @@ func (mode *Input) Key(event tb.Event) (err error) {
 
 	switch event.Key {
 	case tb.KeyEsc:
-		mode.Switch(mode.Editor.Normal)
+		mode.SwitchMode(mode.Editor.Normal)
 	case tb.KeyArrowLeft:
 		mode.ApplyFileOp(MoveOp(Left))
 	case tb.KeyArrowRight:
@@ -27,7 +27,7 @@ func (mode *Input) Key(event tb.Event) (err error) {
 	case tb.KeyEnter:
 		mode.ApplyFileOp(Split)
 	case tb.KeyDelete:
-		mode.Delete()
+		mode.ApplyFileOp(DeleteRune)
 	}
 
 	return
