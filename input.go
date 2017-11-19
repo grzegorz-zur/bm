@@ -25,9 +25,9 @@ func (mode *Input) Key(event tb.Event) (err error) {
 	case tb.KeyArrowDown:
 		mode.ApplyFileOp(MoveOp(Down))
 	case tb.KeyEnter:
-		mode.ApplyFileOp(Split)
+		mode.ApplyFileOp(File.Split)
 	case tb.KeyDelete:
-		mode.ApplyFileOp(DeleteRune)
+		mode.ApplyFileOp(File.DeleteRune)
 	}
 
 	return

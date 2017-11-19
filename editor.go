@@ -39,7 +39,7 @@ func (editor *Editor) ApplyFileOp(op FileOp) {
 func Open(path string) (editor *Editor, err error) {
 	file, err := Read(path)
 	editor = &Editor{
-		File: file,
+		File: &file,
 	}
 	editor.Normal = &Normal{
 		Editor: editor,

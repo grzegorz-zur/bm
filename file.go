@@ -10,15 +10,15 @@ import (
 
 type File struct {
 	Path     string
-	Data     [][]rune
+	Lines    Lines
 	Window   Bounds
 	Position Position
 }
 
 type FileOp func(File) File
 
-func Read(path string) (file *File, err error) {
-	file = &File{
+func Read(path string) (file File, err error) {
+	file = File{
 		Path: path,
 	}
 	f, err := os.Open(path)
@@ -42,20 +42,20 @@ func Read(path string) (file *File, err error) {
 		}
 		line := s.Text()
 		runes := []rune(line)
-		file.Data = append(file.Data, runes)
+		file.Lines = append(file.Lines, runes)
 	}
 	return
 }
 
-func (file *File) Write() (err error) {
+func (file File) Write() (err error) {
 	f, err := os.Create(file.Path)
 	if err != nil {
 		err = errors.Wrapf(err, "cannot write file: %s", file.Path)
 		return
 	}
-	for i, runes := range file.Data {
+	for i, runes := range file.Lines {
 		line := string(runes)
-		if i+1 < len(file.Data) {
+		if i+1 < len(file.Lines) {
 			line += "\n"
 		}
 		bytes := []byte(line)
@@ -103,13 +103,13 @@ func (file *File) Resize(size Size) {
 	return
 }
 
-func (file *File) Display(position Position) (cursor Position) {
+func (file File) Display(position Position) (cursor Position) {
 	w := file.Window
 	for line := w.Top; line <= w.Bottom; line++ {
-		if line >= len(file.Data) {
+		if line >= len(file.Lines) {
 			break
 		}
-		runes := file.Data[line]
+		runes := file.Lines[line]
 		screenLine := position.Line + line - w.Top
 		for col := w.Left; col <= w.Right; col++ {
 			if col >= len(runes) {
@@ -126,19 +126,24 @@ func (file *File) Display(position Position) (cursor Position) {
 	return
 }
 
-func (file *File) empty() bool {
-	p := &file.Position
-	return p.Line >= len(file.Data) ||
-		p.Col >= len(file.Data[p.Line])
+func (f File) DeleteRune() (file File) {
+	file = f
+	file.Lines = f.Lines.DeleteRune(f.Position)
+	return
 }
 
-func (file *File) emptyLine() bool {
-	p := &file.Position
-	line := &file.Data[p.Line]
-	return len(*line) == 0
+func InsertRune(r rune) FileOp {
+	return func(f File) (file File) {
+		file = f
+		p := f.Position
+		file.Lines = f.Lines.InsertRune(p, r)
+		file.Position = Position{Line: p.Line, Col: p.Col + 1}
+		return
+	}
 }
 
-func (file *File) emptyChar() bool {
-	p := &file.Position
-	return p.Col >= len(file.Data[p.Line])
+func (f File) Split() File {
+	f.Lines = f.Lines.Split(f.Position)
+	f.Position = Position{Line: f.Position.Line + 1}
+	return f
 }
