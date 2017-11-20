@@ -4,6 +4,9 @@ import (
 	tb "github.com/nsf/termbox-go"
 	"github.com/pkg/errors"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 type Editor struct {
@@ -65,6 +68,8 @@ func (editor *Editor) Run() (err error) {
 	size := Size{Cols: width, Lines: height}
 	editor.Resize(size)
 
+	editor.signals()
+
 	for !editor.exit {
 		editor.Display()
 		err = editor.Listen()
@@ -75,6 +80,22 @@ func (editor *Editor) Run() (err error) {
 		editor.Scroll()
 	}
 	return
+}
+
+func (editor Editor) signals() {
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGTSTP, syscall.SIGCONT)
+	go func() {
+		for {
+			sig := <-signals
+			switch sig {
+			case syscall.SIGTSTP:
+				editor.Stop()
+			case syscall.SIGCONT:
+				editor.Cont()
+			}
+		}
+	}()
 }
 
 func (editor *Editor) SwitchMode(mode Mode) {
@@ -100,11 +121,33 @@ func (editor *Editor) Resize(size Size) {
 	return
 }
 
-func (editor *Editor) Display() {
+func (editor Editor) Display() {
 	tb.Clear(tb.ColorDefault, tb.ColorDefault)
 	cursor := editor.File.Display(Position{0, 0})
 	tb.SetCursor(cursor.Col, cursor.Line)
 	tb.Flush()
+	return
+}
+
+func (editor Editor) Stop() (err error) {
+	tb.Close()
+	pid := os.Getpid()
+	p, err := os.FindProcess(pid)
+	if err != nil {
+		err = errors.Wrap(err, "editor background failed")
+		return
+	}
+	p.Signal(syscall.SIGSTOP)
+	return
+}
+
+func (editor Editor) Cont() (err error) {
+	err = tb.Init()
+	if err != nil {
+		err = errors.Wrap(err, "editor continue failed")
+		return
+	}
+	editor.Display()
 	return
 }
 

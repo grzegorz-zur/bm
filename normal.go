@@ -33,6 +33,8 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 		mode.ApplyMoveOp(File.Down)
 	case tb.KeyDelete:
 		mode.ApplyFileOp(File.DeleteRune)
+	case tb.KeyCtrlE:
+		mode.Stop()
 	case tb.KeyCtrlQ:
 		mode.Quit()
 	case tb.KeyCtrlW:
