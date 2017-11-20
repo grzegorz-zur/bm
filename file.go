@@ -17,6 +17,10 @@ type File struct {
 
 type FileOp func(File) File
 
+func (f *File) ApplyMoveOp(m Move) {
+	(*f).Position = m(*f)
+}
+
 func Read(path string) (file File, err error) {
 	file = File{
 		Path: path,

@@ -17,13 +17,13 @@ func (mode *Input) Key(event tb.Event) (err error) {
 	case tb.KeyEsc:
 		mode.SwitchMode(mode.Editor.Normal)
 	case tb.KeyArrowLeft:
-		mode.ApplyFileOp(MoveOp(Left))
+		mode.ApplyMoveOp(File.Left)
 	case tb.KeyArrowRight:
-		mode.ApplyFileOp(MoveOp(Right))
+		mode.ApplyMoveOp(File.Right)
 	case tb.KeyArrowUp:
-		mode.ApplyFileOp(MoveOp(Up))
+		mode.ApplyMoveOp(File.Up)
 	case tb.KeyArrowDown:
-		mode.ApplyFileOp(MoveOp(Down))
+		mode.ApplyMoveOp(File.Down)
 	case tb.KeyEnter:
 		mode.ApplyFileOp(File.Split)
 	case tb.KeyDelete:

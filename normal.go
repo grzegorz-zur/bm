@@ -11,26 +11,26 @@ type Normal struct {
 func (mode *Normal) Key(event tb.Event) (err error) {
 	switch event.Ch {
 	case 'd':
-		mode.ApplyFileOp(MoveOp(Left))
+		mode.ApplyMoveOp(File.Left)
 	case 'f':
-		mode.ApplyFileOp(MoveOp(Right))
+		mode.ApplyMoveOp(File.Right)
 	case 'k':
-		mode.ApplyFileOp(MoveOp(Up))
+		mode.ApplyMoveOp(File.Up)
 	case 'j':
-		mode.ApplyFileOp(MoveOp(Down))
+		mode.ApplyMoveOp(File.Down)
 	}
 
 	switch event.Key {
 	case tb.KeySpace:
 		mode.SwitchMode(mode.Editor.Input)
 	case tb.KeyArrowLeft:
-		mode.ApplyFileOp(MoveOp(Left))
+		mode.ApplyMoveOp(File.Left)
 	case tb.KeyArrowRight:
-		mode.ApplyFileOp(MoveOp(Right))
+		mode.ApplyMoveOp(File.Right)
 	case tb.KeyArrowUp:
-		mode.ApplyFileOp(MoveOp(Up))
+		mode.ApplyMoveOp(File.Up)
 	case tb.KeyArrowDown:
-		mode.ApplyFileOp(MoveOp(Down))
+		mode.ApplyMoveOp(File.Down)
 	case tb.KeyDelete:
 		mode.ApplyFileOp(File.DeleteRune)
 	case tb.KeyCtrlQ:
