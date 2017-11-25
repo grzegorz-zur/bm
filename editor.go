@@ -15,6 +15,7 @@ type Editor struct {
 	Mode
 	Normal *Normal
 	Input  *Input
+	cont   chan struct{}
 	exit   bool
 }
 
@@ -43,6 +44,7 @@ func Open(path string) (editor *Editor, err error) {
 	file, err := Read(path)
 	editor = &Editor{
 		File: &file,
+		cont: make(chan struct{}),
 	}
 	editor.Normal = &Normal{
 		Editor: editor,
@@ -63,46 +65,42 @@ func (editor *Editor) Run() (err error) {
 	defer tb.Close()
 
 	defer editor.Close()
+	editor.signals()
 
 	width, height := tb.Size()
 	size := Size{Cols: width, Lines: height}
 	editor.Resize(size)
 
-	editor.signals()
-
 	for !editor.exit {
+		editor.Scroll()
 		editor.Display()
-		err = editor.Listen()
+		err = editor.listen()
 		if err != nil {
 			err = errors.Wrap(err, "event poll failed")
 			editor.Quit()
 		}
-		editor.Scroll()
 	}
 	return
 }
 
 func (editor Editor) signals() {
 	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGTSTP, syscall.SIGCONT)
+	signal.Notify(signals, syscall.SIGCONT)
 	go func() {
-		for {
-			sig := <-signals
-			switch sig {
-			case syscall.SIGTSTP:
-				editor.Stop()
+		for s := range signals {
+			var err error
+			switch s {
 			case syscall.SIGCONT:
-				editor.Cont()
+				err = editor.Continue()
+			}
+			if err != nil {
+				log.Fatalf("signal handling failure", err)
 			}
 		}
 	}()
 }
 
-func (editor *Editor) SwitchMode(mode Mode) {
-	editor.Mode = mode
-}
-
-func (editor *Editor) Listen() (err error) {
+func (editor *Editor) listen() (err error) {
 	event := tb.PollEvent()
 	switch event.Type {
 	case tb.EventKey:
@@ -113,6 +111,10 @@ func (editor *Editor) Listen() (err error) {
 		log.Printf("%+v\n", event)
 	}
 	return
+}
+
+func (editor *Editor) SwitchMode(mode Mode) {
+	editor.Mode = mode
 }
 
 func (editor *Editor) Resize(size Size) {
@@ -129,25 +131,26 @@ func (editor Editor) Display() {
 	return
 }
 
-func (editor Editor) Stop() (err error) {
+func (editor *Editor) Stop() (err error) {
 	tb.Close()
 	pid := os.Getpid()
 	p, err := os.FindProcess(pid)
 	if err != nil {
-		err = errors.Wrap(err, "editor background failed")
+		err = errors.Wrap(err, "editor stop failed")
 		return
 	}
 	p.Signal(syscall.SIGSTOP)
+	<-editor.cont
 	return
 }
 
-func (editor Editor) Cont() (err error) {
+func (editor *Editor) Continue() (err error) {
 	err = tb.Init()
 	if err != nil {
 		err = errors.Wrap(err, "editor continue failed")
 		return
 	}
-	editor.Display()
+	editor.cont <- struct{}{}
 	return
 }
 

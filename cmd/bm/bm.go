@@ -9,6 +9,13 @@ import (
 )
 
 func main() {
+	l, err := os.Create("bm.log")
+	if err != nil {
+		fmt.Fprint(os.Stderr, "cannot initiate log\n")
+		os.Exit(-1)
+	}
+	log.SetOutput(l)
+	defer l.Close()
 	flag.Parse()
 	path := flag.Arg(0)
 	if path == "" {
