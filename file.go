@@ -11,8 +11,8 @@ import (
 type File struct {
 	Path     string
 	Lines    Lines
-	Window   Bounds
 	Position Position
+	Window   Bounds
 }
 
 type FileOp func(File) File
@@ -68,7 +68,47 @@ func (file File) Write() (err error) {
 	return
 }
 
-func (file *File) Scroll() {
+func (file *File) Display(bounds Bounds) (cursor Position, err error) {
+	file.scroll()
+	size := Size{Lines: bounds.Bottom - bounds.Top, Cols: bounds.Right - bounds.Left}
+	file.size(size)
+	w := file.Window
+	for line := w.Top; line <= w.Bottom; line++ {
+		if line >= len(file.Lines) {
+			break
+		}
+		runes := file.Lines[line]
+		screenLine := bounds.Top + line - w.Top
+		for col := w.Left; col <= w.Right; col++ {
+			if col >= len(runes) {
+				break
+			}
+			symbol := runes[col]
+			screenCol := bounds.Left + col - w.Left
+			tb.SetCell(screenCol, screenLine, symbol, tb.ColorDefault, tb.ColorDefault)
+		}
+	}
+	p := file.Position
+	cursor.Line = p.Line - w.Top
+	cursor.Col = p.Col - w.Left
+	return
+}
+
+func (file *File) size(size Size) {
+	p := &file.Position
+	w := &file.Window
+	w.Bottom = w.Top + size.Lines - 1
+	w.Right = w.Left + size.Cols - 1
+	if p.Line > w.Bottom {
+		p.Line = w.Bottom
+	}
+	if p.Col > w.Right {
+		p.Col = w.Right
+	}
+	return
+}
+
+func (file *File) scroll() {
 	p := &file.Position
 	w := &file.Window
 	height := w.Bottom - w.Top
@@ -93,56 +133,17 @@ func (file *File) Scroll() {
 	}
 }
 
-func (file *File) Resize(size Size) {
-	p := &file.Position
-	w := &file.Window
-	w.Bottom = w.Top + size.Lines - 1
-	w.Right = w.Left + size.Cols - 1
-	if p.Line > w.Bottom {
-		p.Line = w.Bottom
-	}
-	if p.Col > w.Right {
-		p.Col = w.Right
-	}
-	return
-}
-
-func (file File) Display(position Position) (cursor Position) {
-	w := file.Window
-	for line := w.Top; line <= w.Bottom; line++ {
-		if line >= len(file.Lines) {
-			break
-		}
-		runes := file.Lines[line]
-		screenLine := position.Line + line - w.Top
-		for col := w.Left; col <= w.Right; col++ {
-			if col >= len(runes) {
-				break
-			}
-			symbol := runes[col]
-			screenCol := position.Col + col - w.Left
-			tb.SetCell(screenCol, screenLine, symbol, tb.ColorDefault, tb.ColorDefault)
-		}
-	}
-	p := file.Position
-	cursor.Line = p.Line - w.Top
-	cursor.Col = p.Col - w.Left
-	return
-}
-
-func (f File) DeleteRune() (file File) {
-	file = f
-	file.Lines = f.Lines.DeleteRune(f.Position)
-	return
+func (f File) DeleteRune() File {
+	f.Lines = f.Lines.DeleteRune(f.Position)
+	return f
 }
 
 func InsertRune(r rune) FileOp {
-	return func(f File) (file File) {
-		file = f
+	return func(f File) File {
 		p := f.Position
-		file.Lines = f.Lines.InsertRune(p, r)
-		file.Position = Position{Line: p.Line, Col: p.Col + 1}
-		return
+		f.Lines = f.Lines.InsertRune(p, r)
+		f.Position = Position{Line: p.Line, Col: p.Col + 1}
+		return f
 	}
 }
 

@@ -43,3 +43,8 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 
 	return
 }
+
+func (mode *Normal) Display(bounds Bounds) (cursor Position, err error) {
+	cursor, err = mode.Editor.File.Display(bounds)
+	return
+}

@@ -5,5 +5,6 @@ import (
 )
 
 type Mode interface {
+	Visual
 	Key(event tb.Event) error
 }

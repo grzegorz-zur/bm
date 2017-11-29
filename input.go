@@ -32,3 +32,8 @@ func (mode *Input) Key(event tb.Event) (err error) {
 
 	return
 }
+
+func (mode *Input) Display(bounds Bounds) (cursor Position, err error) {
+	cursor, err = mode.Editor.File.Display(bounds)
+	return
+}

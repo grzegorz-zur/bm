@@ -13,10 +13,10 @@ type Editor struct {
 	Size
 	*File
 	Mode
-	Normal *Normal
-	Input  *Input
-	cont   chan struct{}
-	exit   bool
+	Normal  *Normal
+	Input   *Input
+	restart chan struct{}
+	exit    bool
 }
 
 type Position struct {
@@ -43,8 +43,8 @@ func (editor *Editor) ApplyFileOp(op FileOp) {
 func Open(path string) (editor *Editor, err error) {
 	file, err := Read(path)
 	editor = &Editor{
-		File: &file,
-		cont: make(chan struct{}),
+		File:    &file,
+		restart: make(chan struct{}),
 	}
 	editor.Normal = &Normal{
 		Editor: editor,
@@ -53,6 +53,19 @@ func Open(path string) (editor *Editor, err error) {
 		Editor: editor,
 	}
 	editor.SwitchMode(editor.Normal)
+	return
+}
+
+func (editor *Editor) SwitchMode(mode Mode) {
+	editor.Mode = mode
+}
+
+func (editor *Editor) Quit() (err error) {
+	editor.exit = true
+	return
+}
+
+func (editor *Editor) Close() (err error) {
 	return
 }
 
@@ -67,13 +80,12 @@ func (editor *Editor) Run() (err error) {
 	defer editor.Close()
 	editor.signals()
 
-	width, height := tb.Size()
-	size := Size{Cols: width, Lines: height}
-	editor.Resize(size)
-
 	for !editor.exit {
-		editor.Scroll()
-		editor.Display()
+		err = editor.display()
+		if err != nil {
+			err = errors.Wrap(err, "display failed")
+			editor.Quit()
+		}
 		err = editor.listen()
 		if err != nil {
 			err = errors.Wrap(err, "event poll failed")
@@ -83,7 +95,7 @@ func (editor *Editor) Run() (err error) {
 	return
 }
 
-func (editor Editor) signals() {
+func (editor *Editor) signals() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGCONT)
 	go func() {
@@ -91,7 +103,7 @@ func (editor Editor) signals() {
 			var err error
 			switch s {
 			case syscall.SIGCONT:
-				err = editor.Continue()
+				err = editor.cont()
 			}
 			if err != nil {
 				log.Fatalf("signal handling failure", err)
@@ -113,19 +125,12 @@ func (editor *Editor) listen() (err error) {
 	return
 }
 
-func (editor *Editor) SwitchMode(mode Mode) {
-	editor.Mode = mode
-}
-
-func (editor *Editor) Resize(size Size) {
-	editor.Size = size
-	editor.File.Resize(size)
-	return
-}
-
-func (editor Editor) Display() {
+func (editor *Editor) display() (err error) {
 	tb.Clear(tb.ColorDefault, tb.ColorDefault)
-	cursor := editor.File.Display(Position{0, 0})
+	width, height := tb.Size()
+	size := Size{Lines: height, Cols: width}
+	bounds := Bounds{Left: 0, Top: 0, Right: size.Cols, Bottom: size.Lines}
+	cursor, err := editor.Mode.Display(bounds)
 	tb.SetCursor(cursor.Col, cursor.Line)
 	tb.Flush()
 	return
@@ -140,25 +145,16 @@ func (editor *Editor) Stop() (err error) {
 		return
 	}
 	p.Signal(syscall.SIGSTOP)
-	<-editor.cont
+	<-editor.restart
 	return
 }
 
-func (editor *Editor) Continue() (err error) {
+func (editor *Editor) cont() (err error) {
 	err = tb.Init()
 	if err != nil {
 		err = errors.Wrap(err, "editor continue failed")
 		return
 	}
-	editor.cont <- struct{}{}
-	return
-}
-
-func (editor *Editor) Quit() (err error) {
-	editor.exit = true
-	return
-}
-
-func (editor *Editor) Close() (err error) {
+	editor.restart <- struct{}{}
 	return
 }
