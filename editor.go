@@ -19,23 +19,6 @@ type Editor struct {
 	exit    bool
 }
 
-type Position struct {
-	Line int
-	Col  int
-}
-
-type Size struct {
-	Lines int
-	Cols  int
-}
-
-type Bounds struct {
-	Top    int
-	Bottom int
-	Left   int
-	Right  int
-}
-
 func (editor *Editor) ApplyFileOp(op FileOp) {
 	*editor.File = op(*editor.File)
 }
@@ -129,7 +112,7 @@ func (editor *Editor) display() (err error) {
 	tb.Clear(tb.ColorDefault, tb.ColorDefault)
 	width, height := tb.Size()
 	size := Size{Lines: height, Cols: width}
-	bounds := Bounds{Left: 0, Top: 0, Right: size.Cols, Bottom: size.Lines}
+	bounds := Bounds{Right: size.Cols, Bottom: size.Lines}
 	cursor, err := editor.Mode.Display(bounds)
 	tb.SetCursor(cursor.Col, cursor.Line)
 	tb.Flush()

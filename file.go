@@ -70,7 +70,7 @@ func (file File) Write() (err error) {
 
 func (file *File) Display(bounds Bounds) (cursor Position, err error) {
 	file.scroll()
-	size := Size{Lines: bounds.Bottom - bounds.Top, Cols: bounds.Right - bounds.Left}
+	size := bounds.Size()
 	file.size(size)
 	w := file.Window
 	for line := w.Top; line <= w.Bottom; line++ {
