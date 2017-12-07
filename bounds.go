@@ -7,9 +7,23 @@ type Bounds struct {
 	Right  int
 }
 
-func (b Bounds) Size() Size {
+func (bounds Bounds) Size() Size {
 	return Size{
-		Lines: b.Bottom - b.Top,
-		Cols:  b.Right - b.Left,
+		Lines: bounds.Bottom - bounds.Top,
+		Cols:  bounds.Right - bounds.Left,
 	}
+}
+
+func (bounds Bounds) SplitHorizontal(line int) (top, bottom Bounds) {
+	split := 0
+	if line > 0 {
+		split = bounds.Top + line
+	} else {
+		split = bounds.Bottom + line
+	}
+	top = bounds
+	top.Bottom = split
+	bottom = bounds
+	bottom.Top = split + 1
+	return
 }

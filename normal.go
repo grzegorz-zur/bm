@@ -33,18 +33,42 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 		mode.ApplyMoveOp(File.Down)
 	case tb.KeyDelete:
 		mode.ApplyFileOp(File.DeleteRune)
-	case tb.KeyCtrlE:
-		mode.Stop()
 	case tb.KeyCtrlQ:
 		mode.Quit()
 	case tb.KeyCtrlW:
 		mode.Write()
+	case tb.KeyCtrlZ:
+		mode.Stop()
 	}
 
 	return
 }
 
 func (mode *Normal) Display(bounds Bounds) (cursor Position, err error) {
-	cursor, err = mode.Editor.File.Display(bounds)
+	f, s := bounds.SplitHorizontal(-1)
+	fc, err := mode.Editor.File.Display(f)
+	if err != nil {
+		return
+	}
+	_, err = mode.display(s)
+	if err != nil {
+		return
+	}
+	cursor = fc
+	return
+}
+
+func (mode *Normal) display(bounds Bounds) (cursor Position, err error) {
+	name := []rune(mode.Editor.File.Path)
+	for c := bounds.Left; c <= bounds.Right; c++ {
+		i := c - bounds.Left
+		r := ' '
+		if i < len(name) {
+			r = name[i]
+		}
+		tb.SetCell(c, bounds.Top, r,
+			tb.ColorDefault|tb.AttrBold,
+			tb.ColorGreen)
+	}
 	return
 }

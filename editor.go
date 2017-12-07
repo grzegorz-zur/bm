@@ -112,7 +112,7 @@ func (editor *Editor) display() (err error) {
 	tb.Clear(tb.ColorDefault, tb.ColorDefault)
 	width, height := tb.Size()
 	size := Size{Lines: height, Cols: width}
-	bounds := Bounds{Right: size.Cols, Bottom: size.Lines}
+	bounds := Bounds{Right: size.Cols - 1, Bottom: size.Lines - 1}
 	cursor, err := editor.Mode.Display(bounds)
 	tb.SetCursor(cursor.Col, cursor.Line)
 	tb.Flush()

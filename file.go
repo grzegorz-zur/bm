@@ -97,8 +97,8 @@ func (file *File) Display(bounds Bounds) (cursor Position, err error) {
 func (file *File) size(size Size) {
 	p := &file.Position
 	w := &file.Window
-	w.Bottom = w.Top + size.Lines - 1
-	w.Right = w.Left + size.Cols - 1
+	w.Bottom = w.Top + size.Lines
+	w.Right = w.Left + size.Cols
 	if p.Line > w.Bottom {
 		p.Line = w.Bottom
 	}
