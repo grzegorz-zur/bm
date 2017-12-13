@@ -10,7 +10,6 @@ import (
 )
 
 type Editor struct {
-	Size
 	*File
 	Mode
 	Normal  *Normal
