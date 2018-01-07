@@ -10,10 +10,11 @@ import (
 )
 
 type Editor struct {
-	*File
 	Mode
-	Normal  *Normal
-	Input   *Input
+	Normal *Normal
+	Input  *Input
+	*File
+	Files
 	restart chan struct{}
 	exit    bool
 }
@@ -22,10 +23,8 @@ func (editor *Editor) ApplyFileOp(op FileOp) {
 	*editor.File = op(*editor.File)
 }
 
-func Open(path string) (editor *Editor, err error) {
-	file, err := Read(path)
+func New() (editor *Editor) {
 	editor = &Editor{
-		File:    &file,
 		restart: make(chan struct{}),
 	}
 	editor.Normal = &Normal{
@@ -36,6 +35,20 @@ func Open(path string) (editor *Editor, err error) {
 	}
 	editor.SwitchMode(editor.Normal)
 	return
+}
+
+func (editor *Editor) Open(path string) (err error) {
+	file, err := Read(path)
+	if err != nil {
+		return
+	}
+	editor.File = &file
+	editor.Files = editor.Files.Add(&file)
+	return
+}
+
+func (editor *Editor) NextFile() {
+	editor.File = editor.Files.Next(editor.File)
 }
 
 func (editor *Editor) SwitchMode(mode Mode) {

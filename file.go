@@ -52,6 +52,9 @@ func Read(path string) (file File, err error) {
 }
 
 func (file File) Write() (err error) {
+	if file.Path == "" {
+		return
+	}
 	f, err := os.Create(file.Path)
 	if err != nil {
 		err = errors.Wrapf(err, "cannot write file: %s", file.Path)

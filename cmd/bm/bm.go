@@ -17,15 +17,12 @@ func main() {
 	log.SetOutput(l)
 	defer l.Close()
 	flag.Parse()
-	path := flag.Arg(0)
-	if path == "" {
-		fmt.Fprint(os.Stderr, "no file name given\n")
-		flag.Usage()
-		os.Exit(-1)
-	}
-	editor, err := bm.Open(path)
-	if err != nil {
-		log.Fatal(err)
+	editor := bm.New()
+	for _, path := range flag.Args() {
+		err = editor.Open(path)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 	err = editor.Run()
 	if err != nil {

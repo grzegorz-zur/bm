@@ -78,7 +78,8 @@ func testCase(file string) func(t *testing.T) {
 		if err != nil {
 			t.Fatalf("cannot close temp file: %v", err)
 		}
-		editor, err := Open(temp.Name())
+		editor := New()
+		err = editor.Open(temp.Name())
 		if err != nil {
 			t.Fatalf("cannot open editor: %v", err)
 		}
