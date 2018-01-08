@@ -34,9 +34,9 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 	case tb.KeyDelete:
 		mode.ApplyFileOp(File.DeleteRune)
 	case tb.KeyCtrlD:
-		mode.NextFile(Backward)
+		mode.Next(Backward)
 	case tb.KeyCtrlF:
-		mode.NextFile(Forward)
+		mode.Next(Forward)
 	case tb.KeyCtrlQ:
 		mode.Quit()
 	case tb.KeyCtrlW:

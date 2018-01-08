@@ -37,6 +37,12 @@ func New() (editor *Editor) {
 	return
 }
 
+func (editor *Editor) New() {
+	file := NewFile()
+	editor.File = &file
+	editor.Files = editor.Files.Add(&file)
+}
+
 func (editor *Editor) Open(path string) (err error) {
 	file, err := Read(path)
 	if err != nil {
@@ -47,7 +53,7 @@ func (editor *Editor) Open(path string) (err error) {
 	return
 }
 
-func (editor *Editor) NextFile(d Direction) {
+func (editor *Editor) Next(d Direction) {
 	editor.SwitchFile(editor.Files.Next(editor.File, d))
 }
 
@@ -80,18 +86,27 @@ func (editor *Editor) Run() (err error) {
 	editor.signals()
 
 	for !editor.exit {
+		editor.init()
 		err = editor.display()
 		if err != nil {
 			err = errors.Wrap(err, "display failed")
+			log.Println(err)
 			editor.Quit()
 		}
 		err = editor.listen()
 		if err != nil {
 			err = errors.Wrap(err, "event poll failed")
+			log.Println(err)
 			editor.Quit()
 		}
 	}
 	return
+}
+
+func (editor *Editor) init() {
+	if editor.File == nil {
+		editor.New()
+	}
 }
 
 func (editor *Editor) signals() {

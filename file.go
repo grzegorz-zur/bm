@@ -21,6 +21,10 @@ func (f *File) ApplyMoveOp(m Move) {
 	(*f).Position = m(*f)
 }
 
+func NewFile() File {
+	return File{}
+}
+
 func Read(path string) (file File, err error) {
 	file = File{
 		Path: path,
