@@ -47,6 +47,10 @@ func (editor *Editor) Open(path string) (err error) {
 	return
 }
 
+func (editor *Editor) NextFile(d Direction) {
+	editor.SwitchFile(editor.Files.Next(editor.File, d))
+}
+
 func (editor *Editor) SwitchFile(f *File) {
 	editor.File = f
 }
