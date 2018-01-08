@@ -47,8 +47,8 @@ func (editor *Editor) Open(path string) (err error) {
 	return
 }
 
-func (editor *Editor) NextFile() {
-	editor.File = editor.Files.Next(editor.File)
+func (editor *Editor) SwitchFile(f *File) {
+	editor.File = f
 }
 
 func (editor *Editor) SwitchMode(mode Mode) {

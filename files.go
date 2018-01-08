@@ -6,10 +6,12 @@ func (fs Files) Add(f *File) Files {
 	return append(fs, f)
 }
 
-func (fs Files) Next(f *File) *File {
+func (fs Files) Next(f *File, d Direction) *File {
 	i := fs.find(f)
-	n := (i + 1) % len(fs)
-	return fs[n]
+	k := int(d)
+	n := len(fs)
+	j := ((i+k)%n + n) % n
+	return fs[j]
 }
 
 func (fs Files) find(f *File) int {
@@ -18,5 +20,5 @@ func (fs Files) find(f *File) int {
 			return i
 		}
 	}
-	panic("file not on the files")
+	panic("file " + f.Path + " not on the files")
 }
