@@ -57,6 +57,15 @@ func (editor *Editor) Next(d Direction) {
 	editor.SwitchFile(editor.Files.Next(editor.File, d))
 }
 
+func (editor *Editor) Close() {
+	file := editor.File
+	editor.File = editor.Files.Next(file, Forward)
+	editor.Files = editor.Files.Remove(file)
+	if editor.Files.Empty() {
+		editor.File = nil
+	}
+}
+
 func (editor *Editor) SwitchFile(f *File) {
 	editor.File = f
 }
@@ -70,10 +79,6 @@ func (editor *Editor) Quit() (err error) {
 	return
 }
 
-func (editor *Editor) Close() (err error) {
-	return
-}
-
 func (editor *Editor) Run() (err error) {
 	err = tb.Init()
 	if err != nil {
@@ -82,7 +87,6 @@ func (editor *Editor) Run() (err error) {
 	}
 	defer tb.Close()
 
-	defer editor.Close()
 	editor.signals()
 
 	for !editor.exit {
