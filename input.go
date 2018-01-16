@@ -24,6 +24,10 @@ func (mode *Input) Key(event tb.Event) (err error) {
 		mode.Move(File.Up)
 	case tb.KeyArrowDown:
 		mode.Move(File.Down)
+	case tb.KeySpace:
+		mode.Change(InsertRune(' '))
+	case tb.KeyTab:
+		mode.Change(InsertRune('\t'))
 	case tb.KeyEnter:
 		mode.Change(File.Split)
 	case tb.KeyDelete:

@@ -128,6 +128,8 @@ func interpret(t *testing.T, editor *Editor, commands []string) (err error) {
 			event = tb.Event{Key: tb.KeyArrowDown}
 		case cmd == "space":
 			event = tb.Event{Key: tb.KeySpace}
+		case cmd == "tab":
+			event = tb.Event{Key: tb.KeyTab}
 		case cmd == "enter":
 			event = tb.Event{Key: tb.KeyEnter}
 		case cmd == "backspace":
