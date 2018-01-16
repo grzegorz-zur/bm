@@ -15,10 +15,10 @@ type File struct {
 	Window   Bounds
 }
 
-type FileOp func(File) File
+type Change func(File) File
 
-func (f *File) ApplyMoveOp(m Move) {
-	(*f).Position = m(*f)
+func (f *File) Move(m Move) {
+	f.Position = m(*f)
 }
 
 func NewFile() File {
@@ -145,7 +145,7 @@ func (f File) DeleteRune() File {
 	return f
 }
 
-func InsertRune(r rune) FileOp {
+func InsertRune(r rune) Change {
 	return func(f File) File {
 		p := f.Position
 		f.Lines = f.Lines.InsertRune(p, r)

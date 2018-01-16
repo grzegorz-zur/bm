@@ -11,28 +11,28 @@ type Normal struct {
 func (mode *Normal) Key(event tb.Event) (err error) {
 	switch event.Ch {
 	case 'd':
-		mode.ApplyMoveOp(File.Left)
+		mode.Move(File.Left)
 	case 'f':
-		mode.ApplyMoveOp(File.Right)
+		mode.Move(File.Right)
 	case 'k':
-		mode.ApplyMoveOp(File.Up)
+		mode.Move(File.Up)
 	case 'j':
-		mode.ApplyMoveOp(File.Down)
+		mode.Move(File.Down)
 	}
 
 	switch event.Key {
 	case tb.KeySpace:
-		mode.SwitchMode(mode.Editor.Input)
+		mode.Switch(mode.Editor.Input)
 	case tb.KeyArrowLeft:
-		mode.ApplyMoveOp(File.Left)
+		mode.Move(File.Left)
 	case tb.KeyArrowRight:
-		mode.ApplyMoveOp(File.Right)
+		mode.Move(File.Right)
 	case tb.KeyArrowUp:
-		mode.ApplyMoveOp(File.Up)
+		mode.Move(File.Up)
 	case tb.KeyArrowDown:
-		mode.ApplyMoveOp(File.Down)
+		mode.Move(File.Down)
 	case tb.KeyDelete:
-		mode.ApplyFileOp(File.DeleteRune)
+		mode.Change(File.DeleteRune)
 	case tb.KeyCtrlD:
 		mode.Next(Backward)
 	case tb.KeyCtrlF:
@@ -40,9 +40,9 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 	case tb.KeyCtrlQ:
 		mode.Quit()
 	case tb.KeyCtrlW:
-		mode.Write()
-	case tb.KeyCtrlE:
 		mode.Close()
+	case tb.KeyCtrlE:
+		mode.Write()
 	case tb.KeyCtrlZ:
 		mode.Stop()
 	}
@@ -52,7 +52,7 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 
 func (mode *Normal) Display(bounds Bounds) (cursor Position, err error) {
 	f, s := bounds.SplitHorizontal(-1)
-	fc, err := mode.Editor.File.Display(f)
+	fc, err := mode.Current().Display(f)
 	if err != nil {
 		return
 	}
@@ -65,7 +65,7 @@ func (mode *Normal) Display(bounds Bounds) (cursor Position, err error) {
 }
 
 func (mode *Normal) display(bounds Bounds) (cursor Position, err error) {
-	name := []rune(mode.Editor.File.Path)
+	name := []rune(mode.Current().Path)
 	for c := bounds.Left; c <= bounds.Right; c++ {
 		i := c - bounds.Left
 		r := ' '

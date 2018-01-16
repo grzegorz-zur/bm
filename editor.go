@@ -13,19 +13,14 @@ type Editor struct {
 	Mode
 	Normal *Normal
 	Input  *Input
-	*File
 	Files
-	restart chan struct{}
-	exit    bool
-}
-
-func (editor *Editor) ApplyFileOp(op FileOp) {
-	*editor.File = op(*editor.File)
+	wait chan struct{}
+	exit bool
 }
 
 func New() (editor *Editor) {
 	editor = &Editor{
-		restart: make(chan struct{}),
+		wait: make(chan struct{}),
 	}
 	editor.Normal = &Normal{
 		Editor: editor,
@@ -33,44 +28,11 @@ func New() (editor *Editor) {
 	editor.Input = &Input{
 		Editor: editor,
 	}
-	editor.SwitchMode(editor.Normal)
+	editor.Switch(editor.Normal)
 	return
 }
 
-func (editor *Editor) New() {
-	file := NewFile()
-	editor.File = &file
-	editor.Files = editor.Files.Add(&file)
-}
-
-func (editor *Editor) Open(path string) (err error) {
-	file, err := Read(path)
-	if err != nil {
-		return
-	}
-	editor.File = &file
-	editor.Files = editor.Files.Add(&file)
-	return
-}
-
-func (editor *Editor) Next(d Direction) {
-	editor.SwitchFile(editor.Files.Next(editor.File, d))
-}
-
-func (editor *Editor) Close() {
-	file := editor.File
-	editor.File = editor.Files.Next(file, Forward)
-	editor.Files = editor.Files.Remove(file)
-	if editor.Files.Empty() {
-		editor.File = nil
-	}
-}
-
-func (editor *Editor) SwitchFile(f *File) {
-	editor.File = f
-}
-
-func (editor *Editor) SwitchMode(mode Mode) {
+func (editor *Editor) Switch(mode Mode) {
 	editor.Mode = mode
 }
 
@@ -90,7 +52,6 @@ func (editor *Editor) Run() (err error) {
 	editor.signals()
 
 	for !editor.exit {
-		editor.init()
 		err = editor.display()
 		if err != nil {
 			err = errors.Wrap(err, "display failed")
@@ -105,12 +66,6 @@ func (editor *Editor) Run() (err error) {
 		}
 	}
 	return
-}
-
-func (editor *Editor) init() {
-	if editor.File == nil {
-		editor.New()
-	}
 }
 
 func (editor *Editor) signals() {
@@ -163,7 +118,7 @@ func (editor *Editor) Stop() (err error) {
 		return
 	}
 	p.Signal(syscall.SIGSTOP)
-	<-editor.restart
+	<-editor.wait
 	return
 }
 
@@ -173,6 +128,6 @@ func (editor *Editor) cont() (err error) {
 		err = errors.Wrap(err, "editor continue failed")
 		return
 	}
-	editor.restart <- struct{}{}
+	editor.wait <- struct{}{}
 	return
 }
