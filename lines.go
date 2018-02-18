@@ -7,10 +7,21 @@ func (ls Lines) DeleteRune(p Position) (lines Lines) {
 		return ls
 	}
 	l := ls[p.Line]
-	if p.Col >= len(l) {
+	line := l.DeleteRune(p.Col)
+	lines = make(Lines, len(ls))
+	for i := range ls {
+		lines[i] = ls[i]
+	}
+	lines[p.Line] = line
+	return
+}
+
+func (ls Lines) DeletePreviousRune(p Position) (lines Lines) {
+	if p.Line >= len(ls) {
 		return ls
 	}
-	line := l.DeleteRune(p.Col)
+	l := ls[p.Line]
+	line := l.DeletePreviousRune(p.Col)
 	lines = make(Lines, len(ls))
 	for i := range ls {
 		lines[i] = ls[i]

@@ -10,9 +10,7 @@ import (
 )
 
 type Editor struct {
-	Mode
-	Normal *Normal
-	Input  *Input
+	Modes
 	Files
 	wait chan struct{}
 	exit bool
@@ -22,18 +20,17 @@ func New() (editor *Editor) {
 	editor = &Editor{
 		wait: make(chan struct{}),
 	}
-	editor.Normal = &Normal{
+	editor.Modes.Normal = &Normal{
 		Editor: editor,
 	}
-	editor.Input = &Input{
+	editor.Modes.Input = &Input{
 		Editor: editor,
 	}
-	editor.Switch(editor.Normal)
+	editor.Modes.Switch = &Switch{
+		Editor: editor,
+	}
+	editor.SwitchMode(editor.Normal)
 	return
-}
-
-func (editor *Editor) Switch(mode Mode) {
-	editor.Mode = mode
 }
 
 func (editor *Editor) Quit() (err error) {

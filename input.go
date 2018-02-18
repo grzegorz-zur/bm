@@ -8,6 +8,14 @@ type Input struct {
 	*Editor
 }
 
+func (mode *Input) Show() (err error) {
+	return
+}
+
+func (mode *Input) Hide() (err error) {
+	return
+}
+
 func (mode *Input) Key(event tb.Event) (err error) {
 	if event.Ch != 0 {
 		mode.Change(InsertRune(event.Ch))
@@ -15,7 +23,7 @@ func (mode *Input) Key(event tb.Event) (err error) {
 
 	switch event.Key {
 	case tb.KeyEsc:
-		mode.Switch(mode.Editor.Normal)
+		mode.SwitchMode(mode.Editor.Normal)
 	case tb.KeyArrowLeft:
 		mode.Move(File.Left)
 	case tb.KeyArrowRight:
@@ -30,6 +38,9 @@ func (mode *Input) Key(event tb.Event) (err error) {
 		mode.Change(InsertRune('\t'))
 	case tb.KeyEnter:
 		mode.Change(File.Split)
+	case tb.KeyBackspace:
+	case tb.KeyBackspace2:
+		mode.Change(File.DeletePreviousRune)
 	case tb.KeyDelete:
 		mode.Change(File.DeleteRune)
 	}

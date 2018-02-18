@@ -133,7 +133,7 @@ func interpret(t *testing.T, editor *Editor, commands []string) (err error) {
 		case cmd == "enter":
 			event = tb.Event{Key: tb.KeyEnter}
 		case cmd == "backspace":
-			event = tb.Event{Key: tb.KeyBackspace}
+			event = tb.Event{Key: tb.KeyBackspace2}
 		case cmd == "delete":
 			event = tb.Event{Key: tb.KeyDelete}
 		default:

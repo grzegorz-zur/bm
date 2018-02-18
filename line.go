@@ -11,6 +11,15 @@ func (l Line) DeleteRune(c int) (line Line) {
 	return
 }
 
+func (l Line) DeletePreviousRune(c int) (line Line) {
+	if c == 0 || c > len(l) {
+		return l
+	}
+	line = append(line, l[:c-1]...)
+	line = append(line, l[c:]...)
+	return
+}
+
 func (l Line) Expand(c int) (line Line) {
 	if c < len(l) {
 		return l
@@ -33,9 +42,17 @@ func (l Line) InsertRune(c int, r rune) (line Line) {
 	return
 }
 
+func (l Line) AppendRune(r rune) Line {
+	return l.InsertRune(len(l), r)
+}
+
 func (l Line) Split(c int) (l1, l2 Line) {
 	el := l.Expand(c)
 	l1 = append(l1, el[:c]...)
 	l2 = append(l2, el[c:]...)
 	return
+}
+
+func (l Line) String() string {
+	return string(l)
 }

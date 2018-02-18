@@ -6,5 +6,7 @@ import (
 
 type Mode interface {
 	Visual
+	Show() error
+	Hide() error
 	Key(event tb.Event) error
 }

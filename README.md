@@ -8,6 +8,7 @@ Minimalistic text editor for GNU/Linux.
 
 * space — insert mode
 * delete — delete character
+* backspace — delete previous character
 * arrows — move
 
 * d — left
@@ -27,4 +28,11 @@ Minimalistic text editor for GNU/Linux.
 * escape — normal mode
 * enter — split line
 * delete — delete character
+* backspace — delete previous character
+* arrows — move
+
+### Switch mode
+
+* escape — normal mode
+* enter — select file 
 * arrows — move

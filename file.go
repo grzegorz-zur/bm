@@ -145,6 +145,16 @@ func (f File) DeleteRune() File {
 	return f
 }
 
+func (f File) DeletePreviousRune() File {
+	p := f.Position
+	if p.Col == 0 {
+		return f
+	}
+	f.Lines = f.Lines.DeletePreviousRune(p)
+	f.Position = Position{Line: p.Line, Col: p.Col - 1}
+	return f
+}
+
 func InsertRune(r rune) Change {
 	return func(f File) File {
 		p := f.Position

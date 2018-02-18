@@ -8,6 +8,14 @@ type Normal struct {
 	*Editor
 }
 
+func (mode *Normal) Show() (err error) {
+	return
+}
+
+func (mode *Normal) Hide() (err error) {
+	return
+}
+
 func (mode *Normal) Key(event tb.Event) (err error) {
 	switch event.Ch {
 	case 'd':
@@ -22,7 +30,9 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 
 	switch event.Key {
 	case tb.KeySpace:
-		mode.Switch(mode.Editor.Input)
+		mode.SwitchMode(mode.Editor.Input)
+	case tb.KeyTab:
+		mode.SwitchMode(mode.Editor.Switch)
 	case tb.KeyArrowLeft:
 		mode.Move(File.Left)
 	case tb.KeyArrowRight:
@@ -31,6 +41,9 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 		mode.Move(File.Up)
 	case tb.KeyArrowDown:
 		mode.Move(File.Down)
+	case tb.KeyBackspace:
+	case tb.KeyBackspace2:
+		mode.Change(File.DeletePreviousRune)
 	case tb.KeyDelete:
 		mode.Change(File.DeleteRune)
 	case tb.KeyCtrlD:
@@ -72,9 +85,7 @@ func (mode *Normal) display(bounds Bounds) (cursor Position, err error) {
 		if i < len(name) {
 			r = name[i]
 		}
-		tb.SetCell(c, bounds.Top, r,
-			tb.ColorDefault|tb.AttrBold,
-			tb.ColorGreen)
+		tb.SetCell(c, bounds.Top, r, tb.ColorDefault|tb.AttrBold, tb.ColorGreen)
 	}
 	return
 }
