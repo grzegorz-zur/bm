@@ -76,7 +76,7 @@ func (editor *Editor) signals() {
 				err = editor.cont()
 			}
 			if err != nil {
-				log.Fatalf("signal handling failure", err)
+				log.Fatalf("signal handling failure %v", err)
 			}
 		}
 	}()
