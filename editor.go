@@ -12,12 +12,14 @@ import (
 type Editor struct {
 	Modes
 	Files
+	Base string
 	wait chan struct{}
 	exit bool
 }
 
-func New() (editor *Editor) {
+func New(path string) (editor *Editor) {
 	editor = &Editor{
+		Base: path,
 		wait: make(chan struct{}),
 	}
 	editor.Modes.Normal = &Normal{
@@ -31,6 +33,18 @@ func New() (editor *Editor) {
 	}
 	editor.SwitchMode(editor.Normal)
 	return
+}
+
+func (editor *Editor) Open(path string) (err error) {
+	return editor.Files.Open(editor.Base, path)
+}
+
+func (editor *Editor) Write() (err error) {
+	return editor.Files.Write(editor.Base)
+}
+
+func (editor *Editor) WriteAll() (err error) {
+	return editor.Files.WriteAll(editor.Base)
 }
 
 func (editor *Editor) Quit() (err error) {

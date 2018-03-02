@@ -194,12 +194,8 @@ func (mode *Switch) displayInput(bounds Bounds) (cursor Position, err error) {
 }
 
 func (mode *Switch) read() (paths []string, err error) {
-	wd, err := os.Getwd()
-	if err != nil {
-		return
-	}
 	walker := func(path string, info os.FileInfo, err error) error {
-		relpath, err := filepath.Rel(wd, path)
+		relpath, err := filepath.Rel(mode.Base, path)
 		if err != nil {
 			return err
 		}
@@ -208,7 +204,7 @@ func (mode *Switch) read() (paths []string, err error) {
 		}
 		return nil
 	}
-	err = filepath.Walk(wd, walker)
+	err = filepath.Walk(mode.Base, walker)
 	return
 }
 

@@ -1,51 +1,51 @@
 package bm
 
 type Files struct {
-	list    []*File
-	current int
+	*File
+	list []*File
 }
 
-func (files *Files) Change(op Change) {
-	*(files.list[files.current]) = op(*(files.list[files.current]))
+func (files *Files) Empty() bool {
+	return files.File == nil
 }
 
-func (files *Files) Move(m Move) {
-	files.list[files.current].Move(m)
-}
-
-func (files *Files) New() {
-	file := NewFile()
-	files.current = files.add(&file)
-}
-
-func (files *Files) Open(path string) (err error) {
-	file, err := Read(path)
+func (files *Files) Open(base, path string) (err error) {
+	file, err := Read(base, path)
 	if err != nil {
 		return
 	}
-	files.current = files.add(&file)
+	position := files.add(&file)
+	files.switchFile(position)
 	return
 }
 
-func (files *Files) Current() *File {
-	if len(files.list) == 0 {
-		files.New()
-	}
-	return files.list[files.current]
-}
-
 func (files *Files) Next(dir Direction) {
-	files.current = wrap(files.current, len(files.list), 1, dir)
+	if files.Empty() {
+		return
+	}
+	position := files.current()
+	position = wrap(position, len(files.list), 1, dir)
+	files.switchFile(position)
 }
 
-func (files *Files) Write() (err error) {
-	err = files.list[files.current].Write()
+func (files *Files) WriteAll(base string) (err error) {
+	for _, file := range files.list {
+		err = file.Write(base)
+		if err != nil {
+			return
+		}
+	}
 	return
 }
 
 func (files *Files) Close() {
-	files.remove(files.current)
-	files.current = wrap(files.current, len(files.list), 0, Forward)
+	if files.Empty() {
+		return
+	}
+	position := files.current()
+	files.remove(position)
+	position = wrap(position, len(files.list), 0, Forward)
+	files.switchFile(position)
 }
 
 func (files *Files) add(file *File) (position int) {
@@ -60,6 +60,23 @@ func (files *Files) remove(position int) {
 	list = append(list, files.list[position+1:]...)
 	files.list = list
 	return
+}
+
+func (files *Files) switchFile(position int) {
+	if len(files.list) != 0 {
+		files.File = files.list[position]
+	} else {
+		files.File = nil
+	}
+}
+
+func (files *Files) current() (position int) {
+	for position, file := range files.list {
+		if files.File == file {
+			return position
+		}
+	}
+	panic("failed to find current file: " + files.Path)
 }
 
 func wrap(position, length, step int, dir Direction) int {

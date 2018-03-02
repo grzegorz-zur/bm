@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"log"
 	"os"
+	"path"
 )
 
 type File struct {
@@ -17,27 +18,34 @@ type File struct {
 
 type Change func(File) File
 
-func (f *File) Move(m Move) {
-	f.Position = m(*f)
-}
-
-func NewFile() File {
-	return File{}
-}
-
-func Read(path string) (file File, err error) {
-	file = File{
-		Path: path,
+func (file *File) Move(m Move) {
+	if file == nil {
+		return
 	}
-	f, err := os.Open(path)
+	file.Position = m(*file)
+}
+
+func (file *File) Change(op Change) {
+	if file == nil {
+		return
+	}
+	*(file) = op(*file)
+}
+
+func Read(base, rel string) (file File, err error) {
+	file = File{
+		Path: rel,
+	}
+	abs := path.Join(base, rel)
+	f, err := os.Open(abs)
 	if err != nil {
-		err = errors.Wrapf(err, "cannot open file: %s", path)
+		err = errors.Wrapf(err, "cannot open file: %s", rel)
 		return
 	}
 	defer func() {
 		err := f.Close()
 		if err != nil {
-			err = errors.Wrapf(err, "cannot close file: %s", path)
+			err = errors.Wrapf(err, "cannot close file: %s", rel)
 			log.Print(err)
 		}
 	}()
@@ -45,7 +53,7 @@ func Read(path string) (file File, err error) {
 	for s.Scan() {
 		err = s.Err()
 		if err != nil {
-			err = errors.Wrapf(err, "cannot read file: %s", path)
+			err = errors.Wrapf(err, "cannot read file: %s", rel)
 			return
 		}
 		line := s.Text()
@@ -55,11 +63,12 @@ func Read(path string) (file File, err error) {
 	return
 }
 
-func (file File) Write() (err error) {
-	if file.Path == "" {
+func (file *File) Write(base string) (err error) {
+	if file == nil {
 		return
 	}
-	f, err := os.Create(file.Path)
+	abs := path.Join(base, file.Path)
+	f, err := os.Create(abs)
 	if err != nil {
 		err = errors.Wrapf(err, "cannot write file: %s", file.Path)
 		return
@@ -76,6 +85,9 @@ func (file File) Write() (err error) {
 }
 
 func (file *File) Display(bounds Bounds) (cursor Position, err error) {
+	if file == nil {
+		return
+	}
 	file.scroll()
 	size := bounds.Size()
 	file.size(size)

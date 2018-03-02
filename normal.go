@@ -65,7 +65,7 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 
 func (mode *Normal) Display(bounds Bounds) (cursor Position, err error) {
 	f, s := bounds.SplitHorizontal(-1)
-	fc, err := mode.Current().Display(f)
+	fc, err := mode.File.Display(f)
 	if err != nil {
 		return
 	}
@@ -78,7 +78,10 @@ func (mode *Normal) Display(bounds Bounds) (cursor Position, err error) {
 }
 
 func (mode *Normal) display(bounds Bounds) (cursor Position, err error) {
-	name := []rune(mode.Current().Path)
+	if mode.File == nil {
+		return
+	}
+	name := []rune(mode.Path)
 	for c := bounds.Left; c <= bounds.Right; c++ {
 		i := c - bounds.Left
 		r := ' '

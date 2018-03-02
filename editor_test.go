@@ -1,116 +1,174 @@
 package bm
 
 import (
+	"bufio"
+	"bytes"
+	"errors"
 	tb "github.com/nsf/termbox-go"
-	"github.com/pkg/errors"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
-	"regexp"
-	"strings"
 	"testing"
+	"time"
 )
 
-var (
-	Terminator = regexp.MustCompile("\n?—+\n")
-	WhiteChars = regexp.MustCompile("\\s+")
+const (
+	base   = "test"
+	in     = "in"
+	out    = "out"
+	script = "script"
 )
 
 func TestEditor(t *testing.T) {
-	files := list(t, "test")
+	prefix := time.Now().Format("bm_2006-01-02_15-04-05_")
+	temp, err := ioutil.TempDir("", prefix)
+	if err != nil {
+		t.Fatalf("cannot create temporary directory %s: %v", prefix, err)
+	}
+	files, err := ioutil.ReadDir(base)
+	if err != nil {
+		t.Fatalf("cannot read test directory %s: %v", base, err)
+	}
 	for _, file := range files {
-		t.Run(file, testCase(file))
+		name := file.Name()
+		test := test(name, base, temp)
+		t.Run(name, test)
 	}
 }
 
-func list(t *testing.T, dir string) (names []string) {
-	t.Helper()
-	fis, err := ioutil.ReadDir(dir)
-	if err != nil {
-		t.Fatal("cannot read directory", err)
+func test(name, base, temp string) func(t *testing.T) {
+	return func(t *testing.T) {
+		t.Parallel()
+
+		err := setup(name, base, temp)
+		if err != nil {
+			t.Fatalf("setup failure: %v", err)
+		}
+		cmds, err := commands(name, base)
+		if err != nil {
+			t.Fatalf("script failure: %v", err)
+		}
+
+		testPath := path.Join(temp, name)
+		editor := New(testPath)
+		defer editor.Close()
+
+		files, err := ioutil.ReadDir(testPath)
+		for _, file := range files {
+			err := editor.Open(file.Name())
+			if err != nil {
+				t.Fatalf("cannot open editor: %v", err)
+			}
+		}
+		editor.Next(Forward)
+
+		err = interpret(editor, cmds)
+		if err != nil {
+			t.Fatalf("cannot write files: %v", err)
+		}
+
+		err = editor.WriteAll()
+		if err != nil {
+			t.Fatalf("cannot write files: %v", err)
+		}
+
+		err = verify(name, base, temp, t)
+		if err != nil {
+			t.Fatalf("cannot verify files: %v", err)
+		}
 	}
-	for _, fi := range fis {
-		if fi.Mode().IsRegular() {
-			names = append(names, fi.Name())
+}
+
+func setup(name, base, temp string) (err error) {
+	inPath := path.Join(base, name, in)
+	files, err := ioutil.ReadDir(inPath)
+	if err != nil {
+		return err
+	}
+	dir := path.Join(temp, name)
+	err = os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		src := path.Join(inPath, file.Name())
+		dst := path.Join(dir, file.Name())
+		err := copy(src, dst)
+		if err != nil {
+			return err
 		}
 	}
 	return
 }
 
-func testCase(file string) func(t *testing.T) {
-	return func(t *testing.T) {
-		t.Helper()
-		t.Logf("testing file %s", file)
-
-		path := path.Join("test", file)
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			t.Fatalf("cannot read test file: %v", err)
-		}
-
-		text := string(data)
-		parts := Terminator.Split(text, -1)
-		if len(parts) != 4 {
-			t.Fatalf("invalid test file %s", file)
-		}
-
-		before := parts[0]
-		commands := []string{}
-		if strings.Trim(parts[1], " ") != "" {
-			commands = WhiteChars.Split(parts[1], -1)
-		}
-		after := parts[2]
-		t.Logf("before\n`%s`", before)
-		t.Logf("commands: %v", commands)
-		t.Logf("after\n`%s`", after)
-
-		temp, err := ioutil.TempFile("", file+"_")
-		if err != nil {
-			t.Fatalf("cannot create temp file: %v", err)
-		}
-		defer os.Remove(temp.Name())
-		t.Logf("temp file %s", temp.Name())
-		_, err = temp.WriteString(before)
-		if err != nil {
-			t.Fatalf("cannot write to temp file: %v", err)
-		}
-		err = temp.Close()
-		if err != nil {
-			t.Fatalf("cannot close temp file: %v", err)
-		}
-		editor := New()
-		err = editor.Open(temp.Name())
-		if err != nil {
-			t.Fatalf("cannot open editor: %v", err)
-		}
-		defer editor.Close()
-
-		err = interpret(t, editor, commands)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = editor.Write()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		data, err = ioutil.ReadFile(temp.Name())
-		if err != nil {
-			t.Fatalf("cannot read temp file: %v", err)
-		}
-		result := string(data)
-		if result != after {
-			t.Errorf("comparison failed")
-			t.Errorf("expected\n%s", after)
-			t.Errorf("found\n%s", result)
-		}
+func commands(name, base string) (cmds []string, err error) {
+	scriptPath := path.Join(base, name, script)
+	file, err := os.Open(scriptPath)
+	defer file.Close()
+	if err != nil {
+		return
 	}
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		err = scanner.Err()
+		if err != nil {
+			return
+		}
+		cmd := scanner.Text()
+		cmds = append(cmds, cmd)
+	}
+	return
 }
 
-func interpret(t *testing.T, editor *Editor, commands []string) (err error) {
+func verify(name, base, temp string, t *testing.T) (err error) {
+	outPath := path.Join(base, name, out)
+	expected, err := list(outPath)
+	if err != nil {
+		return
+	}
+	testPath := path.Join(temp, name)
+	actual, err := list(testPath)
+	if err != nil {
+		return
+	}
+	if len(expected) != len(actual) {
+		t.Logf("expected files %v", expected)
+		t.Logf("actual files %v", actual)
+		t.Fail()
+	}
+	for i := range expected {
+		if actual[i] != expected[i] {
+			t.Logf("expected files %v", expected)
+			t.Logf("actual files %v", actual)
+			t.Fail()
+		}
+	}
+	for i := range expected {
+		actualPath := path.Join(temp, name, expected[i])
+		actualContent, err := ioutil.ReadFile(actualPath)
+		if err != nil {
+			return err
+		}
+		expectedPath := path.Join(base, name, out, expected[i])
+		expectedContent, err := ioutil.ReadFile(expectedPath)
+		if err != nil {
+			return err
+		}
+		if bytes.Compare(actualContent, expectedContent) != 0 {
+			t.Log("expected content")
+			t.Log(string(expectedContent))
+			t.Log("actual content")
+			t.Log(string(actualContent))
+			t.Fail()
+		}
+	}
+	return
+}
+
+func interpret(editor *Editor, commands []string) (err error) {
 	for _, cmd := range commands {
-		t.Logf("event: %s", cmd)
 		var event tb.Event
 		switch {
 		case len(cmd) == 1:
@@ -137,10 +195,45 @@ func interpret(t *testing.T, editor *Editor, commands []string) (err error) {
 		case cmd == "delete":
 			event = tb.Event{Key: tb.KeyDelete}
 		default:
-			err = errors.Errorf("cannot interpret command %s", cmd)
+			err = errors.New("cannot interpret command: " + cmd)
 			return
 		}
 		err = editor.Key(event)
+		if err != nil {
+			return err
+		}
 	}
 	return
+}
+
+func list(path string) (names []string, err error) {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return
+	}
+	for _, file := range files {
+		name := file.Name()
+		names = append(names, name)
+	}
+	return
+}
+
+func copy(src, dst string) (err error) {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+	return out.Close()
 }

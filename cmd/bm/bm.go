@@ -17,7 +17,11 @@ func main() {
 	log.SetOutput(l)
 	defer l.Close()
 	flag.Parse()
-	editor := bm.New()
+	base, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+	editor := bm.New(base)
 	for _, path := range flag.Args() {
 		err = editor.Open(path)
 		if err != nil {
