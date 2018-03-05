@@ -11,6 +11,7 @@ import (
 	"path"
 	"testing"
 	"time"
+	"unicode"
 )
 
 const (
@@ -169,11 +170,16 @@ func verify(name, base, temp string, t *testing.T) (err error) {
 
 func interpret(editor *Editor, commands []string) (err error) {
 	for _, cmd := range commands {
+		runes := []rune(cmd)
 		var event tb.Event
 		switch {
 		case len(cmd) == 1:
-			runes := []rune(cmd)
 			event = tb.Event{Ch: runes[0]}
+		case len(cmd) == 2 && runes[0] == '^':
+			letter := unicode.ToUpper(runes[1])
+			offset := int(letter - 'A')
+			key := tb.KeyCtrlA + tb.Key(offset)
+			event = tb.Event{Key: key}
 		case cmd == "escape":
 			event = tb.Event{Key: tb.KeyEsc}
 		case cmd == "left":
