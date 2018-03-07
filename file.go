@@ -32,12 +32,14 @@ func (file *File) Change(op Change) {
 	*(file) = op(*file)
 }
 
-func Read(base, rel string) (file File, err error) {
+func Open(base, rel string) (file File, err error) {
 	file = File{
 		Path: rel,
 	}
 	abs := path.Join(base, rel)
-	f, err := os.Open(abs)
+	flags := os.O_RDWR | os.O_CREATE
+	perm := os.ModePerm
+	f, err := os.OpenFile(abs, flags, perm)
 	if err != nil {
 		err = errors.Wrapf(err, "cannot open file: %s", rel)
 		return

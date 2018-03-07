@@ -68,7 +68,10 @@ func (mode *Switch) filter() {
 
 func (mode *Switch) open() (err error) {
 	p := mode.position
-	path := mode.filtered[p.Line]
+	path := mode.query.String()
+	if p.Line < len(mode.filtered) {
+		path = mode.filtered[p.Line]
+	}
 	err = mode.Open(path)
 	return
 }

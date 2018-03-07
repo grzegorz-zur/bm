@@ -10,7 +10,7 @@ func (files *Files) Empty() bool {
 }
 
 func (files *Files) Open(base, path string) (err error) {
-	file, err := Read(base, path)
+	file, err := Open(base, path)
 	if err != nil {
 		return
 	}
