@@ -1,51 +1,55 @@
-default:
-    deps: [build]
+version: '2'
 
-clean:
-    cmds:
-        - go clean ./...
+tasks:
 
-fmt:
-    cmds:
-        - go fmt ./...
-    sources:
-        - '**.go'
+    default:
+        deps: [build]
 
-test:
-    cmds:
-        - go test ./...
-    deps: [fmt]
-    sources:
-        - '**.go'
-        - 'test/**'
+    clean:
+        cmds:
+            - go clean ./...
 
-race:
-    cmds:
-        - go test -race ./...
-    deps: [fmt]
-    sources:
-        - '**.go'
-        - 'test/**'
+    fmt:
+        cmds:
+            - go fmt ./...
+        sources:
+            - '**.go'
 
-cover:
-    cmds:
-        - go test -cover ./...
-    deps: [fmt]
-    sources:
-        - '**.go'
-        - 'test/**'
+    test:
+        cmds:
+            - go test ./...
+        deps: [fmt]
+        sources:
+            - '**.go'
+            - 'test/**'
 
-build:
-    cmds:
-        - go build ./cmd/bm
-    deps: [fmt]
-    sources:
-        - '**.go'
-    generates:
-        - bm
+    race:
+        cmds:
+            - go test -race ./...
+        deps: [fmt]
+        sources:
+            - '**.go'
+            - 'test/**'
 
-install:
-    cmds:
-        - go install ./cmd/bm
-    deps: [build]
+    cover:
+        cmds:
+            - go test -cover ./...
+        deps: [fmt]
+        sources:
+            - '**.go'
+            - 'test/**'
+
+    build:
+        cmds:
+            - go build ./cmd/bm
+        deps: [fmt]
+        sources:
+            - '**.go'
+        generates:
+            - bm
+
+    install:
+        cmds:
+            - go install ./cmd/bm
+        deps: [build]
 
