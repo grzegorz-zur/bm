@@ -10,4 +10,4 @@ jobs:
             - run: go test -v -race -covermode=atomic -coverprofile=coverage.out
             - run: go get github.com/schrej/godacov 
             - run: godacov -t $CODACY_TOKEN -r ./coverage.out -c $CIRCLE_SHA1
-			- run: bash <(curl -s https://codecov.io/bash)
+            - run: bash <(curl -s https://codecov.io/bash)
