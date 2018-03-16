@@ -5,7 +5,7 @@ jobs:
             - image: circleci/golang:1.10
         working_directory: /go/src/github.com/grzegorz-zur/bare-minimum
         environment:
-            - CGO_ENABLED=0
+            - CC=gcc 
         steps:
             - run: go get golang.org/x/vgo
             - run: go get github.com/schrej/godacov 
