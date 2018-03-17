@@ -21,7 +21,8 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
-	editor := bm.New(base)
+	display := &bm.Display{}
+	editor := bm.New(display, base)
 	for _, path := range flag.Args() {
 		err = editor.Open(path)
 		if err != nil {

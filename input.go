@@ -48,13 +48,13 @@ func (mode *Input) Key(event tb.Event) (err error) {
 	return
 }
 
-func (mode *Input) Display(bounds Bounds) (cursor Position, err error) {
+func (mode *Input) Render(display *Display, bounds Bounds) (cursor Position, err error) {
 	f, s := bounds.SplitHorizontal(-1)
-	fc, err := mode.File.Display(f)
+	fc, err := mode.File.Render(display, f)
 	if err != nil {
 		return
 	}
-	_, err = mode.display(s)
+	_, err = mode.render(display, s)
 	if err != nil {
 		return
 	}
@@ -62,7 +62,7 @@ func (mode *Input) Display(bounds Bounds) (cursor Position, err error) {
 	return
 }
 
-func (mode *Input) display(bounds Bounds) (cursor Position, err error) {
+func (mode *Input) render(display *Display, bounds Bounds) (cursor Position, err error) {
 	name := []rune(mode.Path)
 	for c := bounds.Left; c <= bounds.Right; c++ {
 		i := c - bounds.Left
@@ -70,9 +70,7 @@ func (mode *Input) display(bounds Bounds) (cursor Position, err error) {
 		if i < len(name) {
 			r = name[i]
 		}
-		tb.SetCell(c, bounds.Top, r,
-			tb.ColorDefault|tb.AttrBold,
-			tb.ColorRed)
+		display.SetCell(c, bounds.Top, r, tb.ColorDefault|tb.AttrBold, tb.ColorRed)
 	}
 	return
 }

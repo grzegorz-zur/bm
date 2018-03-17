@@ -53,7 +53,7 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 	case tb.KeyCtrlQ:
 		mode.Quit()
 	case tb.KeyCtrlW:
-		mode.Close()
+		mode.Files.Close()
 	case tb.KeyCtrlE:
 		mode.Write()
 	case tb.KeyCtrlZ:
@@ -63,13 +63,13 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 	return
 }
 
-func (mode *Normal) Display(bounds Bounds) (cursor Position, err error) {
+func (mode *Normal) Render(display *Display, bounds Bounds) (cursor Position, err error) {
 	f, s := bounds.SplitHorizontal(-1)
-	fc, err := mode.File.Display(f)
+	fc, err := mode.File.Render(display, f)
 	if err != nil {
 		return
 	}
-	_, err = mode.display(s)
+	_, err = mode.render(display, s)
 	if err != nil {
 		return
 	}
@@ -77,7 +77,7 @@ func (mode *Normal) Display(bounds Bounds) (cursor Position, err error) {
 	return
 }
 
-func (mode *Normal) display(bounds Bounds) (cursor Position, err error) {
+func (mode *Normal) render(display *Display, bounds Bounds) (cursor Position, err error) {
 	if mode.File == nil {
 		return
 	}
@@ -88,7 +88,7 @@ func (mode *Normal) display(bounds Bounds) (cursor Position, err error) {
 		if i < len(name) {
 			r = name[i]
 		}
-		tb.SetCell(c, bounds.Top, r, tb.ColorDefault|tb.AttrBold, tb.ColorGreen)
+		display.SetCell(c, bounds.Top, r, tb.ColorDefault|tb.AttrBold, tb.ColorGreen)
 	}
 	return
 }

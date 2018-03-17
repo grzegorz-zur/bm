@@ -86,7 +86,7 @@ func (file *File) Write(base string) (err error) {
 	return
 }
 
-func (file *File) Display(bounds Bounds) (cursor Position, err error) {
+func (file *File) Render(display *Display, bounds Bounds) (cursor Position, err error) {
 	if file == nil {
 		return
 	}
@@ -106,7 +106,7 @@ func (file *File) Display(bounds Bounds) (cursor Position, err error) {
 			}
 			symbol := runes[col]
 			screenCol := bounds.Left + col - w.Left
-			tb.SetCell(screenCol, screenLine, symbol, tb.ColorDefault, tb.ColorDefault)
+			display.SetCell(screenCol, screenLine, symbol, tb.ColorDefault, tb.ColorDefault)
 		}
 	}
 	p := file.Position

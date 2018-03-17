@@ -52,8 +52,7 @@ func test(name, base, temp string) func(t *testing.T) {
 		}
 
 		testPath := path.Join(temp, name)
-		editor := New(testPath)
-		defer editor.Close()
+		editor := New(nil, testPath)
 
 		files, err := ioutil.ReadDir(testPath)
 		for _, file := range files {

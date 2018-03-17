@@ -1,5 +1,5 @@
 package bm
 
 type Visual interface {
-	Display(Bounds) (Position, error)
+	Render(*Display, Bounds) (Position, error)
 }

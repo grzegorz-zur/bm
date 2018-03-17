@@ -10,6 +10,7 @@ import (
 )
 
 type Editor struct {
+	*Display
 	Modes
 	Files
 	Base string
@@ -17,10 +18,11 @@ type Editor struct {
 	exit bool
 }
 
-func New(path string) (editor *Editor) {
+func New(display *Display, path string) (editor *Editor) {
 	editor = &Editor{
-		Base: path,
-		wait: make(chan struct{}),
+		Display: display,
+		Base:    path,
+		wait:    make(chan struct{}),
 	}
 	editor.Modes.Normal = &Normal{
 		Editor: editor,
@@ -53,12 +55,12 @@ func (editor *Editor) Quit() (err error) {
 }
 
 func (editor *Editor) Run() (err error) {
-	err = tb.Init()
+	err = editor.Display.Init()
 	if err != nil {
 		err = errors.Wrap(err, "editor init failed")
 		return
 	}
-	defer tb.Close()
+	defer editor.Display.Close()
 
 	editor.signals()
 
@@ -110,18 +112,18 @@ func (editor *Editor) listen() (err error) {
 }
 
 func (editor *Editor) display() (err error) {
-	tb.Clear(tb.ColorDefault, tb.ColorDefault)
-	width, height := tb.Size()
+	editor.Display.Clear(tb.ColorDefault, tb.ColorDefault)
+	width, height := editor.Display.Size()
 	size := Size{Lines: height, Cols: width}
 	bounds := Bounds{Right: size.Cols - 1, Bottom: size.Lines - 1}
-	cursor, err := editor.Mode.Display(bounds)
-	tb.SetCursor(cursor.Col, cursor.Line)
-	tb.Flush()
+	cursor, err := editor.Mode.Render(editor.Display, bounds)
+	editor.Display.SetCursor(cursor.Col, cursor.Line)
+	editor.Display.Flush()
 	return
 }
 
 func (editor *Editor) Stop() (err error) {
-	tb.Close()
+	editor.Display.Close()
 	pid := os.Getpid()
 	p, err := os.FindProcess(pid)
 	if err != nil {
@@ -134,7 +136,7 @@ func (editor *Editor) Stop() (err error) {
 }
 
 func (editor *Editor) cont() (err error) {
-	err = tb.Init()
+	err = editor.Display.Init()
 	if err != nil {
 		err = errors.Wrap(err, "editor continue failed")
 		return

@@ -98,13 +98,13 @@ func (mode *Switch) moveDown() {
 	}
 }
 
-func (mode *Switch) Display(bounds Bounds) (cursor Position, err error) {
+func (mode *Switch) Render(display *Display, bounds Bounds) (cursor Position, err error) {
 	f, s := bounds.SplitHorizontal(-1)
-	err = mode.displayPaths(f)
+	err = mode.renderPaths(display, f)
 	if err != nil {
 		return
 	}
-	sc, err := mode.displayInput(s)
+	sc, err := mode.renderInput(display, s)
 	if err != nil {
 		return
 	}
@@ -112,7 +112,7 @@ func (mode *Switch) Display(bounds Bounds) (cursor Position, err error) {
 	return
 }
 
-func (mode *Switch) displayPaths(bounds Bounds) (err error) {
+func (mode *Switch) renderPaths(display *Display, bounds Bounds) (err error) {
 	paths := mode.filtered
 	mode.scroll()
 	size := bounds.Size()
@@ -138,7 +138,7 @@ func (mode *Switch) displayPaths(bounds Bounds) (err error) {
 			}
 			symbol := runes[col]
 			screenCol := bounds.Left + col - w.Left
-			tb.SetCell(screenCol, screenLine, symbol, foreground, background)
+			display.SetCell(screenCol, screenLine, symbol, foreground, background)
 		}
 	}
 	return
@@ -183,14 +183,14 @@ func (mode *Switch) scroll() {
 	}
 }
 
-func (mode *Switch) displayInput(bounds Bounds) (cursor Position, err error) {
+func (mode *Switch) renderInput(display *Display, bounds Bounds) (cursor Position, err error) {
 	for c := bounds.Left; c <= bounds.Right; c++ {
 		i := c - bounds.Left
 		r := ' '
 		if i < len(mode.query) {
 			r = mode.query[i]
 		}
-		tb.SetCell(c, bounds.Top, r, tb.ColorDefault|tb.AttrBold, tb.ColorBlue)
+		display.SetCell(c, bounds.Top, r, tb.ColorDefault|tb.AttrBold, tb.ColorBlue)
 	}
 	cursor = Position{Line: bounds.Top, Col: len(mode.query)}
 	return
