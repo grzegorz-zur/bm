@@ -55,7 +55,7 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 	case tb.KeyCtrlW:
 		mode.Files.Close()
 	case tb.KeyCtrlE:
-		mode.Write()
+		mode.WriteAll()
 	case tb.KeyCtrlZ:
 		mode.Pause()
 	}
