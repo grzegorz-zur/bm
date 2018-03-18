@@ -78,9 +78,6 @@ func (mode *Normal) Render(display *Display, bounds Bounds) (cursor Position, er
 }
 
 func (mode *Normal) render(display *Display, bounds Bounds) (cursor Position, err error) {
-	if mode.File == nil {
-		return
-	}
 	name := []rune(mode.Path)
 	for c := bounds.Left; c <= bounds.Right; c++ {
 		i := c - bounds.Left
