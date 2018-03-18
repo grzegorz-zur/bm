@@ -149,21 +149,14 @@ func (mode *Switch) renderPaths(display *Display, bounds Bounds) (err error) {
 }
 
 func (mode *Switch) size(size Size) {
-	p := &mode.position
 	w := &mode.window
 	w.Bottom = w.Top + size.Lines
 	w.Right = w.Left + size.Cols
-	if p.Line > w.Bottom {
-		p.Line = w.Bottom
-	}
-	if p.Col > w.Right {
-		p.Col = w.Right
-	}
 	return
 }
 
 func (mode *Switch) scroll() {
-	p := &mode.position
+	p := mode.position
 	w := &mode.window
 	height := w.Bottom - w.Top
 	width := w.Right - w.Left
@@ -216,7 +209,7 @@ func (mode *Switch) read() (paths []string, err error) {
 }
 
 func include(path string, info os.FileInfo) bool {
-	if strings.Contains(path, "/.") {
+	if strings.HasPrefix(path, ".") || strings.Contains(path, "/.") {
 		return false
 	}
 	if !info.Mode().IsRegular() {
