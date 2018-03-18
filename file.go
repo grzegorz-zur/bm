@@ -18,17 +18,11 @@ type File struct {
 
 type Change func(File) File
 
-func (file *File) Move(m Move) {
-	if file == nil {
-		return
-	}
-	file.Position = m(*file)
+func (file *File) Move(move Move) {
+	file.Position = move(*file)
 }
 
 func (file *File) Change(op Change) {
-	if file == nil {
-		return
-	}
 	*(file) = op(*file)
 }
 
@@ -41,13 +35,13 @@ func Open(base, rel string) (file File, err error) {
 	perm := os.ModePerm
 	f, err := os.OpenFile(abs, flags, perm)
 	if err != nil {
-		err = errors.Wrapf(err, "cannot open file: %s", rel)
+		err = errors.Wrapf(err, "error opening file: %s", rel)
 		return
 	}
 	defer func() {
 		err := f.Close()
 		if err != nil {
-			err = errors.Wrapf(err, "cannot close file: %s", rel)
+			err = errors.Wrapf(err, "error closing file: %s", rel)
 			log.Print(err)
 		}
 	}()
@@ -55,7 +49,7 @@ func Open(base, rel string) (file File, err error) {
 	for s.Scan() {
 		err = s.Err()
 		if err != nil {
-			err = errors.Wrapf(err, "cannot read file: %s", rel)
+			err = errors.Wrapf(err, "error reading file: %s", rel)
 			return
 		}
 		line := s.Text()
@@ -66,13 +60,10 @@ func Open(base, rel string) (file File, err error) {
 }
 
 func (file *File) Write(base string) (err error) {
-	if file == nil {
-		return
-	}
 	abs := path.Join(base, file.Path)
 	f, err := os.Create(abs)
 	if err != nil {
-		err = errors.Wrapf(err, "cannot write file: %s", file.Path)
+		err = errors.Wrapf(err, "error writing file: %s", file.Path)
 		return
 	}
 	for i, runes := range file.Lines {
@@ -87,9 +78,6 @@ func (file *File) Write(base string) (err error) {
 }
 
 func (file *File) Render(display *Display, bounds Bounds) (cursor Position, err error) {
-	if file == nil {
-		return
-	}
 	file.scroll()
 	size := bounds.Size()
 	file.size(size)
@@ -116,21 +104,14 @@ func (file *File) Render(display *Display, bounds Bounds) (cursor Position, err 
 }
 
 func (file *File) size(size Size) {
-	p := &file.Position
 	w := &file.Window
 	w.Bottom = w.Top + size.Lines
 	w.Right = w.Left + size.Cols
-	if p.Line > w.Bottom {
-		p.Line = w.Bottom
-	}
-	if p.Col > w.Right {
-		p.Col = w.Right
-	}
 	return
 }
 
 func (file *File) scroll() {
-	p := &file.Position
+	p := file.Position
 	w := &file.Window
 	height := w.Bottom - w.Top
 	width := w.Right - w.Left

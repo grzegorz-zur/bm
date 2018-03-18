@@ -8,6 +8,9 @@ type Modes struct {
 }
 
 func (modes *Modes) SwitchMode(mode Mode) {
+	if modes.Mode == mode {
+		return
+	}
 	if modes.Mode != nil {
 		modes.Mode.Hide()
 	}

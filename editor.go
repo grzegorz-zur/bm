@@ -13,16 +13,23 @@ type Editor struct {
 	*Display
 	Modes
 	Files
-	Base string
-	wait chan struct{}
-	exit bool
+	Base    string
+	keys    chan tb.Event
+	pause   chan struct{}
+	unpause chan struct{}
+	quit    chan struct{}
+	done    chan struct{}
 }
 
-func New(display *Display, path string) (editor *Editor) {
+func New(display *Display, path string, files []string) (editor *Editor) {
 	editor = &Editor{
 		Display: display,
 		Base:    path,
-		wait:    make(chan struct{}),
+		keys:    make(chan tb.Event),
+		pause:   make(chan struct{}, 1),
+		unpause: make(chan struct{}),
+		quit:    make(chan struct{}, 1),
+		done:    make(chan struct{}),
 	}
 	editor.Modes.Normal = &Normal{
 		Editor: editor,
@@ -33,8 +40,22 @@ func New(display *Display, path string) (editor *Editor) {
 	editor.Modes.Switch = &Switch{
 		Editor: editor,
 	}
-	editor.SwitchMode(editor.Normal)
+	for _, file := range files {
+		editor.Open(file)
+	}
+	if editor.File == nil {
+		editor.SwitchMode(editor.Switch)
+	} else {
+		editor.Next(Forward)
+		editor.SwitchMode(editor.Normal)
+	}
 	return
+}
+
+func (editor *Editor) Start() {
+	go editor.signals()
+	go editor.listen()
+	go editor.run()
 }
 
 func (editor *Editor) Open(path string) (err error) {
@@ -49,69 +70,99 @@ func (editor *Editor) WriteAll() (err error) {
 	return editor.Files.WriteAll(editor.Base)
 }
 
-func (editor *Editor) Quit() (err error) {
-	editor.exit = true
+func (editor *Editor) Pause() {
+	editor.pause <- struct{}{}
 	return
 }
 
-func (editor *Editor) Run() (err error) {
-	err = editor.Display.Init()
-	if err != nil {
-		err = errors.Wrap(err, "editor init failed")
-		return
-	}
-	defer editor.Display.Close()
-
-	editor.signals()
-
-	for !editor.exit {
-		err = editor.display()
-		if err != nil {
-			err = errors.Wrap(err, "display failed")
-			log.Println(err)
-			editor.Quit()
-		}
-		err = editor.listen()
-		if err != nil {
-			err = errors.Wrap(err, "event poll failed")
-			log.Println(err)
-			editor.Quit()
-		}
-	}
+func (editor *Editor) Quit() {
+	editor.quit <- struct{}{}
 	return
+}
+
+func (editor *Editor) Wait() {
+	<-editor.done
 }
 
 func (editor *Editor) signals() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGCONT)
-	go func() {
-		for s := range signals {
-			var err error
-			switch s {
-			case syscall.SIGCONT:
-				err = editor.cont()
-			}
-			if err != nil {
-				log.Fatalf("signal handling failure %v", err)
-			}
+	for signal := range signals {
+		switch signal {
+		case syscall.SIGCONT:
+			editor.unpause <- struct{}{}
 		}
-	}()
+	}
 }
 
-func (editor *Editor) listen() (err error) {
-	event := tb.PollEvent()
-	switch event.Type {
-	case tb.EventKey:
-		err = editor.Key(event)
-	case tb.EventError:
-		err = errors.Wrap(event.Err, "event poll failed")
-	default:
-		log.Printf("%+v\n", event)
+func (editor *Editor) listen() {
+	for {
+		editor.keys <- tb.PollEvent()
+	}
+}
+
+func (editor *Editor) run() {
+	defer close(editor.done)
+	err := editor.Display.Init()
+	if err != nil {
+		err = errors.Wrap(err, "display init failed")
+		return
+	}
+	defer editor.Display.Close()
+
+	for {
+		log.Printf("%+v", editor)
+		log.Printf("%+v", editor.File)
+		if editor.File == nil {
+			editor.SwitchMode(editor.Switch)
+		}
+		err = editor.render()
+		if err != nil {
+			err = errors.Wrap(err, "render failed")
+			log.Println(err)
+			return
+		}
+		select {
+		case event := <-editor.keys:
+			log.Printf("%+v", event)
+			err = editor.Key(event)
+			if err != nil {
+				err = errors.Wrap(err, "key handling failed")
+				log.Println(err)
+				return
+			}
+		case <-editor.pause:
+			err = editor.background()
+			if err != nil {
+				err = errors.Wrap(err, "pause handling failed")
+				log.Println(err)
+				return
+			}
+		case <-editor.quit:
+			return
+		}
+	}
+}
+
+func (editor *Editor) background() (err error) {
+	editor.Display.Close()
+	pid := os.Getpid()
+	p, err := os.FindProcess(pid)
+	if err != nil {
+		err = errors.Wrap(err, "background failed")
+		return
+	}
+	p.Signal(syscall.SIGSTOP)
+	<-editor.unpause
+	err = editor.Display.Init()
+	if err != nil {
+		err = errors.Wrap(err, "display init failed")
+		return
 	}
 	return
 }
 
-func (editor *Editor) display() (err error) {
+func (editor *Editor) render() (err error) {
 	editor.Display.Clear(tb.ColorDefault, tb.ColorDefault)
 	width, height := editor.Display.Size()
 	size := Size{Lines: height, Cols: width}
@@ -119,28 +170,5 @@ func (editor *Editor) display() (err error) {
 	cursor, err := editor.Mode.Render(editor.Display, bounds)
 	editor.Display.SetCursor(cursor.Col, cursor.Line)
 	editor.Display.Flush()
-	return
-}
-
-func (editor *Editor) Stop() (err error) {
-	editor.Display.Close()
-	pid := os.Getpid()
-	p, err := os.FindProcess(pid)
-	if err != nil {
-		err = errors.Wrap(err, "editor stop failed")
-		return
-	}
-	p.Signal(syscall.SIGSTOP)
-	<-editor.wait
-	return
-}
-
-func (editor *Editor) cont() (err error) {
-	err = editor.Display.Init()
-	if err != nil {
-		err = errors.Wrap(err, "editor continue failed")
-		return
-	}
-	editor.wait <- struct{}{}
 	return
 }

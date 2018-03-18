@@ -9,28 +9,24 @@ import (
 )
 
 func main() {
-	l, err := os.Create("bm.log")
+	logfile, err := os.Create("bm.log")
 	if err != nil {
-		fmt.Fprint(os.Stderr, "cannot initiate log\n")
+		fmt.Fprint(os.Stderr, "error opening logfile\n")
 		os.Exit(-1)
 	}
-	log.SetOutput(l)
-	defer l.Close()
+	log.SetOutput(logfile)
+	defer logfile.Close()
 	flag.Parse()
 	base, err := os.Getwd()
 	if err != nil {
 		log.Println(err)
 	}
-	display := &bm.Display{}
-	editor := bm.New(display, base)
+	paths := []string{}
 	for _, path := range flag.Args() {
-		err = editor.Open(path)
-		if err != nil {
-			log.Println(err)
-		}
+		paths = append(paths, path)
 	}
-	err = editor.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
+	display := &bm.Display{}
+	editor := bm.New(display, base, paths)
+	editor.Start()
+	editor.Wait()
 }

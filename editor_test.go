@@ -25,11 +25,11 @@ func TestEditor(t *testing.T) {
 	prefix := time.Now().Format("bm_2006-01-02_15-04-05_")
 	temp, err := ioutil.TempDir("", prefix)
 	if err != nil {
-		t.Fatalf("cannot create temporary directory %s: %v", prefix, err)
+		t.Fatalf("error creating temporary directory %s: %v", prefix, err)
 	}
 	files, err := ioutil.ReadDir(base)
 	if err != nil {
-		t.Fatalf("cannot read test directory %s: %v", base, err)
+		t.Fatalf("error reading test directory %s: %v", base, err)
 	}
 	for _, file := range files {
 		name := file.Name()
@@ -44,38 +44,32 @@ func test(name, base, temp string) func(t *testing.T) {
 
 		err := setup(name, base, temp)
 		if err != nil {
-			t.Fatalf("setup failure: %v", err)
+			t.Fatalf("setup failure: %s: %v", name, err)
 		}
 		cmds, err := commands(name, base)
 		if err != nil {
-			t.Fatalf("script failure: %v", err)
+			t.Fatalf("script failure: %s: %v", name, err)
 		}
 
-		testPath := path.Join(temp, name)
-		editor := New(nil, testPath)
-
-		files, err := ioutil.ReadDir(testPath)
+		editorBase := path.Join(temp, name)
+		paths := []string{}
+		files, err := ioutil.ReadDir(editorBase)
 		for _, file := range files {
-			err := editor.Open(file.Name())
-			if err != nil {
-				t.Fatalf("cannot open editor: %v", err)
-			}
+			paths = append(paths, file.Name())
 		}
-		editor.Next(Forward)
+		editor := New(nil, editorBase, paths)
+		editor.Start()
 
 		err = interpret(editor, cmds)
 		if err != nil {
-			t.Fatalf("cannot write files: %v", err)
+			t.Fatalf("error interpreting script: %s: %v", name, err)
 		}
 
-		err = editor.WriteAll()
-		if err != nil {
-			t.Fatalf("cannot write files: %v", err)
-		}
+		editor.Wait()
 
 		err = verify(name, base, temp, t)
 		if err != nil {
-			t.Fatalf("cannot verify files: %v", err)
+			t.Fatalf("wrong results: %s: %v", name, err)
 		}
 	}
 }
@@ -200,13 +194,10 @@ func interpret(editor *Editor, commands []string) (err error) {
 		case cmd == "delete":
 			event = tb.Event{Key: tb.KeyDelete}
 		default:
-			err = errors.New("cannot interpret command: " + cmd)
+			err = errors.New("unknown command: " + cmd)
 			return
 		}
-		err = editor.Key(event)
-		if err != nil {
-			return err
-		}
+		editor.keys <- event
 	}
 	return
 }

@@ -49,6 +49,10 @@ func (mode *Switch) Key(event tb.Event) (err error) {
 	case tb.KeyEnter:
 		err = mode.open()
 		mode.SwitchMode(mode.Normal)
+	case tb.KeyCtrlQ:
+		mode.Quit()
+	case tb.KeyCtrlZ:
+		mode.Pause()
 	}
 
 	return

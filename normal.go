@@ -57,7 +57,7 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 	case tb.KeyCtrlE:
 		mode.Write()
 	case tb.KeyCtrlZ:
-		mode.Stop()
+		mode.Pause()
 	}
 
 	return
