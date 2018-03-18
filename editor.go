@@ -111,8 +111,6 @@ func (editor *Editor) run() {
 	defer editor.Display.Close()
 
 	for {
-		log.Printf("%+v", editor)
-		log.Printf("%+v", editor.File)
 		if editor.File == nil {
 			editor.SwitchMode(editor.Switch)
 		}
@@ -124,7 +122,6 @@ func (editor *Editor) run() {
 		}
 		select {
 		case event := <-editor.keys:
-			log.Printf("%+v", event)
 			err = editor.Key(event)
 			if err != nil {
 				err = errors.Wrap(err, "key handling failed")

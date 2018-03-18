@@ -77,7 +77,7 @@ func test(name, base, temp string) func(t *testing.T) {
 func setup(name, base, temp string) (err error) {
 	inPath := path.Join(base, name, in)
 	files, err := ioutil.ReadDir(inPath)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	dir := path.Join(temp, name)
@@ -204,7 +204,7 @@ func interpret(editor *Editor, commands []string) (err error) {
 
 func list(path string) (names []string, err error) {
 	files, err := ioutil.ReadDir(path)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return
 	}
 	for _, file := range files {
