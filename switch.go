@@ -62,7 +62,7 @@ func (mode *Switch) filter() {
 	query := mode.query.String()
 	mode.filtered = make([]string, 0, len(mode.paths))
 	for _, path := range mode.paths {
-		if strings.Contains(path, query) {
+		if match(path, query) {
 			mode.filtered = append(mode.filtered, path)
 		}
 	}
@@ -216,4 +216,22 @@ func include(path string, info os.FileInfo) bool {
 		return false
 	}
 	return true
+}
+
+func match(path, query string) bool {
+	if len(query) == 0 {
+		return true
+	}
+	j := 0
+	runes := []rune(query)
+	for _, p := range path {
+		q := runes[j]
+		if p == q {
+			j++
+		}
+		if j == len(query) {
+			return true
+		}
+	}
+	return false
 }
