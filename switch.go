@@ -17,6 +17,7 @@ type Switch struct {
 }
 
 func (mode *Switch) Show() (err error) {
+	mode.query = Line{}
 	mode.paths, err = mode.read()
 	if err != nil {
 		return
