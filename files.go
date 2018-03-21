@@ -10,11 +10,16 @@ func (files *Files) Empty() bool {
 }
 
 func (files *Files) Open(base, path string) (err error) {
+	position, found := files.find(path)
+	if found {
+		files.switchFile(position)
+		return
+	}
 	file, err := Open(base, path)
 	if err != nil {
 		return
 	}
-	position := files.add(&file)
+	position = files.add(&file)
 	files.switchFile(position)
 	return
 }
@@ -68,6 +73,15 @@ func (files *Files) switchFile(position int) {
 	} else {
 		files.File = nil
 	}
+}
+
+func (files *Files) find(path string) (position int, found bool) {
+	for i, file := range files.list {
+		if file.Path == path {
+			return i, true
+		}
+	}
+	return
 }
 
 func (files *Files) current() (position int) {

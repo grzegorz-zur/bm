@@ -139,18 +139,19 @@ func verify(name, base, temp string, t *testing.T) (err error) {
 			t.Fail()
 		}
 	}
-	for i := range expected {
-		actualPath := path.Join(temp, name, expected[i])
+	for _, exp := range expected {
+		actualPath := path.Join(temp, name, exp)
 		actualContent, err := ioutil.ReadFile(actualPath)
 		if err != nil {
 			return err
 		}
-		expectedPath := path.Join(base, name, out, expected[i])
+		expectedPath := path.Join(base, name, out, exp)
 		expectedContent, err := ioutil.ReadFile(expectedPath)
 		if err != nil {
 			return err
 		}
 		if bytes.Compare(actualContent, expectedContent) != 0 {
+			t.Log("comparing file " + exp)
 			t.Log("expected content")
 			t.Log(string(expectedContent))
 			t.Log("actual content")
