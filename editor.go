@@ -86,11 +86,13 @@ func (editor *Editor) Wait() {
 
 func (editor *Editor) signals() {
 	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGCONT)
+	signal.Notify(signals, syscall.SIGCONT, syscall.SIGTERM)
 	for signal := range signals {
 		switch signal {
 		case syscall.SIGCONT:
 			editor.unpause <- struct{}{}
+		case syscall.SIGTERM:
+			editor.quit <- struct{}{}
 		}
 	}
 }
