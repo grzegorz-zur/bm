@@ -11,6 +11,11 @@ tasks:
         cmds:
             - vgo clean ./...
 
+    upgrade:
+        desc: upgrades
+        cmds:
+            - vgo get -u
+
     fmt:
         desc: formats
         cmds:
@@ -31,6 +36,8 @@ tasks:
         desc: tests for race conditions
         cmds:
             - vgo test -race ./...
+        env:
+            CC: gcc
         deps: [fmt]
         sources:
             - '**.go'
@@ -60,4 +67,3 @@ tasks:
         cmds:
             - vgo install ./cmd/bm
         deps: [build]
-
