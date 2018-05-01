@@ -12,19 +12,13 @@ Minimalistic text editor for GNU/Linux.
 1. Effectively work with multiple files.
 2. Effectively work with external tools that modify edited files.
 
-## Keys
+## Usage
 
 ### Normal mode
 
-* space — insert mode
-* delete — delete character
-* backspace — delete previous character
-* arrows — move
+![normal mode](keyboards/normal.svg "Normal mode")
 
-* d — left
-* f — right
-* j — down
-* k — up
+### Commands
 
 * ^q — quit editor
 * ^w — close current file
@@ -35,14 +29,8 @@ Minimalistic text editor for GNU/Linux.
 
 ### Input mode
 
-* escape — normal mode
-* enter — split line
-* delete — delete character
-* backspace — delete previous character
-* arrows — move
+Type to input text in the current file.
 
 ### Switch mode
 
-* escape — normal mode
-* enter — select file 
-* arrows — move
+Type to filter files. Navigate with cursor keys and press enter to select a file.

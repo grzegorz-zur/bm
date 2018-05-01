@@ -17,14 +17,15 @@ func (mode *Normal) Hide() (err error) {
 }
 
 func (mode *Normal) Key(event tb.Event) (err error) {
+
 	switch event.Ch {
 	case 'd':
 		mode.Move(File.Left)
 	case 'f':
 		mode.Move(File.Right)
-	case 'k':
+	case 'w':
 		mode.Move(File.Up)
-	case 'j':
+	case 's':
 		mode.Move(File.Down)
 	}
 
@@ -41,11 +42,6 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 		mode.Move(File.Up)
 	case tb.KeyArrowDown:
 		mode.Move(File.Down)
-	case tb.KeyBackspace:
-	case tb.KeyBackspace2:
-		mode.Change(File.DeletePreviousRune)
-	case tb.KeyDelete:
-		mode.Change(File.DeleteRune)
 	case tb.KeyCtrlD:
 		mode.Next(Backward)
 	case tb.KeyCtrlF:
