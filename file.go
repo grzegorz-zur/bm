@@ -159,6 +159,11 @@ func InsertRune(r rune) Change {
 	}
 }
 
+func (f File) DeleteLine() File {
+	f.Lines = f.Lines.DeleteLine(f.Position.Line)
+	return f
+}
+
 func (f File) Split() File {
 	f.Lines = f.Lines.Split(f.Position)
 	f.Position = Position{Line: f.Position.Line + 1}

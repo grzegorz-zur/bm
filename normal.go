@@ -27,6 +27,10 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 		mode.Move(File.Up)
 	case 's':
 		mode.Move(File.Down)
+	case 'j':
+		mode.Change(File.DeleteRune)
+	case 'J':
+		mode.Change(File.DeleteLine)
 	}
 
 	switch event.Key {

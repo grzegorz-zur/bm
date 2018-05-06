@@ -30,6 +30,20 @@ func (ls Lines) DeletePreviousRune(p Position) (lines Lines) {
 	return
 }
 
+func (ls Lines) DeleteLine(l int) (lines Lines) {
+	if l >= len(ls) {
+		return ls
+	}
+	lines = make(Lines, len(ls)-1)
+	for i := 0; i < l; i++ {
+		lines[i] = ls[i]
+	}
+	for j := l + 1; j < len(ls); j++ {
+		lines[j-1] = ls[j]
+	}
+	return
+}
+
 func (ls Lines) Expand(l int) (lines Lines) {
 	if l < len(ls) {
 		return ls
