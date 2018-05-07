@@ -23,7 +23,7 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 		mode.Move(File.Left)
 	case 'f':
 		mode.Move(File.Right)
-	case 'w':
+	case 'a':
 		mode.Move(File.Up)
 	case 's':
 		mode.Move(File.Down)
