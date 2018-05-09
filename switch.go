@@ -131,8 +131,8 @@ func (mode *Switch) renderPaths(display *Display, bounds Bounds) (err error) {
 		foreground := tb.ColorDefault
 		background := tb.ColorDefault
 		if line == p.Line {
-			foreground = tb.ColorBlack | tb.AttrBold
-			background = tb.ColorWhite | tb.AttrBold
+			foreground = tb.ColorBlack
+			background = tb.ColorWhite
 		}
 		path := paths[line]
 		runes := []rune(path)
