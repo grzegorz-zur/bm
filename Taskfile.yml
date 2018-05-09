@@ -21,7 +21,7 @@ tasks:
         cmds:
             - vgo fmt ./...
         sources:
-            - '**.go'
+            - '**/*.go'
 
     test:
         desc: tests
@@ -29,7 +29,7 @@ tasks:
             - vgo test ./...
         deps: [fmt]
         sources:
-            - '**.go'
+            - '**/*.go'
             - 'test/**'
 
     race:
@@ -40,7 +40,7 @@ tasks:
             CC: gcc
         deps: [fmt]
         sources:
-            - '**.go'
+            - '**/*.go'
             - 'test/**'
 
     cover:
@@ -49,7 +49,7 @@ tasks:
             - vgo test -cover -covermode=atomic ./...
         deps: [fmt]
         sources:
-            - '**.go'
+            - '**/*.go'
             - 'test/**'
 
     build:
@@ -58,7 +58,7 @@ tasks:
             - vgo build ./cmd/bm
         deps: [fmt]
         sources:
-            - '**.go'
+            - '**/*.go'
         generates:
             - bm
 

@@ -4,12 +4,13 @@ import (
 	"flag"
 	"fmt"
 	bm "github.com/grzegorz-zur/bare-minimum"
+	"io/ioutil"
 	"log"
 	"os"
 )
 
 func main() {
-	logfile, err := os.Create("bm.log")
+	logfile, err := ioutil.TempFile("", "bm")
 	if err != nil {
 		fmt.Fprint(os.Stderr, "error opening logfile\n")
 		os.Exit(-1)
