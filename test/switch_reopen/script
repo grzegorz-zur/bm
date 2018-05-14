@@ -1,5 +1,5 @@
 tab b enter
-^f ^f ^f
+v v v
 space
 x
-escape ^e ^q
+escape delete 

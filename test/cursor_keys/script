@@ -2,4 +2,4 @@ f s
 space x escape
 a d d
 space y escape
-^e ^q
+escape delete 

@@ -38,7 +38,11 @@ func (mode *Switch) Key(event tb.Event) (err error) {
 
 	switch event.Key {
 	case tb.KeyEsc:
-		mode.SwitchMode(mode.Normal)
+		if mode.Files.Empty() {
+			mode.Quit()
+		} else {
+			mode.SwitchMode(mode.Command)
+		}
 	case tb.KeyArrowUp:
 		mode.moveUp()
 	case tb.KeyArrowDown:
@@ -49,11 +53,7 @@ func (mode *Switch) Key(event tb.Event) (err error) {
 		mode.filter()
 	case tb.KeyEnter:
 		err = mode.open()
-		mode.SwitchMode(mode.Normal)
-	case tb.KeyCtrlQ:
-		mode.Quit()
-	case tb.KeyCtrlZ:
-		mode.Pause()
+		mode.SwitchMode(mode.Command)
 	}
 
 	return

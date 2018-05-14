@@ -2,9 +2,9 @@ package bm
 
 type Modes struct {
 	Mode
-	Normal Mode
-	Input  Mode
-	Switch Mode
+	Command Mode
+	Input   Mode
+	Switch  Mode
 }
 
 func (modes *Modes) SwitchMode(mode Mode) {

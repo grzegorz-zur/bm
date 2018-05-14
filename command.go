@@ -4,19 +4,19 @@ import (
 	tb "github.com/nsf/termbox-go"
 )
 
-type Normal struct {
+type Command struct {
 	*Editor
 }
 
-func (mode *Normal) Show() (err error) {
+func (mode *Command) Show() (err error) {
 	return
 }
 
-func (mode *Normal) Hide() (err error) {
+func (mode *Command) Hide() (err error) {
 	return
 }
 
-func (mode *Normal) Key(event tb.Event) (err error) {
+func (mode *Command) Key(event tb.Event) (err error) {
 
 	switch event.Ch {
 	case 'd':
@@ -27,10 +27,21 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 		mode.Move(File.Up)
 	case 's':
 		mode.Move(File.Down)
+	case 'c':
+		mode.Next(Backward)
+	case 'v':
+		mode.Next(Forward)
 	case 'j':
 		mode.Change(File.DeleteRune)
 	case 'J':
 		mode.Change(File.DeleteLine)
+	case 'n':
+		mode.WriteAll()
+		mode.Files.Close()
+	case 'm':
+		mode.WriteAll()
+	case 'M':
+		mode.Write()
 	}
 
 	switch event.Key {
@@ -38,6 +49,13 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 		mode.SwitchMode(mode.Editor.Input)
 	case tb.KeyTab:
 		mode.SwitchMode(mode.Editor.Switch)
+	case tb.KeyBackspace:
+	case tb.KeyBackspace2:
+		mode.WriteAll()
+		mode.Pause()
+	case tb.KeyDelete:
+		mode.WriteAll()
+		mode.Quit()
 	case tb.KeyArrowLeft:
 		mode.Move(File.Left)
 	case tb.KeyArrowRight:
@@ -46,24 +64,12 @@ func (mode *Normal) Key(event tb.Event) (err error) {
 		mode.Move(File.Up)
 	case tb.KeyArrowDown:
 		mode.Move(File.Down)
-	case tb.KeyCtrlD:
-		mode.Next(Backward)
-	case tb.KeyCtrlF:
-		mode.Next(Forward)
-	case tb.KeyCtrlQ:
-		mode.Quit()
-	case tb.KeyCtrlW:
-		mode.Files.Close()
-	case tb.KeyCtrlE:
-		mode.WriteAll()
-	case tb.KeyCtrlZ:
-		mode.Pause()
 	}
 
 	return
 }
 
-func (mode *Normal) Render(display *Display, bounds Bounds) (cursor Position, err error) {
+func (mode *Command) Render(display *Display, bounds Bounds) (cursor Position, err error) {
 	f, s := bounds.SplitHorizontal(-1)
 	fc, err := mode.File.Render(display, f)
 	if err != nil {
@@ -77,7 +83,7 @@ func (mode *Normal) Render(display *Display, bounds Bounds) (cursor Position, er
 	return
 }
 
-func (mode *Normal) render(display *Display, bounds Bounds) (cursor Position, err error) {
+func (mode *Command) render(display *Display, bounds Bounds) (cursor Position, err error) {
 	name := []rune(mode.Path)
 	for c := bounds.Left; c <= bounds.Right; c++ {
 		i := c - bounds.Left

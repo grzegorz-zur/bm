@@ -23,7 +23,7 @@ func (mode *Input) Key(event tb.Event) (err error) {
 
 	switch event.Key {
 	case tb.KeyEsc:
-		mode.SwitchMode(mode.Editor.Normal)
+		mode.SwitchMode(mode.Editor.Command)
 	case tb.KeyArrowLeft:
 		mode.Move(File.Left)
 	case tb.KeyArrowRight:

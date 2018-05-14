@@ -16,18 +16,9 @@ Minimalistic text editor for GNU/Linux.
 
 ## Usage
 
-### Normal mode
+### Command mode
 
-![normal mode](keyboards/normal.svg "Normal mode")
-
-### Commands
-
-* ^q — quit editor
-* ^w — close current file
-* ^e — write current file
-* ^z — stop the editor (background)
-* ^d — switch to previous file
-* ^f — switch to next file
+![command mode](keyboard.svg "Command mode")
 
 ### Input mode
 

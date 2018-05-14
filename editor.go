@@ -31,7 +31,7 @@ func New(display *Display, path string, files []string) (editor *Editor) {
 		quit:    make(chan struct{}, 1),
 		done:    make(chan struct{}),
 	}
-	editor.Modes.Normal = &Normal{
+	editor.Modes.Command = &Command{
 		Editor: editor,
 	}
 	editor.Modes.Input = &Input{
@@ -47,7 +47,7 @@ func New(display *Display, path string, files []string) (editor *Editor) {
 		editor.SwitchMode(editor.Switch)
 	} else {
 		editor.Next(Forward)
-		editor.SwitchMode(editor.Normal)
+		editor.SwitchMode(editor.Command)
 	}
 	return
 }
