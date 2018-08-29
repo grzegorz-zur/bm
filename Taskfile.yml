@@ -63,5 +63,6 @@ tasks:
     install:
         desc: installs
         cmds:
-            - go install ./cmd/bm
+            - mkdir -p ~/.local/bin
+            - cp bm ~/.local/bin/bm
         deps: [build]
