@@ -3,7 +3,6 @@ jobs:
     build:
         docker:
             - image: circleci/golang:1.11
-        working_directory: /go/src/github.com/grzegorz-zur/bare-minimum
         steps:
             - run: go get github.com/schrej/godacov 
             - checkout
