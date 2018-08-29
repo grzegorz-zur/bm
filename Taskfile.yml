@@ -9,24 +9,24 @@ tasks:
     clean:
         desc: cleans
         cmds:
-            - vgo clean ./...
+            - go clean ./...
 
     upgrade:
         desc: upgrades
         cmds:
-            - vgo get -u
+            - go get -u
 
     fmt:
         desc: formats
         cmds:
-            - vgo fmt ./...
+            - go fmt ./...
         sources:
             - '**/*.go'
 
     test:
         desc: tests
         cmds:
-            - vgo test ./...
+            - go test ./...
         deps: [fmt]
         sources:
             - '**/*.go'
@@ -35,9 +35,7 @@ tasks:
     race:
         desc: tests for race conditions
         cmds:
-            - vgo test -race ./...
-        env:
-            CC: gcc
+            - go test -race ./...
         deps: [fmt]
         sources:
             - '**/*.go'
@@ -46,7 +44,7 @@ tasks:
     cover:
         desc: checks coverage
         cmds:
-            - vgo test -cover -covermode=atomic ./...
+            - go test -cover -covermode=atomic ./...
         deps: [fmt]
         sources:
             - '**/*.go'
@@ -55,7 +53,7 @@ tasks:
     build:
         desc: builds
         cmds:
-            - vgo build ./cmd/bm
+            - go build ./cmd/bm
         deps: [fmt]
         sources:
             - '**/*.go'
@@ -65,5 +63,5 @@ tasks:
     install:
         desc: installs
         cmds:
-            - vgo install ./cmd/bm
+            - go install ./cmd/bm
         deps: [build]
