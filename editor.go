@@ -46,7 +46,7 @@ func New(display *Display, path string, files []string) (editor *Editor) {
 	if editor.File == nil {
 		editor.SwitchMode(editor.Switch)
 	} else {
-		editor.Next(Forward)
+		editor.SwitchFile(Forward)
 		editor.SwitchMode(editor.Command)
 	}
 	return

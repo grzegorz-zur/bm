@@ -10,10 +10,11 @@ import (
 )
 
 type File struct {
-	Path     string
-	Lines    Lines
-	Position Position
-	Window   Bounds
+	Path string
+	Lines
+	Position
+	Window Bounds
+	*History
 }
 
 type Change func(File) File
@@ -24,11 +25,21 @@ func (file *File) Move(move Move) {
 
 func (file *File) Change(op Change) {
 	*(file) = op(*file)
+	file.Archive()
+}
+
+func (file *File) Archive() {
+	file.History.Archive(file.Lines, file.Position)
+}
+
+func (file *File) SwitchVersion(dir Direction) {
+	file.Lines, file.Position = file.History.Switch(dir)
 }
 
 func Open(base, rel string) (file File, err error) {
 	file = File{
-		Path: rel,
+		Path:    rel,
+		History: &History{},
 	}
 	abs := path.Join(base, rel)
 	flags := os.O_RDWR | os.O_CREATE
@@ -56,6 +67,7 @@ func Open(base, rel string) (file File, err error) {
 		runes := []rune(line)
 		file.Lines = append(file.Lines, runes)
 	}
+	file.Archive()
 	return
 }
 

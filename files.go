@@ -24,7 +24,7 @@ func (files *Files) Open(base, path string) (err error) {
 	return
 }
 
-func (files *Files) Next(dir Direction) {
+func (files *Files) SwitchFile(dir Direction) {
 	if files.Empty() {
 		return
 	}
@@ -91,11 +91,4 @@ func (files *Files) current() (position int) {
 		}
 	}
 	panic("failed to find current file: " + files.Path)
-}
-
-func wrap(position, length, step int, dir Direction) int {
-	if length == 0 {
-		return 0
-	}
-	return ((position+step*dir.Value())%length + length) % length
 }

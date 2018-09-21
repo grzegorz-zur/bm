@@ -27,10 +27,14 @@ func (mode *Command) Key(event tb.Event) (err error) {
 		mode.Move(File.Up)
 	case 's':
 		mode.Move(File.Down)
+	case 'z':
+		mode.SwitchVersion(Backward)
+	case 'x':
+		mode.SwitchVersion(Forward)
 	case 'c':
-		mode.Next(Backward)
+		mode.SwitchFile(Backward)
 	case 'v':
-		mode.Next(Forward)
+		mode.SwitchFile(Forward)
 	case 'j':
 		mode.Change(File.DeleteRune)
 	case 'J':
