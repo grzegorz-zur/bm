@@ -1,7 +1,7 @@
 package bm
 
 const (
-	HISTORY_SIZE = 256
+	HistorySize = 256
 )
 
 type History struct {
@@ -20,11 +20,11 @@ type Record struct {
 
 func (history *History) Archive(lines Lines, position Position) {
 	if history.Records == nil {
-		history.Records = make(Records, HISTORY_SIZE)
+		history.Records = make(Records, HistorySize)
 	} else {
-		history.top = wrap(history.top, HISTORY_SIZE, 1, Forward)
+		history.top = wrap(history.top, HistorySize, 1, Forward)
 		if history.top == history.bottom {
-			history.bottom = wrap(history.bottom, HISTORY_SIZE, 1, Forward)
+			history.bottom = wrap(history.bottom, HistorySize, 1, Forward)
 		}
 	}
 	history.current = history.top
@@ -38,7 +38,7 @@ func (history *History) Archive(lines Lines, position Position) {
 func (history *History) Switch(dir Direction) (lines Lines, position Position) {
 	if dir == Backward && history.current != history.bottom ||
 		dir == Forward && history.current != history.top {
-		history.current = wrap(history.current, HISTORY_SIZE, 1, dir)
+		history.current = wrap(history.current, HistorySize, 1, dir)
 	}
 	record := history.Records[history.current]
 	lines, position = record.Lines, record.Position
