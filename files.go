@@ -9,13 +9,13 @@ func (files *Files) Empty() bool {
 	return files.File == nil
 }
 
-func (files *Files) Open(base, path string) (err error) {
+func (files *Files) Open(path string) (err error) {
 	position, found := files.find(path)
 	if found {
 		files.switchFile(position)
 		return
 	}
-	file, err := Open(base, path)
+	file, err := Open(path)
 	if err != nil {
 		return
 	}
@@ -33,9 +33,9 @@ func (files *Files) SwitchFile(dir Direction) {
 	files.switchFile(position)
 }
 
-func (files *Files) WriteAll(base string) (err error) {
+func (files *Files) WriteAll() (err error) {
 	for _, file := range files.list {
-		err = file.Write(base)
+		err = file.Write()
 		if err != nil {
 			return
 		}

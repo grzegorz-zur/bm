@@ -14,50 +14,44 @@ import (
 	"unicode"
 )
 
-const (
-	base   = "test"
-	in     = "in"
-	out    = "out"
-	script = "script"
-)
-
 func TestEditor(t *testing.T) {
 	prefix := time.Now().Format("bm_2006-01-02_15-04-05_")
 	temp, err := ioutil.TempDir("", prefix)
 	if err != nil {
 		t.Fatalf("error creating temporary directory %s: %v", prefix, err)
 	}
-	files, err := ioutil.ReadDir(base)
+	names, err := list("test")
 	if err != nil {
-		t.Fatalf("error reading test directory %s: %v", base, err)
+		t.Fatalf("error reading test directory: %v", err)
 	}
-	for _, file := range files {
-		name := file.Name()
-		test := test(name, base, temp)
+	for _, name := range names {
+		test := test(name, temp)
 		t.Run(name, test)
 	}
 }
 
-func test(name, base, temp string) func(t *testing.T) {
+func test(name, temp string) func(t *testing.T) {
 	return func(t *testing.T) {
-		t.Parallel()
-
-		err := setup(name, base, temp)
+		work, files, err := setup(name, temp, t)
 		if err != nil {
-			t.Fatalf("setup failure: %s: %v", name, err)
+			t.Fatalf("error on setup: %s: %v", name, err)
 		}
-		cmds, err := commands(name, base)
+		cmds, err := commands(name)
 		if err != nil {
-			t.Fatalf("script failure: %s: %v", name, err)
+			t.Fatalf("error parsing script: %s: %v", name, err)
 		}
 
-		editorBase := path.Join(temp, name)
-		paths := []string{}
-		files, err := ioutil.ReadDir(editorBase)
-		for _, file := range files {
-			paths = append(paths, file.Name())
+		dir, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("error getting current directory: %v", err)
 		}
-		editor := New(nil, editorBase, paths)
+		defer os.Chdir(dir)
+		err = os.Chdir(work)
+		if err != nil {
+			t.Fatalf("error changing dir to %s: %v", work, err)
+		}
+
+		editor := New(nil, files)
 		editor.Start()
 
 		err = interpret(editor, cmds)
@@ -67,38 +61,42 @@ func test(name, base, temp string) func(t *testing.T) {
 
 		editor.Wait()
 
-		err = verify(name, base, temp, t)
+		os.Chdir(dir)
+		if err != nil {
+			t.Fatalf("error changing dir to %s: %v", dir, err)
+		}
+		err = verify(name, work, t)
 		if err != nil {
 			t.Fatalf("wrong results: %s: %v", name, err)
 		}
 	}
 }
 
-func setup(name, base, temp string) (err error) {
-	inPath := path.Join(base, name, in)
-	files, err := ioutil.ReadDir(inPath)
+func setup(name, temp string, t *testing.T) (work string, files []string, err error) {
+	in := path.Join("test", name, "in")
+	files, err = list(in)
 	if err != nil && !os.IsNotExist(err) {
-		return err
+		return "", nil, err
 	}
-	dir := path.Join(temp, name)
-	err = os.MkdirAll(dir, os.ModePerm)
+	work = path.Join(temp, name)
+	err = os.MkdirAll(work, os.ModePerm)
 	if err != nil {
-		return err
+		return "", nil, err
 	}
 	for _, file := range files {
-		src := path.Join(inPath, file.Name())
-		dst := path.Join(dir, file.Name())
+		src := path.Join(in, file)
+		dst := path.Join(work, file)
 		err := copy(src, dst)
 		if err != nil {
-			return err
+			return "", nil, err
 		}
 	}
 	return
 }
 
-func commands(name, base string) (cmds []string, err error) {
-	scriptPath := path.Join(base, name, script)
-	file, err := os.Open(scriptPath)
+func commands(name string) (cmds []string, err error) {
+	path := path.Join("test", name, "script")
+	file, err := os.Open(path)
 	defer file.Close()
 	if err != nil {
 		return
@@ -116,36 +114,35 @@ func commands(name, base string) (cmds []string, err error) {
 	return
 }
 
-func verify(name, base, temp string, t *testing.T) (err error) {
-	outPath := path.Join(base, name, out)
-	expected, err := list(outPath)
+func verify(name, work string, t *testing.T) (err error) {
+	out := path.Join("test", name, "out")
+	expected, err := list(out)
 	if err != nil {
 		return
 	}
-	testPath := path.Join(temp, name)
-	actual, err := list(testPath)
+	actual, err := list(work)
 	if err != nil {
 		return
 	}
 	if len(expected) != len(actual) {
 		t.Logf("expected files %v", expected)
 		t.Logf("actual files %v", actual)
-		t.Fail()
+		t.FailNow()
 	}
 	for i := range expected {
 		if actual[i] != expected[i] {
 			t.Logf("expected files %v", expected)
 			t.Logf("actual files %v", actual)
-			t.Fail()
+			t.FailNow()
 		}
 	}
 	for _, exp := range expected {
-		actualPath := path.Join(temp, name, exp)
+		actualPath := path.Join(work, exp)
 		actualContent, err := ioutil.ReadFile(actualPath)
 		if err != nil {
 			return err
 		}
-		expectedPath := path.Join(base, name, out, exp)
+		expectedPath := path.Join("test", name, "out", exp)
 		expectedContent, err := ioutil.ReadFile(expectedPath)
 		if err != nil {
 			return err
@@ -156,7 +153,7 @@ func verify(name, base, temp string, t *testing.T) (err error) {
 			t.Log(string(expectedContent))
 			t.Log("actual content")
 			t.Log(string(actualContent))
-			t.Fail()
+			t.FailNow()
 		}
 	}
 	return

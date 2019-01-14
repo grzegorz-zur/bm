@@ -2,6 +2,7 @@ package bm
 
 import (
 	tb "github.com/nsf/termbox-go"
+	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -195,8 +196,12 @@ func (mode *Switch) renderInput(display *Display, bounds Bounds) (cursor Positio
 }
 
 func (mode *Switch) read() (paths []string, err error) {
+	work, err := os.Getwd()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get working directory")
+	}
 	walker := func(path string, info os.FileInfo, err error) error {
-		relpath, err := filepath.Rel(mode.Base, path)
+		relpath, err := filepath.Rel(work, path)
 		if err != nil {
 			return err
 		}
@@ -205,7 +210,7 @@ func (mode *Switch) read() (paths []string, err error) {
 		}
 		return nil
 	}
-	err = filepath.Walk(mode.Base, walker)
+	err = filepath.Walk(work, walker)
 	return
 }
 

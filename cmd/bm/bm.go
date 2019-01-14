@@ -18,16 +18,12 @@ func main() {
 	log.SetOutput(logfile)
 	defer logfile.Close()
 	flag.Parse()
-	base, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-	}
 	paths := []string{}
 	for _, path := range flag.Args() {
 		paths = append(paths, path)
 	}
 	display := &bm.Display{}
-	editor := bm.New(display, base, paths)
+	editor := bm.New(display, paths)
 	editor.Start()
 	editor.Wait()
 }

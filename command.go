@@ -40,12 +40,14 @@ func (mode *Command) Key(event tb.Event) (err error) {
 	case 'J':
 		mode.Change(File.DeleteLine)
 	case 'n':
-		mode.WriteAll()
+		err = mode.WriteAll()
 		mode.Files.Close()
+	case 'N':
+		err = mode.Reload()
 	case 'm':
-		mode.WriteAll()
+		err = mode.WriteAll()
 	case 'M':
-		mode.Write()
+		err = mode.Write()
 	}
 
 	switch event.Key {
@@ -55,10 +57,10 @@ func (mode *Command) Key(event tb.Event) (err error) {
 		mode.SwitchMode(mode.Editor.Switch)
 	case tb.KeyBackspace:
 	case tb.KeyBackspace2:
-		mode.WriteAll()
+		err = mode.WriteAll()
 		mode.Pause()
 	case tb.KeyDelete:
-		mode.WriteAll()
+		err = mode.WriteAll()
 		mode.Quit()
 	case tb.KeyArrowLeft:
 		mode.Move(File.Left)

@@ -13,7 +13,6 @@ type Editor struct {
 	*Display
 	Modes
 	Files
-	Base    string
 	keys    chan tb.Event
 	pause   chan struct{}
 	unpause chan struct{}
@@ -21,10 +20,9 @@ type Editor struct {
 	done    chan struct{}
 }
 
-func New(display *Display, path string, files []string) (editor *Editor) {
+func New(display *Display, files []string) (editor *Editor) {
 	editor = &Editor{
 		Display: display,
-		Base:    path,
 		keys:    make(chan tb.Event),
 		pause:   make(chan struct{}, 1),
 		unpause: make(chan struct{}),
@@ -56,18 +54,6 @@ func (editor *Editor) Start() {
 	go editor.signals()
 	go editor.listen()
 	go editor.run()
-}
-
-func (editor *Editor) Open(path string) (err error) {
-	return editor.Files.Open(editor.Base, path)
-}
-
-func (editor *Editor) Write() (err error) {
-	return editor.Files.Write(editor.Base)
-}
-
-func (editor *Editor) WriteAll() (err error) {
-	return editor.Files.WriteAll(editor.Base)
 }
 
 func (editor *Editor) Pause() {

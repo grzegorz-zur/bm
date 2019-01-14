@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"log"
 	"os"
-	"path"
 )
 
 type File struct {
@@ -36,44 +35,57 @@ func (file *File) SwitchVersion(dir Direction) {
 	file.Lines, file.Position = file.History.Switch(dir)
 }
 
-func Open(base, rel string) (file File, err error) {
+func Open(path string) (file File, err error) {
 	file = File{
-		Path:    rel,
+		Path:    path,
 		History: &History{},
 	}
-	abs := path.Join(base, rel)
+	err = file.Load()
+	if err != nil {
+		return
+	}
+	file.Archive()
+	return
+}
+
+func (file *File) Reload() (err error) {
+	err = file.Load()
+	file.Archive()
+	return
+}
+
+func (file *File) Load() (err error) {
 	flags := os.O_RDWR | os.O_CREATE
 	perm := os.ModePerm
-	f, err := os.OpenFile(abs, flags, perm)
+	f, err := os.OpenFile(file.Path, flags, perm)
 	if err != nil {
-		err = errors.Wrapf(err, "error opening file: %s", rel)
+		err = errors.Wrapf(err, "error opening file: %s", file.Path)
 		return
 	}
 	defer func() {
 		err := f.Close()
 		if err != nil {
-			err = errors.Wrapf(err, "error closing file: %s", rel)
+			err = errors.Wrapf(err, "error closing file: %s", file.Path)
 			log.Print(err)
 		}
 	}()
 	s := bufio.NewScanner(f)
+	file.Lines = nil
 	for s.Scan() {
 		err = s.Err()
 		if err != nil {
-			err = errors.Wrapf(err, "error reading file: %s", rel)
+			err = errors.Wrapf(err, "error reading file: %s", file.Path)
 			return
 		}
 		line := s.Text()
 		runes := []rune(line)
 		file.Lines = append(file.Lines, runes)
 	}
-	file.Archive()
 	return
 }
 
-func (file *File) Write(base string) (err error) {
-	abs := path.Join(base, file.Path)
-	f, err := os.Create(abs)
+func (file *File) Write() (err error) {
+	f, err := os.Create(file.Path)
 	if err != nil {
 		err = errors.Wrapf(err, "error writing file: %s", file.Path)
 		return
