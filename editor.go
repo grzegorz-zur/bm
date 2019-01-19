@@ -123,29 +123,27 @@ func (editor *Editor) run() {
 		if err != nil {
 			err = errors.Wrap(err, "render failed")
 			log.Println(err)
-			return
 		}
 		select {
 		case event := <-editor.keys:
 			err = editor.Key(event)
 			if err != nil {
-				err = errors.Wrap(err, "key handling failed")
+				err = errors.Wrapf(err, "error handling event %+v", event)
 				log.Println(err)
-				return
 			}
 		case <-editor.check:
-			_, err = editor.ReloadIfModified()
-			if err != nil {
-				err = errors.Wrap(err, "error handling check")
-				log.Println(err)
-				return
+			if !editor.Empty() {
+				_, err = editor.ReloadIfModified()
+				if err != nil {
+					err = errors.Wrap(err, "error handling check")
+					log.Println(err)
+				}
 			}
 		case <-editor.pause:
 			err = editor.background()
 			if err != nil {
-				err = errors.Wrap(err, "pause handling failed")
+				err = errors.Wrap(err, "error handling pause")
 				log.Println(err)
-				return
 			}
 		case <-editor.quit:
 			return

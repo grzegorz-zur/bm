@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+var (
+	ErrNoFile = errors.New("no file")
+)
+
 type File struct {
 	Path string
 	Time time.Time
@@ -21,19 +25,31 @@ type File struct {
 type Change func(File) File
 
 func (file *File) Move(move Move) {
+	if file == nil {
+		return
+	}
 	file.Position = move(*file)
 }
 
 func (file *File) Change(op Change) {
+	if file == nil {
+		return
+	}
 	*(file) = op(*file)
 	file.Archive()
 }
 
 func (file *File) Archive() {
+	if file == nil {
+		return
+	}
 	file.History.Archive(file.Lines, file.Position)
 }
 
 func (file *File) SwitchVersion(dir Direction) {
+	if file == nil {
+		return
+	}
 	file.Lines, file.Position = file.History.Switch(dir)
 }
 
@@ -51,6 +67,9 @@ func Open(path string) (file File, err error) {
 }
 
 func (file *File) ReloadIfModified() (modified bool, err error) {
+	if file == nil {
+		return modified, ErrNoFile
+	}
 	modified, err = file.Modified()
 	if err != nil {
 		return
@@ -63,6 +82,9 @@ func (file *File) ReloadIfModified() (modified bool, err error) {
 }
 
 func (file *File) Modified() (modified bool, err error) {
+	if file == nil {
+		return modified, ErrNoFile
+	}
 	stat, err := os.Stat(file.Path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -75,6 +97,9 @@ func (file *File) Modified() (modified bool, err error) {
 }
 
 func (file *File) Reload() (err error) {
+	if file == nil {
+		return ErrNoFile
+	}
 	err = file.Load()
 	if err != nil {
 		err = errors.Wrapf(err, "error reloading file: %s", file.Path)
@@ -84,6 +109,9 @@ func (file *File) Reload() (err error) {
 }
 
 func (file *File) Load() (err error) {
+	if file == nil {
+		return ErrNoFile
+	}
 	flags := os.O_RDWR | os.O_CREATE
 	perm := os.ModePerm
 	f, err := os.OpenFile(file.Path, flags, perm)
@@ -119,6 +147,9 @@ func (file *File) Load() (err error) {
 }
 
 func (file *File) Write() (err error) {
+	if file == nil {
+		return ErrNoFile
+	}
 	f, err := os.Create(file.Path)
 	defer func() {
 		err := f.Close()
@@ -150,6 +181,9 @@ func (file *File) Write() (err error) {
 }
 
 func (file *File) Render(display *Display, bounds Bounds) (cursor Position, err error) {
+	if file == nil {
+		return cursor, ErrNoFile
+	}
 	file.scroll()
 	size := bounds.Size()
 	file.size(size)
@@ -176,6 +210,9 @@ func (file *File) Render(display *Display, bounds Bounds) (cursor Position, err 
 }
 
 func (file *File) update() (err error) {
+	if file == nil {
+		return ErrNoFile
+	}
 	stat, err := os.Stat(file.Path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -188,6 +225,9 @@ func (file *File) update() (err error) {
 }
 
 func (file *File) size(size Size) {
+	if file == nil {
+		return
+	}
 	w := &file.Window
 	w.Bottom = w.Top + size.Lines
 	w.Right = w.Left + size.Cols
@@ -195,6 +235,9 @@ func (file *File) size(size Size) {
 }
 
 func (file *File) scroll() {
+	if file == nil {
+		return
+	}
 	p := file.Position
 	w := &file.Window
 	height := w.Bottom - w.Top

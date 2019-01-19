@@ -12,10 +12,11 @@ import (
 func main() {
 	logfile, err := ioutil.TempFile("", "bm")
 	if err != nil {
-		fmt.Fprint(os.Stderr, "error opening logfile\n")
+		fmt.Fprintf(os.Stderr, "error opening logfile %v", err)
 		os.Exit(-1)
 	}
 	log.SetOutput(logfile)
+	defer log.SetOutput(os.Stderr)
 	defer logfile.Close()
 	flag.Parse()
 	paths := []string{}

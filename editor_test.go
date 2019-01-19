@@ -7,6 +7,7 @@ import (
 	tb "github.com/nsf/termbox-go"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"testing"
@@ -51,6 +52,15 @@ func test(name, temp string) func(t *testing.T) {
 			t.Fatalf("error changing dir to %s: %v", work, err)
 		}
 
+		logpath := path.Join(temp, name+".log")
+		logfile, err := os.Create(logpath)
+		if err != nil {
+			t.Fatalf("error opening logfile %s", logpath)
+			os.Exit(-1)
+		}
+		log.SetOutput(logfile)
+		defer logfile.Close()
+
 		editor := New(nil, files)
 		editor.Start()
 
@@ -61,7 +71,10 @@ func test(name, temp string) func(t *testing.T) {
 
 		editor.Wait()
 
-		os.Chdir(dir)
+		logfile.Close()
+		log.SetOutput(os.Stderr)
+
+		err = os.Chdir(dir)
 		if err != nil {
 			t.Fatalf("error changing dir to %s: %v", dir, err)
 		}
