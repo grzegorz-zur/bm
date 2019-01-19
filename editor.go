@@ -7,6 +7,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+)
+
+const (
+	TickInterval = 200 * time.Millisecond
 )
 
 type Editor struct {
@@ -14,6 +19,7 @@ type Editor struct {
 	Modes
 	Files
 	keys    chan tb.Event
+	check   chan struct{}
 	pause   chan struct{}
 	unpause chan struct{}
 	quit    chan struct{}
@@ -24,6 +30,7 @@ func New(display *Display, files []string) (editor *Editor) {
 	editor = &Editor{
 		Display: display,
 		keys:    make(chan tb.Event),
+		check:   make(chan struct{}),
 		pause:   make(chan struct{}, 1),
 		unpause: make(chan struct{}),
 		quit:    make(chan struct{}, 1),
@@ -53,17 +60,20 @@ func New(display *Display, files []string) (editor *Editor) {
 func (editor *Editor) Start() {
 	go editor.signals()
 	go editor.listen()
+	go editor.tick()
 	go editor.run()
+}
+
+func (editor *Editor) Check() {
+	editor.check <- struct{}{}
 }
 
 func (editor *Editor) Pause() {
 	editor.pause <- struct{}{}
-	return
 }
 
 func (editor *Editor) Quit() {
 	editor.quit <- struct{}{}
-	return
 }
 
 func (editor *Editor) Wait() {
@@ -86,6 +96,13 @@ func (editor *Editor) signals() {
 func (editor *Editor) listen() {
 	for {
 		editor.keys <- tb.PollEvent()
+	}
+}
+
+func (editor *Editor) tick() {
+	for {
+		time.Sleep(TickInterval)
+		editor.check <- struct{}{}
 	}
 }
 
@@ -115,6 +132,21 @@ func (editor *Editor) run() {
 				err = errors.Wrap(err, "key handling failed")
 				log.Println(err)
 				return
+			}
+		case <-editor.check:
+			modified, err := editor.Modified()
+			if err != nil {
+				err = errors.Wrap(err, "file check failed")
+				log.Println(err)
+				return
+			}
+			if modified {
+				err = editor.Reload()
+				if err != nil {
+					err = errors.Wrap(err, "file reload failed")
+					log.Println(err)
+					return
+				}
 			}
 		case <-editor.pause:
 			err = editor.background()

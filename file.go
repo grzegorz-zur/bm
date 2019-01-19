@@ -6,10 +6,12 @@ import (
 	"github.com/pkg/errors"
 	"log"
 	"os"
+	"time"
 )
 
 type File struct {
 	Path string
+	Time time.Time
 	Lines
 	Position
 	Window Bounds
@@ -48,8 +50,23 @@ func Open(path string) (file File, err error) {
 	return
 }
 
+func (file *File) Modified() (modified bool, err error) {
+	stat, err := os.Stat(file.Path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		err = errors.Wrapf(err, "error checking file: %s", file.Path)
+	}
+	modified = stat.ModTime() != file.Time
+	return
+}
+
 func (file *File) Reload() (err error) {
 	err = file.Load()
+	if err != nil {
+		err = errors.Wrapf(err, "error reloading file: %s", file.Path)
+	}
 	file.Archive()
 	return
 }
@@ -69,6 +86,11 @@ func (file *File) Load() (err error) {
 			log.Print(err)
 		}
 	}()
+	err = file.update()
+	if err != nil {
+		err = errors.Wrapf(err, "error updating file information: %s", file.Path)
+		log.Print(err)
+	}
 	s := bufio.NewScanner(f)
 	file.Lines = nil
 	for s.Scan() {
@@ -86,6 +108,20 @@ func (file *File) Load() (err error) {
 
 func (file *File) Write() (err error) {
 	f, err := os.Create(file.Path)
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			err = errors.Wrapf(err, "error closing file: %s", file.Path)
+			log.Print(err)
+		}
+	}()
+	defer func() {
+		err := file.update()
+		if err != nil {
+			err = errors.Wrapf(err, "error updating file information: %s", file.Path)
+			log.Print(err)
+		}
+	}()
 	if err != nil {
 		err = errors.Wrapf(err, "error writing file: %s", file.Path)
 		return
@@ -124,6 +160,18 @@ func (file *File) Render(display *Display, bounds Bounds) (cursor Position, err 
 	p := file.Position
 	cursor.Line = p.Line - w.Top
 	cursor.Col = p.Col - w.Left
+	return
+}
+
+func (file *File) update() (err error) {
+	stat, err := os.Stat(file.Path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		err = errors.Wrapf(err, "error checking file: %s", file.Path)
+	}
+	file.Time = stat.ModTime()
 	return
 }
 

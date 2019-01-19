@@ -162,40 +162,46 @@ func verify(name, work string, t *testing.T) (err error) {
 func interpret(editor *Editor, commands []string) (err error) {
 	for _, cmd := range commands {
 		runes := []rune(cmd)
-		var event tb.Event
 		switch {
 		case len(cmd) == 1:
-			event = tb.Event{Ch: runes[0]}
+			editor.keys <- tb.Event{Ch: runes[0]}
 		case len(cmd) == 2 && runes[0] == '^':
 			letter := unicode.ToUpper(runes[1])
 			offset := int(letter - 'A')
 			key := tb.KeyCtrlA + tb.Key(offset)
-			event = tb.Event{Key: key}
+			editor.keys <- tb.Event{Key: key}
 		case cmd == "escape":
-			event = tb.Event{Key: tb.KeyEsc}
+			editor.keys <- tb.Event{Key: tb.KeyEsc}
 		case cmd == "left":
-			event = tb.Event{Key: tb.KeyArrowLeft}
+			editor.keys <- tb.Event{Key: tb.KeyArrowLeft}
 		case cmd == "right":
-			event = tb.Event{Key: tb.KeyArrowRight}
+			editor.keys <- tb.Event{Key: tb.KeyArrowRight}
 		case cmd == "up":
-			event = tb.Event{Key: tb.KeyArrowUp}
+			editor.keys <- tb.Event{Key: tb.KeyArrowUp}
 		case cmd == "down":
-			event = tb.Event{Key: tb.KeyArrowDown}
+			editor.keys <- tb.Event{Key: tb.KeyArrowDown}
 		case cmd == "space":
-			event = tb.Event{Key: tb.KeySpace}
+			editor.keys <- tb.Event{Key: tb.KeySpace}
 		case cmd == "tab":
-			event = tb.Event{Key: tb.KeyTab}
+			editor.keys <- tb.Event{Key: tb.KeyTab}
 		case cmd == "enter":
-			event = tb.Event{Key: tb.KeyEnter}
+			editor.keys <- tb.Event{Key: tb.KeyEnter}
 		case cmd == "backspace":
-			event = tb.Event{Key: tb.KeyBackspace2}
+			editor.keys <- tb.Event{Key: tb.KeyBackspace2}
 		case cmd == "delete":
-			event = tb.Event{Key: tb.KeyDelete}
+			editor.keys <- tb.Event{Key: tb.KeyDelete}
+		case cmd == "TOUCH":
+			t := time.Now().Local()
+			err = os.Chtimes(editor.File.Path, t, t)
+			if err != nil {
+				return
+			}
+		case cmd == "CHECK":
+			editor.Check()
 		default:
 			err = errors.New("unknown command: " + cmd)
 			return
 		}
-		editor.keys <- event
 	}
 	return
 }
