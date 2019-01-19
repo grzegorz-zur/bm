@@ -219,37 +219,37 @@ func (file *File) scroll() {
 	}
 }
 
-func (f File) DeleteRune() File {
-	f.Lines = f.Lines.DeleteRune(f.Position)
-	return f
+func (file File) DeleteRune() File {
+	file.Lines = file.Lines.DeleteRune(file.Position)
+	return file
 }
 
-func (f File) DeletePreviousRune() File {
-	p := f.Position
+func (file File) DeletePreviousRune() File {
+	p := file.Position
 	if p.Col == 0 {
-		return f
+		return file
 	}
-	f.Lines = f.Lines.DeletePreviousRune(p)
-	f.Position = Position{Line: p.Line, Col: p.Col - 1}
-	return f
+	file.Lines = file.Lines.DeletePreviousRune(p)
+	file.Position = Position{Line: p.Line, Col: p.Col - 1}
+	return file
 }
 
 func InsertRune(r rune) Change {
-	return func(f File) File {
-		p := f.Position
-		f.Lines = f.Lines.InsertRune(p, r)
-		f.Position = Position{Line: p.Line, Col: p.Col + 1}
-		return f
+	return func(file File) File {
+		p := file.Position
+		file.Lines = file.Lines.InsertRune(p, r)
+		file.Position = Position{Line: p.Line, Col: p.Col + 1}
+		return file
 	}
 }
 
-func (f File) DeleteLine() File {
-	f.Lines = f.Lines.DeleteLine(f.Position.Line)
-	return f
+func (file File) DeleteLine() File {
+	file.Lines = file.Lines.DeleteLine(file.Position.Line)
+	return file
 }
 
-func (f File) Split() File {
-	f.Lines = f.Lines.Split(f.Position)
-	f.Position = Position{Line: f.Position.Line + 1}
-	return f
+func (file File) Split() File {
+	file.Lines = file.Lines.Split(file.Position)
+	file.Position = Position{Line: file.Position.Line + 1}
+	return file
 }
