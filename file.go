@@ -50,6 +50,18 @@ func Open(path string) (file File, err error) {
 	return
 }
 
+func (file *File) ReloadIfModified() (modified bool, err error) {
+	modified, err = file.Modified()
+	if err != nil {
+		return
+	}
+	if !modified {
+		return
+	}
+	err = file.Reload()
+	return
+}
+
 func (file *File) Modified() (modified bool, err error) {
 	stat, err := os.Stat(file.Path)
 	if err != nil {

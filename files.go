@@ -31,6 +31,7 @@ func (files *Files) SwitchFile(dir Direction) {
 	position := files.current()
 	position = wrap(position, len(files.list), 1, dir)
 	files.switchFile(position)
+	files.ReloadIfModified()
 }
 
 func (files *Files) WriteAll() (err error) {

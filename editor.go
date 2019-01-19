@@ -134,19 +134,11 @@ func (editor *Editor) run() {
 				return
 			}
 		case <-editor.check:
-			modified, err := editor.Modified()
+			_, err = editor.ReloadIfModified()
 			if err != nil {
-				err = errors.Wrap(err, "file check failed")
+				err = errors.Wrap(err, "error handling check")
 				log.Println(err)
 				return
-			}
-			if modified {
-				err = editor.Reload()
-				if err != nil {
-					err = errors.Wrap(err, "file reload failed")
-					log.Println(err)
-					return
-				}
 			}
 		case <-editor.pause:
 			err = editor.background()
