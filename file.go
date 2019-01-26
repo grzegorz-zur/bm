@@ -11,6 +11,7 @@ import (
 
 var (
 	ErrNoFile = errors.New("no file")
+	eol       = []byte("\n")
 )
 
 type File struct {
@@ -169,13 +170,11 @@ func (file *File) Write() (err error) {
 		err = errors.Wrapf(err, "error writing file: %s", file.Path)
 		return
 	}
-	for i, runes := range file.Lines {
+	for _, runes := range file.Lines {
 		line := string(runes)
-		if i+1 < len(file.Lines) {
-			line += "\n"
-		}
 		bytes := []byte(line)
 		f.Write(bytes)
+		f.Write(eol)
 	}
 	return
 }

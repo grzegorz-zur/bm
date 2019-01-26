@@ -65,7 +65,6 @@ func (files *Files) remove(position int) {
 	list = append(list, files.list[:position]...)
 	list = append(list, files.list[position+1:]...)
 	files.list = list
-	return
 }
 
 func (files *Files) switchFile(position int) {

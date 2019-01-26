@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"testing"
 	"time"
 	"unicode"
@@ -163,12 +164,21 @@ func verify(name, work string, t *testing.T) (err error) {
 		if bytes.Compare(actualContent, expectedContent) != 0 {
 			t.Log("comparing file " + exp)
 			t.Log("expected content")
-			t.Log(string(expectedContent))
+			t.Log(format(expectedContent))
 			t.Log("actual content")
-			t.Log(string(actualContent))
+			t.Log(format(actualContent))
 			t.FailNow()
 		}
 	}
+	return
+}
+
+func format(content []byte) (text string) {
+	text = string(content)
+	text = strings.Replace(text, " ", "␣", -1)
+	text = strings.Replace(text, "\t", "␉", -1)
+	text = strings.Replace(text, "\r", "␍", -1)
+	text = strings.Replace(text, "\n", "␊", -1)
 	return
 }
 
