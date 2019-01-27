@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	ErrNoFile = errors.New("no file")
-	eol       = []byte("\n")
+	ErrNoFile             = errors.New("no file")
+	eol                   = []byte("\n")
+	perm      os.FileMode = 0644
 )
 
 type File struct {
@@ -114,7 +115,6 @@ func (file *File) Load() (err error) {
 		return ErrNoFile
 	}
 	flags := os.O_RDWR | os.O_CREATE
-	perm := os.ModePerm
 	f, err := os.OpenFile(file.Path, flags, perm)
 	if err != nil {
 		err = errors.Wrapf(err, "error opening file: %s", file.Path)
