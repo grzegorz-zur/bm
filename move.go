@@ -1,31 +1,31 @@
 package bm
 
-type Move func(f File) (p Position)
+type Move func(file File) (pos Position)
 
-func (f File) Left() (p Position) {
-	p = f.Position
-	if p.Col > 0 {
-		p.Col--
+func (file File) Left() (pos Position) {
+	pos = file.Position
+	if pos.Col > 0 {
+		pos.Col--
 	}
 	return
 }
 
-func (f File) Right() (p Position) {
-	p = f.Position
-	p.Col++
+func (file File) Right() (pos Position) {
+	pos = file.Position
+	pos.Col++
 	return
 }
 
-func (f File) Up() (p Position) {
-	p = f.Position
-	if p.Line > 0 {
-		p.Line--
+func (file File) Up() (pos Position) {
+	pos = file.Position
+	if pos.Line > 0 {
+		pos.Line--
 	}
 	return
 }
 
-func (f File) Down() (p Position) {
-	p = f.Position
-	p.Line++
+func (file File) Down() (pos Position) {
+	pos = file.Position
+	pos.Line++
 	return
 }

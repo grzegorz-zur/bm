@@ -2,31 +2,31 @@ package bm
 
 type Lines []Line
 
-func (ls Lines) DeleteRune(p Position) (lines Lines) {
-	if p.Line >= len(ls) {
+func (ls Lines) DeleteRune(pos Position) (lines Lines) {
+	if pos.Line >= len(ls) {
 		return ls
 	}
-	l := ls[p.Line]
-	line := l.DeleteRune(p.Col)
+	l := ls[pos.Line]
+	line := l.DeleteRune(pos.Col)
 	lines = make(Lines, len(ls))
 	for i := range ls {
 		lines[i] = ls[i]
 	}
-	lines[p.Line] = line
+	lines[pos.Line] = line
 	return
 }
 
-func (ls Lines) DeletePreviousRune(p Position) (lines Lines) {
-	if p.Line >= len(ls) {
+func (ls Lines) DeletePreviousRune(pos Position) (lines Lines) {
+	if pos.Line >= len(ls) {
 		return ls
 	}
-	l := ls[p.Line]
-	line := l.DeletePreviousRune(p.Col)
+	l := ls[pos.Line]
+	line := l.DeletePreviousRune(pos.Col)
 	lines = make(Lines, len(ls))
 	for i := range ls {
 		lines[i] = ls[i]
 	}
-	lines[p.Line] = line
+	lines[pos.Line] = line
 	return
 }
 
@@ -55,29 +55,29 @@ func (ls Lines) Expand(l int) (lines Lines) {
 	return
 }
 
-func (ls Lines) InsertRune(p Position, r rune) (lines Lines) {
-	els := ls.Expand(p.Line + 1)
-	l := els[p.Line]
-	line := l.InsertRune(p.Col, r)
+func (ls Lines) InsertRune(pos Position, r rune) (lines Lines) {
+	els := ls.Expand(pos.Line + 1)
+	l := els[pos.Line]
+	line := l.InsertRune(pos.Col, r)
 	lines = make(Lines, len(els))
 	for i := range els {
 		lines[i] = els[i]
 	}
-	lines[p.Line] = line
+	lines[pos.Line] = line
 	return
 }
 
-func (ls Lines) Split(p Position) (lines Lines) {
-	els := ls.Expand(p.Line + 1)
-	l := els[p.Line]
-	line1, line2 := l.Split(p.Col)
+func (ls Lines) Split(pos Position) (lines Lines) {
+	els := ls.Expand(pos.Line + 1)
+	l := els[pos.Line]
+	line1, line2 := l.Split(pos.Col)
 	lines = make(Lines, len(els)+1)
-	for i := 0; i < p.Line; i++ {
+	for i := 0; i < pos.Line; i++ {
 		lines[i] = els[i]
 	}
-	lines[p.Line] = line1
-	lines[p.Line+1] = line2
-	for i := p.Line + 1; i < len(ls); i++ {
+	lines[pos.Line] = line1
+	lines[pos.Line+1] = line2
+	for i := pos.Line + 1; i < len(ls); i++ {
 		lines[i+1] = els[i]
 	}
 	return

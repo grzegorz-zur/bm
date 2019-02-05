@@ -2,6 +2,7 @@ package bm
 
 import (
 	tb "github.com/nsf/termbox-go"
+	"github.com/pkg/errors"
 )
 
 type Input struct {
@@ -49,16 +50,17 @@ func (mode *Input) Key(event tb.Event) (err error) {
 }
 
 func (mode *Input) Render(display *Display, bounds Bounds) (cursor Position, err error) {
-	f, s := bounds.SplitHorizontal(-1)
-	fc, err := mode.File.Render(display, f)
+	file, status := bounds.SplitHorizontal(-1)
+	cursor, err = mode.File.Render(display, file)
 	if err != nil {
+		err = errors.Wrap(err, "error rendering file")
 		return
 	}
-	_, err = mode.render(display, s)
+	_, err = mode.render(display, status)
 	if err != nil {
+		err = errors.Wrap(err, "error rendering status")
 		return
 	}
-	cursor = fc
 	return
 }
 

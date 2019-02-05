@@ -40,7 +40,7 @@ func test(name, temp string) func(t *testing.T) {
 		}
 		cmds, err := commands(name)
 		if err != nil {
-			t.Fatalf("error parsing script: %s: %v", name, err)
+			t.Fatalf("error parsing script %s: %v", name, err)
 		}
 
 		dir, err := os.Getwd()
@@ -56,11 +56,12 @@ func test(name, temp string) func(t *testing.T) {
 		logpath := path.Join(temp, name+".log")
 		logfile, err := os.Create(logpath)
 		if err != nil {
-			t.Fatalf("error opening logfile %s", logpath)
+			t.Fatalf("error opening logfile %s: %v", logpath, err)
 			os.Exit(-1)
 		}
-		log.SetOutput(logfile)
 		defer logfile.Close()
+		log.SetOutput(logfile)
+		defer log.SetOutput(os.Stderr)
 
 		editor := New(nil, files)
 		editor.Start()

@@ -21,6 +21,7 @@ func (mode *Switch) Show() (err error) {
 	mode.query = Line{}
 	mode.paths, err = mode.read()
 	if err != nil {
+		err = errors.Wrap(err, "error showing switch mode")
 		return
 	}
 	mode.filter()
@@ -57,6 +58,10 @@ func (mode *Switch) Key(event tb.Event) (err error) {
 		mode.SwitchMode(mode.Command)
 	}
 
+	if err != nil {
+		err = errors.Wrapf(err, "error handling event: %v", event)
+	}
+
 	return
 }
 
@@ -73,12 +78,15 @@ func (mode *Switch) filter() {
 }
 
 func (mode *Switch) open() (err error) {
-	p := mode.position
+	pos := mode.position
 	path := mode.query.String()
-	if p.Line < len(mode.filtered) {
-		path = mode.filtered[p.Line]
+	if pos.Line < len(mode.filtered) {
+		path = mode.filtered[pos.Line]
 	}
 	err = mode.Open(path)
+	if err != nil {
+		err = errors.Wrapf(err, "error opening file %s", path)
+	}
 	return
 }
 
@@ -105,16 +113,17 @@ func (mode *Switch) moveDown() {
 }
 
 func (mode *Switch) Render(display *Display, bounds Bounds) (cursor Position, err error) {
-	f, s := bounds.SplitHorizontal(-1)
-	err = mode.renderPaths(display, f)
+	paths, status := bounds.SplitHorizontal(-1)
+	err = mode.renderPaths(display, paths)
 	if err != nil {
+		err = errors.Wrap(err, "error rendering paths")
 		return
 	}
-	sc, err := mode.renderInput(display, s)
+	cursor, err = mode.renderInput(display, status)
 	if err != nil {
+		err = errors.Wrap(err, "error rendering status")
 		return
 	}
-	cursor = sc
 	return
 }
 
@@ -198,7 +207,8 @@ func (mode *Switch) renderInput(display *Display, bounds Bounds) (cursor Positio
 func (mode *Switch) read() (paths []string, err error) {
 	work, err := os.Getwd()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get working directory")
+		err = errors.Wrap(err, "error reading working directory")
+		return
 	}
 	walker := func(path string, info os.FileInfo, err error) error {
 		relpath, err := filepath.Rel(work, path)
@@ -211,6 +221,9 @@ func (mode *Switch) read() (paths []string, err error) {
 		return nil
 	}
 	err = filepath.Walk(work, walker)
+	if err != nil {
+		err = errors.Wrapf(err, "error walking directory %s", work)
+	}
 	return
 }
 

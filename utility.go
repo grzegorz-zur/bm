@@ -1,8 +1,8 @@
 package bm
 
-func wrap(position, length, step int, dir Direction) int {
+func wrap(pos, length, step int, dir Direction) int {
 	if length == 0 {
 		return 0
 	}
-	return ((position+step*dir.Value())%length + length) % length
+	return ((pos+step*dir.Value())%length + length) % length
 }

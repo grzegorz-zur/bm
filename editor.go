@@ -110,7 +110,7 @@ func (editor *Editor) run() {
 	defer close(editor.done)
 	err := editor.Display.Init()
 	if err != nil {
-		err = errors.Wrap(err, "display init failed")
+		report(err)
 		return
 	}
 	defer editor.Display.Close()
@@ -120,50 +120,44 @@ func (editor *Editor) run() {
 			editor.SwitchMode(editor.Switch)
 		}
 		err = editor.render()
-		if err != nil {
-			err = errors.Wrap(err, "render failed")
-			log.Println(err)
-		}
+		report(err)
 		select {
 		case event := <-editor.keys:
 			err = editor.Key(event)
-			if err != nil {
-				err = errors.Wrapf(err, "error handling event %+v", event)
-				log.Println(err)
-			}
+			report(err)
 		case <-editor.check:
 			if !editor.Empty() {
 				_, err = editor.ReloadIfModified()
-				if err != nil {
-					err = errors.Wrap(err, "error handling check")
-					log.Println(err)
-				}
+				report(err)
 			}
 		case <-editor.pause:
 			err = editor.background()
-			if err != nil {
-				err = errors.Wrap(err, "error handling pause")
-				log.Println(err)
-			}
+			report(err)
 		case <-editor.quit:
 			return
 		}
 	}
 }
 
+func report(err error) {
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func (editor *Editor) background() (err error) {
 	editor.Display.Close()
 	pid := os.Getpid()
-	p, err := os.FindProcess(pid)
+	process, err := os.FindProcess(pid)
 	if err != nil {
-		err = errors.Wrap(err, "background failed")
+		err = errors.Wrapf(err, "error pausing process %+v", process)
 		return
 	}
-	p.Signal(syscall.SIGSTOP)
+	process.Signal(syscall.SIGSTOP)
 	<-editor.unpause
 	err = editor.Display.Init()
 	if err != nil {
-		err = errors.Wrap(err, "display init failed")
+		err = errors.Wrap(err, "error initializing display")
 		return
 	}
 	return
@@ -175,6 +169,9 @@ func (editor *Editor) render() (err error) {
 	size := Size{Lines: height, Cols: width}
 	bounds := Bounds{Right: size.Cols - 1, Bottom: size.Lines - 1}
 	cursor, err := editor.Mode.Render(editor.Display, bounds)
+	if err != nil {
+		err = errors.Wrap(err, "error rendering editor")
+	}
 	editor.Display.SetCursor(cursor.Col, cursor.Line)
 	editor.Display.Flush()
 	return

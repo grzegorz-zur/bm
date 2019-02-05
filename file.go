@@ -4,7 +4,6 @@ import (
 	"bufio"
 	tb "github.com/nsf/termbox-go"
 	"github.com/pkg/errors"
-	"log"
 	"os"
 	"time"
 )
@@ -62,6 +61,7 @@ func Open(path string) (file File, err error) {
 	}
 	err = file.Load()
 	if err != nil {
+		err = errors.Wrapf(err, "error opening file %s", path)
 		return
 	}
 	file.Archive()
@@ -74,12 +74,17 @@ func (file *File) ReloadIfModified() (modified bool, err error) {
 	}
 	modified, err = file.Modified()
 	if err != nil {
+		err = errors.Wrapf(err, "error checking modification date on %s", file.Path)
 		return
 	}
 	if !modified {
 		return
 	}
 	err = file.Reload()
+	if err != nil {
+		err = errors.Wrapf(err, "error reloading file %s", file.Path)
+		return
+	}
 	return
 }
 
@@ -92,7 +97,8 @@ func (file *File) Modified() (modified bool, err error) {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
-		err = errors.Wrapf(err, "error checking file: %s", file.Path)
+		err = errors.Wrapf(err, "error checking file %s", file.Path)
+		return
 	}
 	modified = stat.ModTime() != file.Time
 	return
@@ -105,6 +111,7 @@ func (file *File) Reload() (err error) {
 	err = file.Load()
 	if err != nil {
 		err = errors.Wrapf(err, "error reloading file: %s", file.Path)
+		return
 	}
 	file.Archive()
 	return
@@ -121,26 +128,25 @@ func (file *File) Load() (err error) {
 		return
 	}
 	defer func() {
-		err := f.Close()
+		err = f.Close()
 		if err != nil {
 			err = errors.Wrapf(err, "error closing file: %s", file.Path)
-			log.Print(err)
 		}
 	}()
 	err = file.update()
 	if err != nil {
 		err = errors.Wrapf(err, "error updating file information: %s", file.Path)
-		log.Print(err)
+		return
 	}
-	s := bufio.NewScanner(f)
+	scanner := bufio.NewScanner(f)
 	file.Lines = nil
-	for s.Scan() {
-		err = s.Err()
+	for scanner.Scan() {
+		err = scanner.Err()
 		if err != nil {
 			err = errors.Wrapf(err, "error reading file: %s", file.Path)
 			return
 		}
-		line := s.Text()
+		line := scanner.Text()
 		runes := []rune(line)
 		file.Lines = append(file.Lines, runes)
 	}
@@ -153,17 +159,15 @@ func (file *File) Write() (err error) {
 	}
 	f, err := os.Create(file.Path)
 	defer func() {
-		err := f.Close()
+		err = f.Close()
 		if err != nil {
 			err = errors.Wrapf(err, "error closing file: %s", file.Path)
-			log.Print(err)
 		}
 	}()
 	defer func() {
-		err := file.update()
+		err = file.update()
 		if err != nil {
 			err = errors.Wrapf(err, "error updating file information: %s", file.Path)
-			log.Print(err)
 		}
 	}()
 	if err != nil {
@@ -218,6 +222,7 @@ func (file *File) update() (err error) {
 			return nil
 		}
 		err = errors.Wrapf(err, "error checking file: %s", file.Path)
+		return
 	}
 	file.Time = stat.ModTime()
 	return

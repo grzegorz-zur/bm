@@ -2,6 +2,7 @@ package bm
 
 import (
 	tb "github.com/nsf/termbox-go"
+	"github.com/pkg/errors"
 )
 
 type Command struct {
@@ -40,7 +41,7 @@ func (mode *Command) Key(event tb.Event) (err error) {
 	case 'J':
 		mode.Change(File.DeleteLine)
 	case 'n':
-		err = mode.WriteAll()
+		err = mode.Write()
 		mode.Files.Close()
 	case 'N':
 		err = mode.Reload()
@@ -72,20 +73,25 @@ func (mode *Command) Key(event tb.Event) (err error) {
 		mode.Move(File.Down)
 	}
 
+	if err != nil {
+		err = errors.Wrapf(err, "error handling event: %v", event)
+	}
+
 	return
 }
 
 func (mode *Command) Render(display *Display, bounds Bounds) (cursor Position, err error) {
-	f, s := bounds.SplitHorizontal(-1)
-	fc, err := mode.File.Render(display, f)
+	file, status := bounds.SplitHorizontal(-1)
+	cursor, err = mode.File.Render(display, file)
 	if err != nil {
+		err = errors.Wrap(err, "error renderning file")
 		return
 	}
-	_, err = mode.render(display, s)
+	_, err = mode.render(display, status)
 	if err != nil {
+		err = errors.Wrap(err, "error renderning status")
 		return
 	}
-	cursor = fc
 	return
 }
 

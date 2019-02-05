@@ -1,7 +1,7 @@
 package bm
 
 const (
-	HistorySize = 256
+	HistorySize = 1024
 )
 
 type History struct {
