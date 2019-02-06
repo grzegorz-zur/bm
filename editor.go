@@ -48,7 +48,7 @@ func New(display *Display, files []string) (editor *Editor) {
 	for _, file := range files {
 		editor.Open(file)
 	}
-	if editor.File == nil {
+	if editor.Empty() {
 		editor.SwitchMode(editor.Switch)
 	} else {
 		editor.SwitchFile(Forward)
@@ -116,7 +116,7 @@ func (editor *Editor) run() {
 	defer editor.Display.Close()
 
 	for {
-		if editor.File == nil {
+		if editor.Empty() {
 			editor.SwitchMode(editor.Switch)
 		}
 		err = editor.render()

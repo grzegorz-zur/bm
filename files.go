@@ -8,7 +8,7 @@ type Files struct {
 }
 
 func (files *Files) Empty() bool {
-	return files.File == nil
+	return len(files.list) == 0
 }
 
 func (files *Files) Open(path string) (err error) {
@@ -38,6 +38,9 @@ func (files *Files) SwitchFile(dir Direction) {
 }
 
 func (files *Files) WriteAll() (err error) {
+	if files.Empty() {
+		return
+	}
 	for _, file := range files.list {
 		err = file.Write()
 		if err != nil {
@@ -64,7 +67,7 @@ func (files *Files) add(file *File) (index int) {
 }
 
 func (files *Files) remove(index int) {
-	list := make([]*File, len(files.list)-1)
+	list := make([]*File, 0, len(files.list)-1)
 	list = append(list, files.list[:index]...)
 	list = append(list, files.list[index+1:]...)
 	files.list = list
