@@ -24,12 +24,10 @@ func (l Line) Expand(c int) (line Line) {
 	if c < len(l) {
 		return l
 	}
-	line = make(Line, c)
-	for i := range l {
-		line[i] = l[i]
-	}
-	for i := len(l); i < len(line); i++ {
-		line[i] = ' '
+	line = make(Line, 0, c)
+	line = append(line, l...)
+	for i := len(line); i < cap(line); i++ {
+		line = append(line, ' ')
 	}
 	return
 }
