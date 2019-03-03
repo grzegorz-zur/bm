@@ -188,32 +188,32 @@ func interpret(editor *Editor, commands []string) (err error) {
 		runes := []rune(cmd)
 		switch {
 		case len(cmd) == 1:
-			editor.keys <- tb.Event{Ch: runes[0]}
+			editor.SendKey(tb.Event{Ch: runes[0]})
 		case len(cmd) == 2 && runes[0] == '^':
 			letter := unicode.ToUpper(runes[1])
 			offset := int(letter - 'A')
 			key := tb.KeyCtrlA + tb.Key(offset)
-			editor.keys <- tb.Event{Key: key}
+			editor.SendKey(tb.Event{Key: key})
 		case cmd == "escape":
-			editor.keys <- tb.Event{Key: tb.KeyEsc}
+			editor.SendKey(tb.Event{Key: tb.KeyEsc})
 		case cmd == "left":
-			editor.keys <- tb.Event{Key: tb.KeyArrowLeft}
+			editor.SendKey(tb.Event{Key: tb.KeyArrowLeft})
 		case cmd == "right":
-			editor.keys <- tb.Event{Key: tb.KeyArrowRight}
+			editor.SendKey(tb.Event{Key: tb.KeyArrowRight})
 		case cmd == "up":
-			editor.keys <- tb.Event{Key: tb.KeyArrowUp}
+			editor.SendKey(tb.Event{Key: tb.KeyArrowUp})
 		case cmd == "down":
-			editor.keys <- tb.Event{Key: tb.KeyArrowDown}
+			editor.SendKey(tb.Event{Key: tb.KeyArrowDown})
 		case cmd == "space":
-			editor.keys <- tb.Event{Key: tb.KeySpace}
+			editor.SendKey(tb.Event{Key: tb.KeySpace})
 		case cmd == "tab":
-			editor.keys <- tb.Event{Key: tb.KeyTab}
+			editor.SendKey(tb.Event{Key: tb.KeyTab})
 		case cmd == "enter":
-			editor.keys <- tb.Event{Key: tb.KeyEnter}
+			editor.SendKey(tb.Event{Key: tb.KeyEnter})
 		case cmd == "backspace":
-			editor.keys <- tb.Event{Key: tb.KeyBackspace2}
+			editor.SendKey(tb.Event{Key: tb.KeyBackspace2})
 		case cmd == "delete":
-			editor.keys <- tb.Event{Key: tb.KeyDelete}
+			editor.SendKey(tb.Event{Key: tb.KeyDelete})
 		case cmd == "TOUCH":
 			t := time.Now().Local()
 			err = os.Chtimes(editor.File.Path, t, t)

@@ -64,6 +64,10 @@ func (editor *Editor) Start() {
 	go editor.run()
 }
 
+func (editor *Editor) SendKey(event tb.Event) {
+	editor.keys <- event
+}
+
 func (editor *Editor) Check() {
 	editor.check <- struct{}{}
 }
