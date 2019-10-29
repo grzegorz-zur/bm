@@ -1,8 +1,8 @@
 package bm
 
 import (
+	"fmt"
 	tb "github.com/nsf/termbox-go"
-	"github.com/pkg/errors"
 	"log"
 	"os"
 	"os/signal"
@@ -154,14 +154,14 @@ func (editor *Editor) background() (err error) {
 	pid := os.Getpid()
 	process, err := os.FindProcess(pid)
 	if err != nil {
-		err = errors.Wrapf(err, "error pausing process %+v", process)
+		err = fmt.Errorf("error pausing process %+v: %w", process, err)
 		return
 	}
 	process.Signal(syscall.SIGSTOP)
 	<-editor.unpause
 	err = editor.Display.Init()
 	if err != nil {
-		err = errors.Wrap(err, "error initializing display")
+		err = fmt.Errorf("error initializing display: %w", err)
 		return
 	}
 	return
@@ -174,7 +174,7 @@ func (editor *Editor) render() (err error) {
 	bounds := Bounds{Right: size.Cols - 1, Bottom: size.Lines - 1}
 	cursor, err := editor.Mode.Render(editor.Display, bounds)
 	if err != nil {
-		err = errors.Wrap(err, "error rendering editor")
+		err = fmt.Errorf("error rendering editor: %w", err)
 	}
 	editor.Display.SetCursor(cursor.Col, cursor.Line)
 	editor.Display.Flush()

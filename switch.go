@@ -1,8 +1,8 @@
 package bm
 
 import (
+	"fmt"
 	tb "github.com/nsf/termbox-go"
-	"github.com/pkg/errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,7 +21,7 @@ func (mode *Switch) Show() (err error) {
 	mode.query = Line{}
 	mode.paths, err = mode.read()
 	if err != nil {
-		err = errors.Wrap(err, "error showing switch mode")
+		err = fmt.Errorf("error showing switch mode: %w", err)
 		return
 	}
 	mode.filter()
@@ -59,7 +59,7 @@ func (mode *Switch) Key(event tb.Event) (err error) {
 	}
 
 	if err != nil {
-		err = errors.Wrapf(err, "error handling event: %v", event)
+		err = fmt.Errorf("error handling event %v: %w", event, err)
 	}
 
 	return
@@ -85,7 +85,7 @@ func (mode *Switch) open() (err error) {
 	}
 	err = mode.Open(path)
 	if err != nil {
-		err = errors.Wrapf(err, "error opening file %s", path)
+		err = fmt.Errorf("error opening file %s: %w", path, err)
 	}
 	return
 }
@@ -116,12 +116,12 @@ func (mode *Switch) Render(display *Display, bounds Bounds) (cursor Position, er
 	paths, status := bounds.SplitHorizontal(-1)
 	err = mode.renderPaths(display, paths)
 	if err != nil {
-		err = errors.Wrap(err, "error rendering paths")
+		err = fmt.Errorf("error rendering paths: %w", err)
 		return
 	}
 	cursor, err = mode.renderInput(display, status)
 	if err != nil {
-		err = errors.Wrap(err, "error rendering status")
+		err = fmt.Errorf("error rendering status: %w", err)
 		return
 	}
 	return
@@ -207,7 +207,7 @@ func (mode *Switch) renderInput(display *Display, bounds Bounds) (cursor Positio
 func (mode *Switch) read() (paths []string, err error) {
 	work, err := os.Getwd()
 	if err != nil {
-		err = errors.Wrap(err, "error reading working directory")
+		err = fmt.Errorf("error reading working directory: %w", err)
 		return
 	}
 	walker := func(path string, info os.FileInfo, err error) error {
@@ -222,7 +222,7 @@ func (mode *Switch) read() (paths []string, err error) {
 	}
 	err = filepath.Walk(work, walker)
 	if err != nil {
-		err = errors.Wrapf(err, "error walking directory %s", work)
+		err = fmt.Errorf("error walking directory %s: %w", work, err)
 	}
 	return
 }

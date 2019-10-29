@@ -2,8 +2,9 @@ package bm
 
 import (
 	"bufio"
+	"errors"
+	"fmt"
 	tb "github.com/nsf/termbox-go"
-	"github.com/pkg/errors"
 	"os"
 	"time"
 )
@@ -61,7 +62,7 @@ func Open(path string) (file File, err error) {
 	}
 	err = file.Load()
 	if err != nil {
-		err = errors.Wrapf(err, "error opening file %s", path)
+		err = fmt.Errorf("error opening file %s: %w", path, err)
 		return
 	}
 	file.Archive()
@@ -74,7 +75,7 @@ func (file *File) ReloadIfModified() (modified bool, err error) {
 	}
 	modified, err = file.Modified()
 	if err != nil {
-		err = errors.Wrapf(err, "error checking modification date on %s", file.Path)
+		err = fmt.Errorf("error checking modification date on %s: %w", file.Path, err)
 		return
 	}
 	if !modified {
@@ -82,7 +83,7 @@ func (file *File) ReloadIfModified() (modified bool, err error) {
 	}
 	err = file.Reload()
 	if err != nil {
-		err = errors.Wrapf(err, "error reloading file %s", file.Path)
+		err = fmt.Errorf("error reloading file %s: %w", file.Path, err)
 		return
 	}
 	return
@@ -97,7 +98,7 @@ func (file *File) Modified() (modified bool, err error) {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
-		err = errors.Wrapf(err, "error checking file %s", file.Path)
+		err = fmt.Errorf("error checking file %s: %w", file.Path, err)
 		return
 	}
 	modified = stat.ModTime() != file.Time
@@ -110,7 +111,7 @@ func (file *File) Reload() (err error) {
 	}
 	err = file.Load()
 	if err != nil {
-		err = errors.Wrapf(err, "error reloading file: %s", file.Path)
+		err = fmt.Errorf("error reloading file: %s: %w", file.Path, err)
 		return
 	}
 	file.Archive()
@@ -124,18 +125,18 @@ func (file *File) Load() (err error) {
 	flags := os.O_RDWR | os.O_CREATE
 	f, err := os.OpenFile(file.Path, flags, perm)
 	if err != nil {
-		err = errors.Wrapf(err, "error opening file: %s", file.Path)
+		err = fmt.Errorf("error opening file %s: %w", file.Path, err)
 		return
 	}
 	defer func() {
 		err = f.Close()
 		if err != nil {
-			err = errors.Wrapf(err, "error closing file: %s", file.Path)
+			err = fmt.Errorf("error closing file %s: %w", file.Path, err)
 		}
 	}()
 	err = file.update()
 	if err != nil {
-		err = errors.Wrapf(err, "error updating file information: %s", file.Path)
+		err = fmt.Errorf("error updating file information %s: %w", file.Path, err)
 		return
 	}
 	scanner := bufio.NewScanner(f)
@@ -143,7 +144,7 @@ func (file *File) Load() (err error) {
 	for scanner.Scan() {
 		err = scanner.Err()
 		if err != nil {
-			err = errors.Wrapf(err, "error reading file: %s", file.Path)
+			err = fmt.Errorf("error reading file %s: %w", file.Path, err)
 			return
 		}
 		line := scanner.Text()
@@ -161,17 +162,17 @@ func (file *File) Write() (err error) {
 	defer func() {
 		err = f.Close()
 		if err != nil {
-			err = errors.Wrapf(err, "error closing file: %s", file.Path)
+			err = fmt.Errorf("error closing file %s: %w", file.Path, err)
 		}
 	}()
 	defer func() {
 		err = file.update()
 		if err != nil {
-			err = errors.Wrapf(err, "error updating file information: %s", file.Path)
+			err = fmt.Errorf("error updating file information %s: %w", file.Path, err)
 		}
 	}()
 	if err != nil {
-		err = errors.Wrapf(err, "error writing file: %s", file.Path)
+		err = fmt.Errorf("error writing file %s: %w", file.Path, err)
 		return
 	}
 	for _, runes := range file.Lines {
@@ -221,7 +222,7 @@ func (file *File) update() (err error) {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		err = errors.Wrapf(err, "error checking file: %s", file.Path)
+		err = fmt.Errorf("error checking file %s: %w", file.Path, err)
 		return
 	}
 	file.Time = stat.ModTime()

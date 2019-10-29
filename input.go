@@ -1,8 +1,8 @@
 package bm
 
 import (
+	"fmt"
 	tb "github.com/nsf/termbox-go"
-	"github.com/pkg/errors"
 )
 
 type Input struct {
@@ -53,12 +53,12 @@ func (mode *Input) Render(display *Display, bounds Bounds) (cursor Position, err
 	file, status := bounds.SplitHorizontal(-1)
 	cursor, err = mode.File.Render(display, file)
 	if err != nil {
-		err = errors.Wrap(err, "error rendering file")
+		err = fmt.Errorf("error rendering file: %w", err)
 		return
 	}
 	_, err = mode.render(display, status)
 	if err != nil {
-		err = errors.Wrap(err, "error rendering status")
+		err = fmt.Errorf("error rendering status: %w", err)
 		return
 	}
 	return

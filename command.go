@@ -1,8 +1,8 @@
 package bm
 
 import (
+	"fmt"
 	tb "github.com/nsf/termbox-go"
-	"github.com/pkg/errors"
 )
 
 type Command struct {
@@ -78,7 +78,7 @@ func (mode *Command) Key(event tb.Event) (err error) {
 	}
 
 	if err != nil {
-		err = errors.Wrapf(err, "error handling event: %v", event)
+		err = fmt.Errorf("error handling event %v: %w", event, err)
 	}
 
 	return
@@ -88,12 +88,12 @@ func (mode *Command) Render(display *Display, bounds Bounds) (cursor Position, e
 	file, status := bounds.SplitHorizontal(-1)
 	cursor, err = mode.File.Render(display, file)
 	if err != nil {
-		err = errors.Wrap(err, "error renderning file")
+		err = fmt.Errorf("error renderning file: %w", err)
 		return
 	}
 	_, err = mode.render(display, status)
 	if err != nil {
-		err = errors.Wrap(err, "error renderning status")
+		err = fmt.Errorf("error renderning status: %w", err)
 		return
 	}
 	return

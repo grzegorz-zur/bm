@@ -1,6 +1,8 @@
 package bm
 
-import "github.com/pkg/errors"
+import (
+	"fmt"
+)
 
 type Files struct {
 	*File
@@ -19,7 +21,7 @@ func (files *Files) Open(path string) (err error) {
 	}
 	file, err := Open(path)
 	if err != nil {
-		err = errors.Wrapf(err, "error opening file %s", file.Path)
+		err = fmt.Errorf("error opening file %s: %w", file.Path, err)
 		return
 	}
 	index = files.add(&file)
@@ -44,7 +46,7 @@ func (files *Files) WriteAll() (err error) {
 	for _, file := range files.list {
 		err = file.Write()
 		if err != nil {
-			err = errors.Wrapf(err, "error writing file %s", file.Path)
+			err = fmt.Errorf("error writing file %s: %w", file.Path, err)
 		}
 	}
 	return
