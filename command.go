@@ -28,6 +28,10 @@ func (mode *Command) Key(event tb.Event) (err error) {
 		mode.Move(File.Up)
 	case 's':
 		mode.Move(File.Down)
+	case 'e':
+		mode.Move(mode.Word(Backward))
+	case 'r':
+		mode.Move(mode.Word(Forward))
 	case 'z':
 		mode.SwitchVersion(Backward)
 	case 'x':
