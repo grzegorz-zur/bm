@@ -5,8 +5,8 @@ Minimalistic text editor for GNU/Linux.
 ## Status
 
 [![CircleCI](https://circleci.com/gh/grzegorz-zur/bm.svg?style=svg)](https://circleci.com/gh/grzegorz-zur/bm)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b395ffed1b5c4a06a54f1416c08362b7)](https://www.codacy.com/app/grzegorz.zur/bm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=grzegorz-zur/bm&amp;utm_campaign=Badge_Grade)
-[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/b395ffed1b5c4a06a54f1416c08362b7)](https://www.codacy.com/app/grzegorz.zur/bm?utm_source=github.com&utm_medium=referral&utm_content=grzegorz-zur/bm&utm_campaign=Badge_Coverage)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7e9ccdb8cb3c4da2a5f12303bf0d9a5a)](https://www.codacy.com/manual/grzegorz.zur/bm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=grzegorz-zur/bm&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/7e9ccdb8cb3c4da2a5f12303bf0d9a5a)](https://www.codacy.com/manual/grzegorz.zur/bm?utm_source=github.com&utm_medium=referral&utm_content=grzegorz-zur/bm&utm_campaign=Badge_Coverage)
 
 ## Goals
 
