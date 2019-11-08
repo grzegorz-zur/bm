@@ -39,7 +39,7 @@ func (file File) Word(dir Direction) Move {
 		pos := file.Position
 		for {
 			var ok bool
-			pos, ok = file.advance(pos, dir)
+			pos, ok = file.nextRune(pos, dir)
 			if !ok {
 				return file.Position
 			}
@@ -48,6 +48,40 @@ func (file File) Word(dir Direction) Move {
 			}
 		}
 	}
+}
+
+func (file File) nextRune(pos Position, dir Direction) (Position, bool) {
+	l := pos.Line
+	if l < len(file.Lines) {
+		c := pos.Col + dir.Value()
+		if 0 <= c && c < len(file.Lines[l]) {
+			return Position{l, c}, true
+		}
+	}
+	return file.nextLine(pos, dir)
+}
+
+func (file File) nextLine(pos Position, dir Direction) (Position, bool) {
+	if pos.Line == 0 && dir == Backward {
+		return pos, false
+	}
+	if pos.Line >= len(file.Lines) && dir == Forward {
+		return pos, false
+	}
+	for l := pos.Line + dir.Value(); 0 <= l && l < len(file.Lines); l += dir.Value() {
+		if len(file.Lines[l]) > 0 {
+			c := 0
+			if dir == Backward {
+				c = len(file.Lines[l]) - 1
+			}
+			return Position{l, c}, true
+		}
+	}
+	return pos, false
+}
+
+func (file File) runeAt(pos Position) rune {
+	return file.Lines[pos.Line][pos.Col]
 }
 
 func (file File) atWord(pos Position) bool {
@@ -69,44 +103,12 @@ func (file File) atWord(pos Position) bool {
 	return true
 }
 
-func (file File) runeAt(pos Position) rune {
-	return file.Lines[pos.Line][pos.Col]
-}
-
 func (file File) atText(pos Position) bool {
 	if pos.Line >= len(file.Lines) {
 		return false
 	}
-	l := file.Lines[pos.Line]
-	if pos.Col >= len(l) {
+	if pos.Col >= len(file.Lines[pos.Line]) {
 		return false
 	}
 	return true
-}
-
-func (file File) advance(pos Position, dir Direction) (next Position, ok bool) {
-	next = pos
-	if dir == Backward && pos.Line == 0 && pos.Col == 0 {
-		return
-	}
-	if dir == Forward && (pos.Line >= len(file.Lines) ||
-		pos.Line == len(file.Lines)-1 && pos.Col >= len(file.Lines[pos.Line])) {
-		return
-	}
-	line := pos.Line
-	col := pos.Col + dir.Value()
-	if col < 0 {
-		line--
-		col = len(file.Lines[line]) - 1
-	}
-	if col >= len(file.Lines[line]) {
-		line++
-		col = 0
-	}
-	if line < 0 || line >= len(file.Lines) {
-		return
-	}
-	ok = true
-	next = Position{Line: line, Col: col}
-	return
 }
