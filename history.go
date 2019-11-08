@@ -1,4 +1,4 @@
-package bm
+package main
 
 const (
 	HistorySize = 1024

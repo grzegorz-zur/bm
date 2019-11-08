@@ -1,4 +1,4 @@
-package bm
+package main
 
 type Lines []Line
 

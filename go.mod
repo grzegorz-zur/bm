@@ -1,4 +1,4 @@
-module github.com/grzegorz-zur/bare-minimum
+module github.com/grzegorz-zur/bm
 
 go 1.13
 

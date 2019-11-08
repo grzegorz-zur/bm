@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	bm "github.com/grzegorz-zur/bare-minimum"
 	"io/ioutil"
 	"log"
 	"os"
@@ -38,8 +37,8 @@ func main() {
 	for _, path := range flag.Args() {
 		paths = append(paths, path)
 	}
-	display := &bm.Display{}
-	editor := bm.New(display, paths)
+	display := &Display{}
+	editor := New(display, paths)
 	editor.Start()
 	editor.Wait()
 }

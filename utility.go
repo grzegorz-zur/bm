@@ -1,4 +1,4 @@
-package bm
+package main
 
 func wrap(pos, length, step int, dir Direction) int {
 	if length == 0 {

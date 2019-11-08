@@ -1,4 +1,4 @@
-package bm
+package main
 
 type Position struct {
 	Line int

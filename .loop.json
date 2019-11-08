@@ -1,18 +1,14 @@
 {
 	"watch" : {
-		"directories" : [
-			".",
-			"cmd/bm"
-		],
 		"patterns" : [
 			"*.go",
 			"go.mod"
 		]
 	},
 	"commands": [
-		[ "go", "fmt", "./..." ],
-		[ "go", "vet", "./..." ],
-		[ "go", "test" ],
-		[ "go", "build", "./cmd/bm" ]
+		[ "go", "fmt" ],
+		[ "go", "vet" ],
+		[ "go", "build" ],
+		[ "go", "test" ]
 	]
 }
