@@ -21,17 +21,17 @@ func (mode *Command) Key(event tb.Event) (err error) {
 
 	switch event.Ch {
 	case 'd':
-		mode.Move(File.Left)
+		mode.Motion(File.Left)
 	case 'f':
-		mode.Move(File.Right)
+		mode.Motion(File.Right)
 	case 'a':
-		mode.Move(File.Up)
+		mode.Motion(File.Up)
 	case 's':
-		mode.Move(File.Down)
+		mode.Motion(File.Down)
 	case 'e':
-		mode.Move(mode.Word(Backward))
+		mode.Motion(mode.Word(Backward))
 	case 'r':
-		mode.Move(mode.Word(Forward))
+		mode.Motion(mode.Word(Forward))
 	case 'z':
 		mode.SwitchVersion(Backward)
 	case 'x':
@@ -68,13 +68,13 @@ func (mode *Command) Key(event tb.Event) (err error) {
 		err = mode.WriteAll()
 		mode.Quit()
 	case tb.KeyArrowLeft:
-		mode.Move(File.Left)
+		mode.Motion(File.Left)
 	case tb.KeyArrowRight:
-		mode.Move(File.Right)
+		mode.Motion(File.Right)
 	case tb.KeyArrowUp:
-		mode.Move(File.Up)
+		mode.Motion(File.Up)
 	case tb.KeyArrowDown:
-		mode.Move(File.Down)
+		mode.Motion(File.Down)
 	}
 
 	if err != nil {

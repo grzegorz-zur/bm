@@ -26,11 +26,11 @@ type File struct {
 
 type Change func(File) File
 
-func (file *File) Move(move Move) {
+func (file *File) Motion(m Motion) {
 	if file == nil {
 		return
 	}
-	file.Position = move(*file)
+	file.Position = m(*file)
 }
 
 func (file *File) Change(op Change) {

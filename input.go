@@ -26,13 +26,13 @@ func (mode *Input) Key(event tb.Event) (err error) {
 	case tb.KeyEsc:
 		mode.SwitchMode(mode.Editor.Command)
 	case tb.KeyArrowLeft:
-		mode.Move(File.Left)
+		mode.Motion(File.Left)
 	case tb.KeyArrowRight:
-		mode.Move(File.Right)
+		mode.Motion(File.Right)
 	case tb.KeyArrowUp:
-		mode.Move(File.Up)
+		mode.Motion(File.Up)
 	case tb.KeyArrowDown:
-		mode.Move(File.Down)
+		mode.Motion(File.Down)
 	case tb.KeySpace:
 		mode.Change(InsertRune(' '))
 	case tb.KeyTab:

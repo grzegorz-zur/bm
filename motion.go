@@ -4,7 +4,7 @@ import (
 	"unicode"
 )
 
-type Move func(file File) (pos Position)
+type Motion func(file File) (pos Position)
 
 func (file File) Left() (pos Position) {
 	pos = file.Position
@@ -34,7 +34,7 @@ func (file File) Down() (pos Position) {
 	return
 }
 
-func (file File) Word(dir Direction) Move {
+func (file File) Word(dir Direction) Motion {
 	return func(file File) Position {
 		pos := file.Position
 		for {
