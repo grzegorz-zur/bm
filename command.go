@@ -32,6 +32,10 @@ func (mode *Command) Key(event tb.Event) (err error) {
 		mode.Motion(mode.Word(Backward))
 	case 'r':
 		mode.Motion(mode.Word(Forward))
+	case 'q':
+		mode.Motion(mode.Paragraph(Backward))
+	case 'w':
+		mode.Motion(mode.Paragraph(Forward))
 	case 'z':
 		mode.SwitchVersion(Backward)
 	case 'x':
