@@ -95,23 +95,10 @@ func (mode *Command) Render(display *Display, bounds Bounds) (cursor Position, e
 		err = fmt.Errorf("error renderning file: %w", err)
 		return
 	}
-	_, err = mode.render(display, status)
+	_, err = renderNameAndPosition(mode.Path, mode.Position, tb.ColorGreen, display, status)
 	if err != nil {
 		err = fmt.Errorf("error renderning status: %w", err)
 		return
-	}
-	return
-}
-
-func (mode *Command) render(display *Display, bounds Bounds) (cursor Position, err error) {
-	name := []rune(mode.Path)
-	for c := bounds.Left; c <= bounds.Right; c++ {
-		i := c - bounds.Left
-		r := ' '
-		if i < len(name) {
-			r = name[i]
-		}
-		display.SetCell(c, bounds.Top, r, tb.ColorDefault|tb.AttrBold, tb.ColorGreen)
 	}
 	return
 }
