@@ -33,6 +33,10 @@ func (mode *Input) Key(event tb.Event) (err error) {
 		mode.Motion(File.Up)
 	case tb.KeyArrowDown:
 		mode.Motion(File.Down)
+	case tb.KeyPgup:
+		mode.Motion(mode.Paragraph(Backward))
+	case tb.KeyPgdn:
+		mode.Motion(mode.Paragraph(Forward))
 	case tb.KeySpace:
 		mode.Change(InsertRune(' '))
 	case tb.KeyTab:

@@ -79,6 +79,10 @@ func (mode *Command) Key(event tb.Event) (err error) {
 		mode.Motion(File.Up)
 	case tb.KeyArrowDown:
 		mode.Motion(File.Down)
+	case tb.KeyPgup:
+		mode.Motion(mode.Paragraph(Backward))
+	case tb.KeyPgdn:
+		mode.Motion(mode.Paragraph(Forward))
 	}
 
 	if err != nil {
