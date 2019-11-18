@@ -1,6 +1,6 @@
 # Bare Minimum
 
-Minimalistic text editor for GNU/Linux.
+Minimalistic text editor.
 
 ## Status
 
@@ -10,8 +10,8 @@ Minimalistic text editor for GNU/Linux.
 
 ## Goals
 
-1. Effectively work with multiple files.
-2. Effectively work with external tools that modify edited files.
+1.  Effectively work with multiple files.
+2.  Effectively work with external tools that modify edited files.
 
 ## Installation
 

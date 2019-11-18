@@ -9,61 +9,63 @@ type Input struct {
 	*Editor
 }
 
-func (mode *Input) Show() (err error) {
-	return
+// Show updates mode when switched to.
+func (m *Input) Show() error {
+	return nil
 }
 
-func (mode *Input) Hide() (err error) {
-	return
+// Hide updates mode when switched from.
+func (m *Input) Hide() error {
+	return nil
 }
 
-func (mode *Input) Key(event tb.Event) (err error) {
-	if event.Ch != 0 {
-		mode.Change(InsertRune(event.Ch))
+// Key handles input events.
+func (m *Input) Key(e tb.Event) error {
+	if e.Ch != 0 {
+		m.Change(InsertRune(e.Ch))
 	}
 
-	switch event.Key {
+	switch e.Key {
 	case tb.KeyEsc:
-		mode.SwitchMode(mode.Editor.Command)
+		m.SwitchMode(m.Editor.Command)
 	case tb.KeyArrowLeft:
-		mode.Motion(File.Left)
+		m.Motion(File.Left)
 	case tb.KeyArrowRight:
-		mode.Motion(File.Right)
+		m.Motion(File.Right)
 	case tb.KeyArrowUp:
-		mode.Motion(File.Up)
+		m.Motion(File.Up)
 	case tb.KeyArrowDown:
-		mode.Motion(File.Down)
+		m.Motion(File.Down)
 	case tb.KeyPgup:
-		mode.Motion(mode.Paragraph(Backward))
+		m.Motion(Paragraph(Backward))
 	case tb.KeyPgdn:
-		mode.Motion(mode.Paragraph(Forward))
+		m.Motion(Paragraph(Forward))
 	case tb.KeySpace:
-		mode.Change(InsertRune(' '))
+		m.Change(InsertRune(' '))
 	case tb.KeyTab:
-		mode.Change(InsertRune('\t'))
+		m.Change(InsertRune('\t'))
 	case tb.KeyEnter:
-		mode.Change(File.Split)
+		m.Change(File.Split)
 	case tb.KeyBackspace:
 	case tb.KeyBackspace2:
-		mode.Change(File.DeletePreviousRune)
+		m.Change(File.DeletePreviousRune)
 	case tb.KeyDelete:
-		mode.Change(File.DeleteRune)
+		m.Change(File.DeleteRune)
 	}
 
-	return
+	return nil
 }
 
-func (mode *Input) Render(display *Display, bounds Bounds) (cursor Position, err error) {
-	file, status := bounds.SplitHorizontal(-1)
-	cursor, err = mode.File.Render(display, file)
+// Render renders mode.
+func (m *Input) Render(d *Display, a Area) (Position, error) {
+	file, status := a.SplitHorizontal(-1)
+	cursor, err := m.File.Render(d, file)
 	if err != nil {
-		err = fmt.Errorf("error rendering file: %w", err)
-		return
+		return cursor, fmt.Errorf("error rendering file: %w", err)
 	}
-	_, err = renderNameAndPosition(mode.Path, mode.Position, tb.ColorRed, display, status)
+	_, err = renderNameAndPosition(m.Path, m.Position, tb.ColorRed, d, status)
 	if err != nil {
-		err = fmt.Errorf("error rendering status: %w", err)
-		return
+		return cursor, fmt.Errorf("error rendering status: %w", err)
 	}
-	return
+	return cursor, nil
 }

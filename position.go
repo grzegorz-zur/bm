@@ -1,6 +1,11 @@
 package main
 
+// Position indicates line and column.
+//
+// The values start at zero.
 type Position struct {
-	Line int
-	Col  int
+	// Line.
+	L int
+	// Column.
+	C int
 }

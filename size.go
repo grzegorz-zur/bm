@@ -1,6 +1,9 @@
 package main
 
+// Size describes number of lines and columns.
 type Size struct {
-	Lines int
-	Cols  int
+	// Lines.
+	L int
+	// Columns.
+	C int
 }

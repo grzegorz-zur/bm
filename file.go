@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	tb "github.com/nsf/termbox-go"
@@ -10,294 +9,135 @@ import (
 )
 
 var (
+	// ErrNoFile indicates missing file.
 	ErrNoFile             = errors.New("no file")
 	eol                   = []byte("\n")
 	perm      os.FileMode = 0644
 )
 
+// File represents open file.
 type File struct {
 	Path string
 	Time time.Time
 	Lines
 	Position
-	Window Bounds
+	Window Area
 	*History
 }
 
-type Change func(File) File
-
-func (file *File) Motion(m Motion) {
-	if file == nil {
+// Motion applies motion to a file.
+func (f *File) Motion(m Motion) {
+	if f == nil {
 		return
 	}
-	file.Position = m(*file)
+	f.Position = m(*f)
 }
 
-func (file *File) Change(op Change) {
-	if file == nil {
+// Change applies change to a file.
+func (f *File) Change(c Change) {
+	if f == nil {
 		return
 	}
-	*(file) = op(*file)
-	file.Archive()
+	*(f) = c(*f)
+	f.Archive()
 }
 
-func (file *File) Archive() {
-	if file == nil {
+// Archive makes a record in history.
+func (f *File) Archive() {
+	if f == nil {
 		return
 	}
-	file.History.Archive(file.Lines, file.Position)
+	f.History.Archive(f.Lines, f.Position)
 }
 
-func (file *File) SwitchVersion(dir Direction) {
-	if file == nil {
+// SwitchVersion switches between versions from history.
+func (f *File) SwitchVersion(dir Direction) {
+	if f == nil {
 		return
 	}
-	file.Lines, file.Position = file.History.Switch(dir)
+	f.Lines, f.Position = f.History.Switch(dir)
 }
 
-func Open(path string) (file File, err error) {
-	file = File{
-		Path:    path,
-		History: &History{},
+// Render renders the file contents to display.
+func (f *File) Render(d *Display, a Area) (Position, error) {
+	if f == nil {
+		return Position{}, ErrNoFile
 	}
-	err = file.Load()
-	if err != nil {
-		err = fmt.Errorf("error opening file %s: %w", path, err)
-		return
-	}
-	file.Archive()
-	return
-}
-
-func (file *File) ReloadIfModified() (modified bool, err error) {
-	if file == nil {
-		return modified, ErrNoFile
-	}
-	modified, err = file.Modified()
-	if err != nil {
-		err = fmt.Errorf("error checking modification date on %s: %w", file.Path, err)
-		return
-	}
-	if !modified {
-		return
-	}
-	err = file.Reload()
-	if err != nil {
-		err = fmt.Errorf("error reloading file %s: %w", file.Path, err)
-		return
-	}
-	return
-}
-
-func (file *File) Modified() (modified bool, err error) {
-	if file == nil {
-		return modified, ErrNoFile
-	}
-	stat, err := os.Stat(file.Path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		err = fmt.Errorf("error checking file %s: %w", file.Path, err)
-		return
-	}
-	modified = stat.ModTime() != file.Time
-	return
-}
-
-func (file *File) Reload() (err error) {
-	if file == nil {
-		return ErrNoFile
-	}
-	err = file.Load()
-	if err != nil {
-		err = fmt.Errorf("error reloading file: %s: %w", file.Path, err)
-		return
-	}
-	file.Archive()
-	return
-}
-
-func (file *File) Load() (err error) {
-	if file == nil {
-		return ErrNoFile
-	}
-	flags := os.O_RDWR | os.O_CREATE
-	f, err := os.OpenFile(file.Path, flags, perm)
-	if err != nil {
-		err = fmt.Errorf("error opening file %s: %w", file.Path, err)
-		return
-	}
-	defer func() {
-		err = f.Close()
-		if err != nil {
-			err = fmt.Errorf("error closing file %s: %w", file.Path, err)
-		}
-	}()
-	err = file.update()
-	if err != nil {
-		err = fmt.Errorf("error updating file information %s: %w", file.Path, err)
-		return
-	}
-	scanner := bufio.NewScanner(f)
-	file.Lines = nil
-	for scanner.Scan() {
-		err = scanner.Err()
-		if err != nil {
-			err = fmt.Errorf("error reading file %s: %w", file.Path, err)
-			return
-		}
-		line := scanner.Text()
-		runes := []rune(line)
-		file.Lines = append(file.Lines, runes)
-	}
-	return
-}
-
-func (file *File) Write() (err error) {
-	if file == nil {
-		return ErrNoFile
-	}
-	f, err := os.Create(file.Path)
-	defer func() {
-		err = f.Close()
-		if err != nil {
-			err = fmt.Errorf("error closing file %s: %w", file.Path, err)
-		}
-	}()
-	defer func() {
-		err = file.update()
-		if err != nil {
-			err = fmt.Errorf("error updating file information %s: %w", file.Path, err)
-		}
-	}()
-	if err != nil {
-		err = fmt.Errorf("error writing file %s: %w", file.Path, err)
-		return
-	}
-	for _, runes := range file.Lines {
-		line := string(runes)
-		bytes := []byte(line)
-		f.Write(bytes)
-		f.Write(eol)
-	}
-	return
-}
-
-func (file *File) Render(display *Display, bounds Bounds) (cursor Position, err error) {
-	if file == nil {
-		return cursor, ErrNoFile
-	}
-	file.scroll()
-	size := bounds.Size()
-	file.size(size)
-	w := file.Window
-	for line := w.Top; line <= w.Bottom; line++ {
-		if line >= len(file.Lines) {
+	f.scroll()
+	s := a.Size()
+	f.size(s)
+	w := f.Window
+	for l := w.T; l <= w.B; l++ {
+		if l >= len(f.Lines) {
 			break
 		}
-		runes := file.Lines[line]
-		screenLine := bounds.Top + line - w.Top
-		for col := w.Left; col <= w.Right; col++ {
-			if col >= len(runes) {
+		runes := f.Lines[l]
+		sl := a.T + l - w.T
+		for c := w.L; c <= w.R; c++ {
+			if c >= len(runes) {
 				break
 			}
-			symbol := runes[col]
-			screenCol := bounds.Left + col - w.Left
-			display.SetCell(screenCol, screenLine, symbol, tb.ColorDefault, tb.ColorDefault)
+			symbol := runes[c]
+			sc := a.L + c - w.L
+			d.SetCell(sc, sl, symbol, tb.ColorDefault, tb.ColorDefault)
 		}
 	}
-	p := file.Position
-	cursor.Line = p.Line - w.Top
-	cursor.Col = p.Col - w.Left
-	return
+	p := f.Position
+	crs := Position{
+		L: p.L - w.T,
+		C: p.C - w.L,
+	}
+	return crs, nil
 }
 
-func (file *File) update() (err error) {
-	if file == nil {
+func (f *File) update() error {
+	if f == nil {
 		return ErrNoFile
 	}
-	stat, err := os.Stat(file.Path)
+	stat, err := os.Stat(f.Path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		err = fmt.Errorf("error checking file %s: %w", file.Path, err)
+		return fmt.Errorf("error checking file %s: %w", f.Path, err)
+	}
+	f.Time = stat.ModTime()
+	return nil
+}
+
+func (f *File) size(s Size) {
+	if f == nil {
 		return
 	}
-	file.Time = stat.ModTime()
+	w := &f.Window
+	w.B = w.T + s.L - 1
+	w.R = w.L + s.C - 1
 	return
 }
 
-func (file *File) size(size Size) {
-	if file == nil {
+func (f *File) scroll() {
+	if f == nil {
 		return
 	}
-	w := &file.Window
-	w.Bottom = w.Top + size.Lines
-	w.Right = w.Left + size.Cols
-	return
-}
-
-func (file *File) scroll() {
-	if file == nil {
-		return
-	}
-	p := file.Position
-	w := &file.Window
-	height := w.Bottom - w.Top
-	width := w.Right - w.Left
+	p := f.Position
+	w := &f.Window
+	s := w.Size()
 
 	switch {
-	case p.Line < w.Top:
-		w.Top = p.Line
-		w.Bottom = w.Top + height
-	case p.Line > w.Bottom:
-		w.Bottom = p.Line
-		w.Top = w.Bottom - height
+	case p.L < w.T:
+		w.T = p.L
+		w.B = w.T + s.L - 1
+	case p.L > w.B:
+		w.B = p.L
+		w.T = w.B - s.L + 1
 	}
 
 	switch {
-	case p.Col < w.Left:
-		w.Left = p.Col
-		w.Right = w.Left + width
-	case p.Col > w.Right:
-		w.Right = p.Col
-		w.Left = w.Right - width
+	case p.C < w.L:
+		w.L = p.C
+		w.R = w.L + s.C - 1
+	case p.C > w.R:
+		w.R = p.C
+		w.L = w.R - s.C + 1
 	}
-}
-
-func (file File) DeleteRune() File {
-	file.Lines = file.Lines.DeleteRune(file.Position)
-	return file
-}
-
-func (file File) DeletePreviousRune() File {
-	p := file.Position
-	if p.Col == 0 {
-		return file
-	}
-	file.Lines = file.Lines.DeletePreviousRune(p)
-	file.Position = Position{Line: p.Line, Col: p.Col - 1}
-	return file
-}
-
-func InsertRune(r rune) Change {
-	return func(file File) File {
-		p := file.Position
-		file.Lines = file.Lines.InsertRune(p, r)
-		file.Position = Position{Line: p.Line, Col: p.Col + 1}
-		return file
-	}
-}
-
-func (file File) DeleteLine() File {
-	file.Lines = file.Lines.DeleteLine(file.Position.Line)
-	return file
-}
-
-func (file File) Split() File {
-	file.Lines = file.Lines.Split(file.Position)
-	file.Position = Position{Line: file.Position.Line + 1}
-	return file
 }

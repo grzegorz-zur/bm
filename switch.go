@@ -8,112 +8,113 @@ import (
 	"strings"
 )
 
+// Switch is a mode for switching files.
 type Switch struct {
 	*Editor
 	query    Line
 	paths    []string
 	filtered []string
 	position Position
-	window   Bounds
+	window   Area
 }
 
-func (mode *Switch) Show() (err error) {
-	mode.query = Line{}
-	mode.paths, err = mode.read()
+// Show updates mode when switched to.
+func (m *Switch) Show() error {
+	m.query = Line{}
+	var err error
+	m.paths, err = m.read()
 	if err != nil {
-		err = fmt.Errorf("error showing switch mode: %w", err)
-		return
+		return fmt.Errorf("error showing switch mode: %w", err)
 	}
-	mode.filter()
-	return
+	m.filter()
+	return nil
 }
 
-func (mode *Switch) Hide() (err error) {
-	return
+// Hide updates mode when switched from.
+func (m *Switch) Hide() error {
+	return nil
 }
 
-func (mode *Switch) Key(event tb.Event) (err error) {
-	if event.Ch != 0 {
-		mode.appendRune(event.Ch)
-		mode.filter()
+// Key handles input events.
+func (m *Switch) Key(e tb.Event) error {
+	if e.Ch != 0 {
+		m.appendRune(e.Ch)
+		m.filter()
 	}
-
-	switch event.Key {
+	var err error
+	switch e.Key {
 	case tb.KeyEsc:
-		if mode.Files.Empty() {
-			mode.Quit()
+		if m.Files.Empty() {
+			m.Quit()
 		} else {
-			mode.SwitchMode(mode.Command)
+			m.SwitchMode(m.Command)
 		}
 	case tb.KeyArrowUp:
-		mode.moveUp()
+		m.moveUp()
 	case tb.KeyArrowDown:
-		mode.moveDown()
+		m.moveDown()
 	case tb.KeyBackspace:
 	case tb.KeyBackspace2:
-		mode.deletePreviousRune()
-		mode.filter()
+		m.deletePreviousRune()
+		m.filter()
 	case tb.KeyEnter:
-		err = mode.open()
-		mode.SwitchMode(mode.Command)
+		err = m.open()
+		m.SwitchMode(m.Command)
 	}
 
 	if err != nil {
-		err = fmt.Errorf("error handling event %v: %w", event, err)
+		return fmt.Errorf("error handling event %v: %w", e, err)
 	}
 
-	return
+	return nil
 }
 
-func (mode *Switch) filter() {
-	query := mode.query.String()
-	mode.filtered = make([]string, 0, len(mode.paths))
-	for _, path := range mode.paths {
+func (m *Switch) filter() {
+	query := m.query.String()
+	m.filtered = make([]string, 0, len(m.paths))
+	for _, path := range m.paths {
 		if match(path, query) {
-			mode.filtered = append(mode.filtered, path)
+			m.filtered = append(m.filtered, path)
 		}
 	}
-	mode.position = Position{}
 	return
 }
 
-func (mode *Switch) open() (err error) {
-	pos := mode.position
-	path := mode.query.String()
-	if pos.Line < len(mode.filtered) {
-		path = mode.filtered[pos.Line]
+func (m *Switch) open() error {
+	p := m.position
+	path := m.query.String()
+	if p.L < len(m.filtered) {
+		path = m.filtered[p.L]
 	}
-	err = mode.Open(path)
+	err := m.Open(path)
 	if err != nil {
-		err = fmt.Errorf("error opening file %s: %w", path, err)
+		return fmt.Errorf("error opening file %s: %w", path, err)
 	}
-	return
+	return nil
 }
 
-func (mode *Switch) appendRune(r rune) {
-	mode.query = mode.query.AppendRune(r)
+func (m *Switch) appendRune(r rune) {
+	m.query = m.query.AppendRune(r)
 }
 
 func (mode *Switch) deletePreviousRune() {
 	mode.query = mode.query.DeletePreviousRune(len(mode.query))
 }
 
-func (mode *Switch) moveUp() {
-	p := mode.position
-	if p.Line > 0 {
-		mode.position = Position{Line: p.Line - 1}
+func (m *Switch) moveUp() {
+	if m.position.L > 0 {
+		m.position.L--
 	}
 }
 
-func (mode *Switch) moveDown() {
-	p := mode.position
-	if p.Line+1 < len(mode.filtered) {
-		mode.position = Position{Line: p.Line + 1}
+func (m *Switch) moveDown() {
+	if m.position.L+1 < len(m.filtered) {
+		m.position.L++
 	}
 }
 
-func (mode *Switch) Render(display *Display, bounds Bounds) (cursor Position, err error) {
-	paths, status := bounds.SplitHorizontal(-1)
+func (mode *Switch) Render(display *Display, area Area) (cursor Position, err error) {
+	paths, status := area.SplitHorizontal(-1)
 	err = mode.renderPaths(display, paths)
 	if err != nil {
 		err = fmt.Errorf("error rendering paths: %w", err)
@@ -127,81 +128,78 @@ func (mode *Switch) Render(display *Display, bounds Bounds) (cursor Position, er
 	return
 }
 
-func (mode *Switch) renderPaths(display *Display, bounds Bounds) (err error) {
-	paths := mode.filtered
-	mode.scroll()
-	size := bounds.Size()
-	mode.size(size)
-	p := mode.position
-	w := mode.window
-	for line := w.Top; line <= w.Bottom; line++ {
-		if line >= len(paths) {
+func (m *Switch) renderPaths(d *Display, a Area) error {
+	paths := m.filtered
+	m.scroll()
+	s := a.Size()
+	m.size(s)
+	p := m.position
+	w := m.window
+	for l := w.T; l <= w.B; l++ {
+		if l >= len(paths) {
 			break
 		}
-		foreground := tb.ColorDefault
-		background := tb.ColorDefault
-		if line == p.Line {
-			foreground = tb.ColorBlack
-			background = tb.ColorWhite
+		fg := tb.ColorDefault
+		bg := tb.ColorDefault
+		if l == p.L {
+			fg = tb.ColorBlack
+			bg = tb.ColorWhite
 		}
-		path := paths[line]
+		path := paths[l]
 		runes := []rune(path)
-		screenLine := bounds.Top + line - w.Top
-		for col := w.Left; col <= w.Right; col++ {
-			if col >= len(runes) {
+		sl := a.T + l - w.T
+		for c := w.L; c <= w.R; c++ {
+			if c >= len(runes) {
 				break
 			}
-			symbol := runes[col]
-			screenCol := bounds.Left + col - w.Left
-			display.SetCell(screenCol, screenLine, symbol, foreground, background)
+			r := runes[c]
+			sc := a.L + c - w.L
+			d.SetCell(sc, sl, r, fg, bg)
 		}
 	}
-	return
+	return nil
 }
 
-func (mode *Switch) size(size Size) {
-	w := &mode.window
-	w.Bottom = w.Top + size.Lines
-	w.Right = w.Left + size.Cols
-	return
+func (m *Switch) size(s Size) {
+	w := &m.window
+	w.B = w.T + s.L - 1
+	w.R = w.L + s.C - 1
 }
 
-func (mode *Switch) scroll() {
-	p := mode.position
-	w := &mode.window
-	height := w.Bottom - w.Top
-	width := w.Right - w.Left
+func (m *Switch) scroll() {
+	p := m.position
+	w := &m.window
+	s := w.Size()
 
 	switch {
-	case p.Line < w.Top:
-		w.Top = p.Line
-		w.Bottom = w.Top + height
-	case p.Line > w.Bottom:
-		w.Bottom = p.Line
-		w.Top = w.Bottom - height
+	case p.L < w.T:
+		w.T = p.L
+		w.B = w.T + s.L - 1
+	case p.L > w.B:
+		w.B = p.L
+		w.T = w.B - s.L + 1
 	}
 
 	switch {
-	case p.Col < w.Left:
-		w.Left = p.Col
-		w.Right = w.Left + width
-	case p.Col > w.Right:
-		w.Right = p.Col
-		w.Left = w.Right - width
+	case p.C < w.L:
+		w.L = p.C
+		w.R = w.L + s.C - 1
+	case p.C > w.R:
+		w.R = p.C
+		w.L = w.R - s.C + 1
 	}
 }
 
-func (mode *Switch) renderInput(display *Display, bounds Bounds) (cursor Position, err error) {
-	for c := bounds.Left; c <= bounds.Right; c++ {
-		i := c - bounds.Left
+func (m *Switch) renderInput(d *Display, a Area) (Position, error) {
+	for c := a.L; c <= a.R; c++ {
+		i := c - a.L
 		r := ' '
-		if i < len(mode.query) {
-			r = mode.query[i]
+		if i < len(m.query) {
+			r = m.query[i]
 		}
-		display.SetCell(c, bounds.Top, r, tb.ColorDefault|tb.AttrBold, tb.ColorBlue)
+		d.SetCell(c, a.T, r, tb.ColorDefault|tb.AttrBold, tb.ColorBlue)
 	}
-	cursor = Position{Line: bounds.Top, Col: len(mode.query)}
-	return
+	return Position{L: a.T, C: len(m.query)}, nil
 }
 
 func (mode *Switch) read() (paths []string, err error) {

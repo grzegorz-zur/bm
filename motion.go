@@ -4,148 +4,155 @@ import (
 	"unicode"
 )
 
-type Motion func(file File) (pos Position)
+// Motion represents cursor movement in the file.
+type Motion func(File) Position
 
-func (file File) Left() (pos Position) {
-	pos = file.Position
-	if pos.Col > 0 {
-		pos.Col--
+// Left moves cursor to the left.
+func (f File) Left() Position {
+	p := f.Position
+	if p.C > 0 {
+		p.C--
 	}
-	return
+	return p
 }
 
-func (file File) Right() (pos Position) {
-	pos = file.Position
-	pos.Col++
-	return
+// Right moves cursor to the right.
+func (f File) Right() Position {
+	p := f.Position
+	p.C++
+	return p
 }
 
-func (file File) Up() (pos Position) {
-	pos = file.Position
-	if pos.Line > 0 {
-		pos.Line--
+// Up moves cursor line up.
+func (f File) Up() Position {
+	p := f.Position
+	if p.L > 0 {
+		p.L--
 	}
-	return
+	return p
 }
 
-func (file File) Down() (pos Position) {
-	pos = file.Position
-	pos.Line++
-	return
+//Down moves cursor line down.
+func (f File) Down() Position {
+	p := f.Position
+	p.L++
+	return p
 }
 
-func (file File) Word(dir Direction) Motion {
-	return func(file File) Position {
-		pos := file.Position
+// Word moves cursor to the next or previous word.
+func Word(d Direction) Motion {
+	return func(f File) Position {
+		p := f.Position
 		for {
 			var ok bool
-			pos, ok = file.nextRune(pos, dir)
+			p, ok = f.nextRune(p, d)
 			if !ok {
-				return file.Position
+				return f.Position
 			}
-			if file.atWord(pos) {
-				return pos
+			if f.atWord(p) {
+				return p
 			}
 		}
 	}
 }
 
-func (file File) Paragraph(dir Direction) Motion {
-	return func(file File) Position {
-		pos := file.Position
+// Paragraph moves cursor to the next or previous paragraph.
+func Paragraph(d Direction) Motion {
+	return func(f File) Position {
+		p := f.Position
 		for {
 			var ok bool
-			pos, ok = file.nextLine(pos, dir)
+			p, ok = f.nextLine(p, d)
 			if !ok {
-				return file.Position
+				return f.Position
 			}
-			pos.Col = 0
-			if file.atParagraph(pos) {
-				return pos
+			p.C = 0
+			if f.atParagraph(p) {
+				return p
 			}
 		}
 	}
 }
 
-func (file File) nextRune(pos Position, dir Direction) (Position, bool) {
-	l := pos.Line
-	if l < len(file.Lines) {
-		c := pos.Col + dir.Value()
-		if 0 <= c && c < len(file.Lines[l]) {
+func (ls Lines) nextRune(p Position, d Direction) (Position, bool) {
+	l := p.L
+	if l < len(ls) {
+		c := p.C + d.Value()
+		if 0 <= c && c < len(ls[l]) {
 			return Position{l, c}, true
 		}
 	}
-	pos, ok := file.nextLine(pos, dir)
-	pos.Col = 0
-	if dir == Backward && len(file.Lines) > pos.Line && len(file.Lines[pos.Line]) > 0 {
-		pos.Col = len(file.Lines[pos.Line]) - 1
+	p, ok := ls.nextLine(p, d)
+	p.C = 0
+	if d == Backward && len(ls) > p.L && len(ls[p.L]) > 0 {
+		p.C = len(ls[p.L]) - 1
 	}
-	return pos, ok
+	return p, ok
 }
 
-func (file File) nextLine(pos Position, dir Direction) (Position, bool) {
-	if pos.Line == 0 && dir == Backward {
-		return pos, false
+func (ls Lines) nextLine(p Position, d Direction) (Position, bool) {
+	if p.L == 0 && d == Backward {
+		return p, false
 	}
-	if pos.Line >= len(file.Lines) && dir == Forward {
-		return pos, false
+	if p.L >= len(ls) && d == Forward {
+		return p, false
 	}
-	for l := pos.Line + dir.Value(); 0 <= l && l < len(file.Lines); l += dir.Value() {
-		if len(file.Lines[l]) > 0 {
-			pos.Line = l
-			return pos, true
+	for l := p.L + d.Value(); 0 <= l && l < len(ls); l += d.Value() {
+		if len(ls[l]) > 0 {
+			p.L = l
+			return p, true
 		}
-		pos.Line = l
-		return pos, true
+		p.L = l
+		return p, true
 	}
-	return pos, false
+	return p, false
 }
 
-func (file File) runeAt(pos Position) rune {
-	return file.Lines[pos.Line][pos.Col]
+func (ls Lines) runeAt(p Position) rune {
+	return ls[p.L][p.C]
 }
 
-func (file File) atWord(pos Position) bool {
-	if !file.atText(pos) {
+func (ls Lines) atWord(p Position) bool {
+	if !ls.atText(p) {
 		return false
 	}
-	r := file.runeAt(pos)
+	r := ls.runeAt(p)
 	if !(unicode.IsLetter(r) || unicode.IsDigit(r)) {
 		return false
 	}
-	if pos.Col == 0 {
+	if p.C == 0 {
 		return true
 	}
-	pos.Col--
-	r = file.runeAt(pos)
+	p.C--
+	r = ls.runeAt(p)
 	if unicode.IsLetter(r) || unicode.IsDigit(r) {
 		return false
 	}
 	return true
 }
 
-func (file File) atParagraph(pos Position) bool {
-	if !file.atText(pos) {
+func (ls Lines) atParagraph(p Position) bool {
+	if !ls.atText(p) {
 		return false
 	}
-	if len(file.Lines[pos.Line]) == 0 {
+	if len(ls[p.L]) == 0 {
 		return false
 	}
-	if pos.Line == 0 {
+	if p.L == 0 {
 		return true
 	}
-	pos.Line--
-	if len(file.Lines[pos.Line]) == 0 {
+	p.L--
+	if len(ls[p.L]) == 0 {
 		return true
 	}
 	return false
 }
 
-func (file File) atText(pos Position) bool {
-	if pos.Line >= len(file.Lines) {
+func (ls Lines) atText(p Position) bool {
+	if p.L >= len(ls) {
 		return false
 	}
-	if pos.Col >= len(file.Lines[pos.Line]) {
+	if p.C >= len(ls[p.L]) {
 		return false
 	}
 	return true

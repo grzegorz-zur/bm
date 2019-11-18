@@ -1,5 +1,6 @@
 package main
 
+// Visual is an object that renders in terminal.
 type Visual interface {
-	Render(*Display, Bounds) (Position, error)
+	Render(*Display, Area) (Position, error)
 }

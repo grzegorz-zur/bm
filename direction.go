@@ -1,12 +1,16 @@
 package main
 
+// Direction	indicates forward or backward.
 type Direction int
 
 const (
-	Forward  Direction = 1
+	// Forward direction.
+	Forward Direction = 1
+	// Backword direction.
 	Backward Direction = -1
 )
 
-func (dir Direction) Value() int {
-	return int(dir)
+// Value returns increment for calculation
+func (d Direction) Value() int {
+	return int(d)
 }

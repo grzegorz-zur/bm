@@ -1,71 +1,78 @@
 package main
 
+// Lines represents lines of text.
 type Lines []Line
 
-func (ls Lines) DeleteRune(pos Position) (lines Lines) {
-	if pos.Line >= len(ls) {
+// DeleteRune deletes a character at a position.
+func (ls Lines) DeleteRune(p Position) Lines {
+	if p.L >= len(ls) {
 		return ls
 	}
-	l := ls[pos.Line]
-	line := l.DeleteRune(pos.Col)
-	lines = make(Lines, 0, len(ls))
-	lines = append(lines, ls...)
-	lines[pos.Line] = line
-	return
+	l := ls[p.L]
+	ln := l.DeleteRune(p.C)
+	lsn := make(Lines, 0, len(ls))
+	lsn = append(lsn, ls...)
+	lsn[p.L] = ln
+	return lsn
 }
 
-func (ls Lines) DeletePreviousRune(pos Position) (lines Lines) {
-	if pos.Line >= len(ls) {
+// DeletePreviousRune deletes a character left to a position.
+func (ls Lines) DeletePreviousRune(p Position) Lines {
+	if p.L >= len(ls) {
 		return ls
 	}
-	l := ls[pos.Line]
-	line := l.DeletePreviousRune(pos.Col)
-	lines = make(Lines, 0, len(ls))
-	lines = append(lines, ls...)
-	lines[pos.Line] = line
-	return
+	l := ls[p.L]
+	ln := l.DeletePreviousRune(p.C)
+	lsn := make(Lines, 0, len(ls))
+	lsn = append(lsn, ls...)
+	lsn[p.L] = ln
+	return lsn
 }
 
-func (ls Lines) DeleteLine(l int) (lines Lines) {
+// DeleteLine deletes a line at a row.
+func (ls Lines) DeleteLine(l int) Lines {
 	if l >= len(ls) {
 		return ls
 	}
-	lines = make(Lines, 0, len(ls)-1)
-	lines = append(lines, ls[:l]...)
-	lines = append(lines, ls[l+1:]...)
-	return
+	lsn := make(Lines, 0, len(ls)-1)
+	lsn = append(lsn, ls[:l]...)
+	lsn = append(lsn, ls[l+1:]...)
+	return lsn
 }
 
-func (ls Lines) Expand(l int) (lines Lines) {
+// Expand expands lines to a number of rows.
+func (ls Lines) Expand(l int) Lines {
 	if l < len(ls) {
 		return ls
 	}
-	lines = make(Lines, 0, l)
-	lines = append(lines, ls...)
-	for i := len(lines); i < cap(lines); i++ {
-		lines = append(lines, Line{})
+	lsn := make(Lines, 0, l)
+	lsn = append(lsn, ls...)
+	for i := len(lsn); i < cap(lsn); i++ {
+		lsn = append(lsn, Line{})
 	}
-	return
+	return lsn
 }
 
-func (ls Lines) InsertRune(pos Position, r rune) (lines Lines) {
-	els := ls.Expand(pos.Line + 1)
-	l := els[pos.Line]
-	line := l.InsertRune(pos.Col, r)
-	lines = make(Lines, 0, len(els))
-	lines = append(lines, els[:pos.Line]...)
-	lines = append(lines, line)
-	lines = append(lines, els[pos.Line+1:]...)
-	return
+// InsertRune inserts a character at a position.
+func (ls Lines) InsertRune(p Position, r rune) Lines {
+	lse := ls.Expand(p.L + 1)
+	l := lse[p.L]
+	ln := l.InsertRune(p.C, r)
+	lsn := make(Lines, 0, len(lse))
+	lsn = append(lsn, lse[:p.L]...)
+	lsn = append(lsn, ln)
+	lsn = append(lsn, lse[p.L+1:]...)
+	return lsn
 }
 
-func (ls Lines) Split(pos Position) (lines Lines) {
-	els := ls.Expand(pos.Line + 1)
-	l := els[pos.Line]
-	line1, line2 := l.Split(pos.Col)
-	lines = make(Lines, 0, len(els)+1)
-	lines = append(lines, els[:pos.Line]...)
-	lines = append(lines, line1, line2)
-	lines = append(lines, els[pos.Line+1:]...)
-	return
+// Split splits lines at a position.
+func (ls Lines) Split(p Position) Lines {
+	lse := ls.Expand(p.L + 1)
+	l := lse[p.L]
+	ln1, ln2 := l.Split(p.C)
+	lsn := make(Lines, 0, len(lse)+1)
+	lsn = append(lsn, lse[:p.L]...)
+	lsn = append(lsn, ln1, ln2)
+	lsn = append(lsn, lse[p.L+1:]...)
+	return lsn
 }

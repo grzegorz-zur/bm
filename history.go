@@ -1,9 +1,11 @@
 package main
 
 const (
+	// HistorySize is length of the history buffer.
 	HistorySize = 1024
 )
 
+// History holds latest records in a ring buffer.
 type History struct {
 	Records
 	bottom  int
@@ -11,36 +13,39 @@ type History struct {
 	top     int
 }
 
+// Records is a list of history records.
 type Records []Record
 
+// Record holds content and position.
 type Record struct {
 	Lines
 	Position
 }
 
-func (history *History) Archive(lines Lines, position Position) {
-	if history.Records == nil {
-		history.Records = make(Records, HistorySize)
+// Archive saves content and position in history and sets position to the recent entry.
+func (h *History) Archive(ls Lines, p Position) {
+	if h.Records == nil {
+		h.Records = make(Records, HistorySize)
 	} else {
-		history.top = wrap(history.top, HistorySize, 1, Forward)
-		if history.top == history.bottom {
-			history.bottom = wrap(history.bottom, HistorySize, 1, Forward)
+		h.top = wrap(h.top, HistorySize, 1, Forward)
+		if h.top == h.bottom {
+			h.bottom = wrap(h.bottom, HistorySize, 1, Forward)
 		}
 	}
-	history.current = history.top
-	record := Record{
-		Lines:    lines,
-		Position: position,
+	h.current = h.top
+	r := Record{
+		Lines:    ls,
+		Position: p,
 	}
-	history.Records[history.current] = record
+	h.Records[h.current] = r
 }
 
-func (history *History) Switch(dir Direction) (lines Lines, position Position) {
-	if dir == Backward && history.current != history.bottom ||
-		dir == Forward && history.current != history.top {
-		history.current = wrap(history.current, HistorySize, 1, dir)
+// Switch retrieves content and position from history and moves current position.
+func (h *History) Switch(d Direction) (Lines, Position) {
+	if d == Backward && h.current != h.bottom ||
+		d == Forward && h.current != h.top {
+		h.current = wrap(h.current, HistorySize, 1, d)
 	}
-	record := history.Records[history.current]
-	lines, position = record.Lines, record.Position
-	return
+	r := h.Records[h.current]
+	return r.Lines, r.Position
 }

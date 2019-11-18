@@ -5,104 +5,110 @@ import (
 	tb "github.com/nsf/termbox-go"
 )
 
+// Command mode.
 type Command struct {
 	*Editor
 }
 
-func (mode *Command) Show() (err error) {
-	return
+// Show updates mode when switched to.
+func (m *Command) Show() error {
+	return nil
 }
 
-func (mode *Command) Hide() (err error) {
-	return
+// Hide updates mode when switched from.
+func (m *Command) Hide() error {
+	return nil
 }
 
-func (mode *Command) Key(event tb.Event) (err error) {
+// Key handles input events.
+func (m *Command) Key(e tb.Event) error {
 
-	switch event.Ch {
+	var err error
+	switch e.Ch {
 	case 'd':
-		mode.Motion(File.Left)
+		m.Motion(File.Left)
 	case 'f':
-		mode.Motion(File.Right)
+		m.Motion(File.Right)
 	case 'a':
-		mode.Motion(File.Up)
+		m.Motion(File.Up)
 	case 's':
-		mode.Motion(File.Down)
+		m.Motion(File.Down)
 	case 'e':
-		mode.Motion(mode.Word(Backward))
+		m.Motion(Word(Backward))
 	case 'r':
-		mode.Motion(mode.Word(Forward))
+		m.Motion(Word(Forward))
 	case 'q':
-		mode.Motion(mode.Paragraph(Backward))
+		m.Motion(Paragraph(Backward))
 	case 'w':
-		mode.Motion(mode.Paragraph(Forward))
+		m.Motion(Paragraph(Forward))
 	case 'z':
-		mode.SwitchVersion(Backward)
+		m.SwitchVersion(Backward)
 	case 'x':
-		mode.SwitchVersion(Forward)
+		m.SwitchVersion(Forward)
 	case 'c':
-		mode.SwitchFile(Backward)
+		m.SwitchFile(Backward)
 	case 'v':
-		mode.SwitchFile(Forward)
+		m.SwitchFile(Forward)
 	case 'j':
-		mode.Change(File.DeleteRune)
+		m.Change(File.DeleteRune)
 	case 'J':
-		mode.Change(File.DeleteLine)
+		m.Change(File.DeleteLine)
 	case 'n':
-		err = mode.Write()
-		mode.Files.Close()
+		err = m.Write()
+		m.Files.Close()
 	case 'N':
-		err = mode.Reload()
+		err = m.Reload()
 	case 'm':
-		err = mode.WriteAll()
+		err = m.WriteAll()
 	case 'M':
-		err = mode.Write()
+		err = m.Write()
 	}
 
-	switch event.Key {
+	switch e.Key {
 	case tb.KeySpace:
-		mode.SwitchMode(mode.Editor.Input)
+		m.SwitchMode(m.Editor.Input)
 	case tb.KeyTab:
-		mode.SwitchMode(mode.Editor.Switch)
+		m.SwitchMode(m.Editor.Switch)
 	case tb.KeyBackspace:
 	case tb.KeyBackspace2:
-		err = mode.WriteAll()
-		mode.Pause()
+		err = m.WriteAll()
+		m.Pause()
 	case tb.KeyDelete:
-		err = mode.WriteAll()
-		mode.Quit()
+		err = m.WriteAll()
+		m.Quit()
 	case tb.KeyArrowLeft:
-		mode.Motion(File.Left)
+		m.Motion(File.Left)
 	case tb.KeyArrowRight:
-		mode.Motion(File.Right)
+		m.Motion(File.Right)
 	case tb.KeyArrowUp:
-		mode.Motion(File.Up)
+		m.Motion(File.Up)
 	case tb.KeyArrowDown:
-		mode.Motion(File.Down)
+		m.Motion(File.Down)
 	case tb.KeyPgup:
-		mode.Motion(mode.Paragraph(Backward))
+		m.Motion(Paragraph(Backward))
 	case tb.KeyPgdn:
-		mode.Motion(mode.Paragraph(Forward))
+		m.Motion(Paragraph(Forward))
 	}
 
 	if err != nil {
-		err = fmt.Errorf("error handling event %v: %w", event, err)
+		return fmt.Errorf("error handling event %v: %w", e, err)
 	}
 
-	return
+	return nil
 }
 
-func (mode *Command) Render(display *Display, bounds Bounds) (cursor Position, err error) {
-	file, status := bounds.SplitHorizontal(-1)
-	cursor, err = mode.File.Render(display, file)
+// Render renders mode to the screen.
+func (m *Command) Render(d *Display, a Area) (Position, error) {
+	file, status := a.SplitHorizontal(-1)
+	cursor, err := m.File.Render(d, file)
 	if err != nil {
 		err = fmt.Errorf("error renderning file: %w", err)
-		return
+		return cursor, err
 	}
-	_, err = renderNameAndPosition(mode.Path, mode.Position, tb.ColorGreen, display, status)
+	_, err = renderNameAndPosition(m.Path, m.Position, tb.ColorGreen, d, status)
 	if err != nil {
 		err = fmt.Errorf("error renderning status: %w", err)
-		return
+		return cursor, err
 	}
-	return
+	return cursor, nil
 }

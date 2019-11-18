@@ -11,9 +11,11 @@ import (
 )
 
 const (
+	// TickInterval designates time between file modification checks.
 	TickInterval = 200 * time.Millisecond
 )
 
+// Editor represents the editor.
 type Editor struct {
 	*Display
 	Modes
@@ -26,9 +28,10 @@ type Editor struct {
 	done    chan struct{}
 }
 
-func New(display *Display, files []string) (editor *Editor) {
-	editor = &Editor{
-		Display: display,
+// New creates new editor.
+func New(d *Display, fs []string) *Editor {
+	e := &Editor{
+		Display: d,
 		keys:    make(chan tb.Event),
 		check:   make(chan struct{}),
 		pause:   make(chan struct{}, 1),
@@ -36,108 +39,114 @@ func New(display *Display, files []string) (editor *Editor) {
 		quit:    make(chan struct{}, 1),
 		done:    make(chan struct{}),
 	}
-	editor.Modes.Command = &Command{
-		Editor: editor,
+	e.Modes.Command = &Command{
+		Editor: e,
 	}
-	editor.Modes.Input = &Input{
-		Editor: editor,
+	e.Modes.Input = &Input{
+		Editor: e,
 	}
-	editor.Modes.Switch = &Switch{
-		Editor: editor,
+	e.Modes.Switch = &Switch{
+		Editor: e,
 	}
-	for _, file := range files {
-		editor.Open(file)
+	for _, f := range fs {
+		e.Open(f)
 	}
-	if editor.Empty() {
-		editor.SwitchMode(editor.Switch)
+	if e.Empty() {
+		e.SwitchMode(e.Switch)
 	} else {
-		editor.SwitchFile(Forward)
-		editor.SwitchMode(editor.Command)
+		e.SwitchFile(Forward)
+		e.SwitchMode(e.Command)
 	}
-	return
+	return e
 }
 
-func (editor *Editor) Start() {
-	go editor.signals()
-	go editor.listen()
-	go editor.tick()
-	go editor.run()
+// Start starts the editor.
+func (e *Editor) Start() {
+	go e.signals()
+	go e.listen()
+	go e.tick()
+	go e.run()
 }
 
-func (editor *Editor) SendKey(event tb.Event) {
-	editor.keys <- event
+// SendKey sends event to the editor.
+func (e *Editor) SendKey(ev tb.Event) {
+	e.keys <- ev
 }
 
-func (editor *Editor) Check() {
-	editor.check <- struct{}{}
+// Check signals file modification check.
+func (e *Editor) Check() {
+	e.check <- struct{}{}
 }
 
-func (editor *Editor) Pause() {
-	editor.pause <- struct{}{}
+// Pause pauses the editor.
+func (e *Editor) Pause() {
+	e.pause <- struct{}{}
 }
 
-func (editor *Editor) Quit() {
-	editor.quit <- struct{}{}
+// Quit quits the editor.
+func (e *Editor) Quit() {
+	e.quit <- struct{}{}
 }
 
-func (editor *Editor) Wait() {
-	<-editor.done
+// Wait waits for the editor to finish.
+func (e *Editor) Wait() {
+	<-e.done
 }
 
-func (editor *Editor) signals() {
+func (e *Editor) signals() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGCONT, syscall.SIGTERM)
 	for signal := range signals {
 		switch signal {
 		case syscall.SIGCONT:
-			editor.unpause <- struct{}{}
+			e.unpause <- struct{}{}
 		case syscall.SIGTERM:
-			editor.quit <- struct{}{}
+			e.quit <- struct{}{}
 		}
 	}
 }
 
-func (editor *Editor) listen() {
+func (e *Editor) listen() {
 	for {
-		editor.keys <- tb.PollEvent()
+		e.keys <- tb.PollEvent()
 	}
 }
 
-func (editor *Editor) tick() {
+func (e *Editor) tick() {
 	for {
 		time.Sleep(TickInterval)
-		editor.check <- struct{}{}
+		e.check <- struct{}{}
 	}
 }
 
-func (editor *Editor) run() {
-	defer close(editor.done)
-	err := editor.Display.Init()
+func (e *Editor) run() {
+	defer close(e.done)
+	err := e.Display.Init()
 	if err != nil {
 		report(err)
 		return
 	}
-	defer editor.Display.Close()
+	defer e.Display.Close()
 
 	for {
-		if editor.Empty() {
-			editor.SwitchMode(editor.Switch)
+		if e.Empty() {
+			e.SwitchMode(e.Switch)
 		}
-		err = editor.render()
+		err = e.render()
 		report(err)
 		select {
-		case event := <-editor.keys:
-			err = editor.Key(event)
+		case event := <-e.keys:
+			err = e.Key(event)
 			report(err)
-		case <-editor.check:
-			if !editor.Empty() {
-				_, err = editor.ReloadIfModified()
+		case <-e.check:
+			if !e.Empty() {
+				_, err = e.ReloadIfModified()
 				report(err)
 			}
-		case <-editor.pause:
-			err = editor.background()
+		case <-e.pause:
+			err = e.background()
 			report(err)
-		case <-editor.quit:
+		case <-e.quit:
 			return
 		}
 	}
@@ -149,34 +158,32 @@ func report(err error) {
 	}
 }
 
-func (editor *Editor) background() (err error) {
-	editor.Display.Close()
+func (e *Editor) background() error {
+	e.Display.Close()
 	pid := os.Getpid()
 	process, err := os.FindProcess(pid)
 	if err != nil {
-		err = fmt.Errorf("error pausing process %+v: %w", process, err)
-		return
+		return fmt.Errorf("error pausing process %+v: %w", process, err)
 	}
 	process.Signal(syscall.SIGSTOP)
-	<-editor.unpause
-	err = editor.Display.Init()
+	<-e.unpause
+	err = e.Display.Init()
 	if err != nil {
-		err = fmt.Errorf("error initializing display: %w", err)
-		return
+		return fmt.Errorf("error initializing display: %w", err)
 	}
-	return
+	return nil
 }
 
-func (editor *Editor) render() (err error) {
-	editor.Display.Clear(tb.ColorDefault, tb.ColorDefault)
-	width, height := editor.Display.Size()
-	size := Size{Lines: height, Cols: width}
-	bounds := Bounds{Right: size.Cols - 1, Bottom: size.Lines - 1}
-	cursor, err := editor.Mode.Render(editor.Display, bounds)
+func (e *Editor) render() error {
+	e.Display.Clear(tb.ColorDefault, tb.ColorDefault)
+	width, height := e.Display.Size()
+	size := Size{L: height, C: width}
+	area := Area{R: size.C - 1, B: size.L - 1}
+	cursor, err := e.Mode.Render(e.Display, area)
 	if err != nil {
-		err = fmt.Errorf("error rendering editor: %w", err)
+		return fmt.Errorf("error rendering editor: %w", err)
 	}
-	editor.Display.SetCursor(cursor.Col, cursor.Line)
-	editor.Display.Flush()
-	return
+	e.Display.SetCursor(cursor.C, cursor.L)
+	e.Display.Flush()
+	return nil
 }

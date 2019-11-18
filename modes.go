@@ -1,19 +1,22 @@
 package main
 
+// Modes holds single instances of each mode.
 type Modes struct {
+	// Mode is the active mode.
 	Mode
 	Command Mode
 	Input   Mode
 	Switch  Mode
 }
 
-func (modes *Modes) SwitchMode(mode Mode) {
-	if modes.Mode == mode {
+// SwitchMode switches active mode.
+func (ms *Modes) SwitchMode(m Mode) {
+	if ms.Mode == m {
 		return
 	}
-	if modes.Mode != nil {
-		modes.Mode.Hide()
+	if ms.Mode != nil {
+		ms.Mode.Hide()
 	}
-	modes.Mode = mode
-	modes.Mode.Show()
+	ms.Mode = m
+	ms.Mode.Show()
 }
