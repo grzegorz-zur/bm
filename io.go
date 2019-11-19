@@ -20,7 +20,7 @@ func Open(path string) (File, error) {
 	return file, nil
 }
 
-// RelaodIfModifed checks if file was modified outside and relaods it.
+// RelaodIfModified checks if file was modified outside and relaods it.
 func (f *File) ReloadIfModified() (bool, error) {
 	if f == nil {
 		return false, ErrNoFile

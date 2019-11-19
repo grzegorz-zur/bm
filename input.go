@@ -5,6 +5,7 @@ import (
 	tb "github.com/nsf/termbox-go"
 )
 
+// Input is a mode for typing.
 type Input struct {
 	*Editor
 }

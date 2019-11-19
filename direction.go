@@ -1,12 +1,12 @@
 package main
 
-// Direction	indicates forward or backward.
+// Direction indicates forward or backward.
 type Direction int
 
 const (
 	// Forward direction.
 	Forward Direction = 1
-	// Backword direction.
+	// Backward direction.
 	Backward Direction = -1
 )
 

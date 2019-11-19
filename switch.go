@@ -97,8 +97,8 @@ func (m *Switch) appendRune(r rune) {
 	m.query = m.query.AppendRune(r)
 }
 
-func (mode *Switch) deletePreviousRune() {
-	mode.query = mode.query.DeletePreviousRune(len(mode.query))
+func (m *Switch) deletePreviousRune() {
+	m.query = m.query.DeletePreviousRune(len(m.query))
 }
 
 func (m *Switch) moveUp() {
@@ -113,19 +113,18 @@ func (m *Switch) moveDown() {
 	}
 }
 
-func (mode *Switch) Render(display *Display, area Area) (cursor Position, err error) {
-	paths, status := area.SplitHorizontal(-1)
-	err = mode.renderPaths(display, paths)
+// Render renders list of files.
+func (m *Switch) Render(d *Display, a Area) (Position, error) {
+	paths, status := a.SplitHorizontal(-1)
+	err := m.renderPaths(d, paths)
 	if err != nil {
-		err = fmt.Errorf("error rendering paths: %w", err)
-		return
+		return Position{}, fmt.Errorf("error rendering paths: %w", err)
 	}
-	cursor, err = mode.renderInput(display, status)
+	cursor, err := m.renderInput(d, status)
 	if err != nil {
-		err = fmt.Errorf("error rendering status: %w", err)
-		return
+		return cursor, fmt.Errorf("error rendering status: %w", err)
 	}
-	return
+	return cursor, nil
 }
 
 func (m *Switch) renderPaths(d *Display, a Area) error {
@@ -202,11 +201,11 @@ func (m *Switch) renderInput(d *Display, a Area) (Position, error) {
 	return Position{L: a.T, C: len(m.query)}, nil
 }
 
-func (mode *Switch) read() (paths []string, err error) {
+func (m *Switch) read() ([]string, error) {
+	paths := []string{}
 	work, err := os.Getwd()
 	if err != nil {
-		err = fmt.Errorf("error reading working directory: %w", err)
-		return
+		return paths, fmt.Errorf("error reading working directory: %w", err)
 	}
 	walker := func(path string, info os.FileInfo, err error) error {
 		relpath, err := filepath.Rel(work, path)
@@ -220,9 +219,9 @@ func (mode *Switch) read() (paths []string, err error) {
 	}
 	err = filepath.Walk(work, walker)
 	if err != nil {
-		err = fmt.Errorf("error walking directory %s: %w", work, err)
+		return paths, fmt.Errorf("error walking directory %s: %w", work, err)
 	}
-	return
+	return paths, nil
 }
 
 func include(path string, info os.FileInfo) bool {

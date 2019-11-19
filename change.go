@@ -9,7 +9,7 @@ func (f File) DeleteRune() File {
 	return f
 }
 
-// DeletePreviouseRune deletes a character left of the current position.
+// DeletePreviousRune deletes a character left of the current position.
 func (f File) DeletePreviousRune() File {
 	if f.Position.C == 0 {
 		return f
