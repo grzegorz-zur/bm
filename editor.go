@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	tb "github.com/nsf/termbox-go"
+	"github.com/gdamore/tcell"
 	"log"
 	"os"
 	"os/signal"
@@ -17,27 +17,32 @@ const (
 
 // Editor represents the editor.
 type Editor struct {
-	*Display
 	Modes
 	Files
-	keys    chan tb.Event
-	check   chan struct{}
-	pause   chan struct{}
-	unpause chan struct{}
-	quit    chan struct{}
-	done    chan struct{}
+	newScreen NewScreen
+	screen    tcell.Screen
+	content   *Content
+	events    chan tcell.Event
+	check     chan struct{}
+	pause     chan struct{}
+	unpause   chan struct{}
+	quit      chan struct{}
+	done      chan struct{}
 }
 
+type NewScreen func() (tcell.Screen, error)
+
 // New creates new editor.
-func New(d *Display, fs []string) *Editor {
+func New(ns NewScreen, fs []string) *Editor {
 	e := &Editor{
-		Display: d,
-		keys:    make(chan tb.Event),
-		check:   make(chan struct{}),
-		pause:   make(chan struct{}, 1),
-		unpause: make(chan struct{}),
-		quit:    make(chan struct{}, 1),
-		done:    make(chan struct{}),
+		newScreen: ns,
+		content:   NewContent(Size{}),
+		events:    make(chan tcell.Event),
+		check:     make(chan struct{}),
+		pause:     make(chan struct{}, 1),
+		unpause:   make(chan struct{}),
+		quit:      make(chan struct{}, 1),
+		done:      make(chan struct{}),
 	}
 	e.Modes.Command = &Command{
 		Editor: e,
@@ -46,7 +51,7 @@ func New(d *Display, fs []string) *Editor {
 		Editor: e,
 	}
 	e.Modes.Switch = &Switch{
-		Editor: e,
+		editor: e,
 	}
 	for _, f := range fs {
 		e.Open(f)
@@ -61,16 +66,21 @@ func New(d *Display, fs []string) *Editor {
 }
 
 // Start starts the editor.
-func (e *Editor) Start() {
+func (e *Editor) Start() error {
+	var err error
+	e.screen, err = e.newScreen()
+	if err != nil {
+		return fmt.Errorf("error creating screen: %w", err)
+	}
+	err = e.screen.Init()
+	if err != nil {
+		return fmt.Errorf("error initializing screen: %w", err)
+	}
 	go e.signals()
 	go e.listen()
 	go e.tick()
 	go e.run()
-}
-
-// SendKey sends event to the editor.
-func (e *Editor) SendKey(ev tb.Event) {
-	e.keys <- ev
+	return nil
 }
 
 // Check signals file modification check.
@@ -108,7 +118,7 @@ func (e *Editor) signals() {
 
 func (e *Editor) listen() {
 	for {
-		e.keys <- tb.PollEvent()
+		e.events <- e.screen.PollEvent()
 	}
 }
 
@@ -121,45 +131,61 @@ func (e *Editor) tick() {
 
 func (e *Editor) run() {
 	defer close(e.done)
-	err := e.Display.Init()
-	if err != nil {
-		report(err)
-		return
-	}
-	defer e.Display.Close()
-
 	for {
 		if e.Empty() {
 			e.SwitchMode(e.Switch)
 		}
-		err = e.render()
-		report(err)
+		err := e.render()
+		e.report(err)
 		select {
-		case event := <-e.keys:
-			err = e.Key(event)
-			report(err)
+		case ev := <-e.events:
+			err = e.handle(ev)
+			e.report(err)
 		case <-e.check:
 			if !e.Empty() {
 				_, err = e.ReloadIfModified()
-				report(err)
+				e.report(err)
 			}
 		case <-e.pause:
 			err = e.background()
-			report(err)
+			e.report(err)
 		case <-e.quit:
+			e.close()
 			return
 		}
 	}
 }
 
-func report(err error) {
+func (e *Editor) handle(ev tcell.Event) error {
+	switch evt := ev.(type) {
+	case *tcell.EventKey:
+		if evt.Key() == tcell.KeyRune {
+			return e.Mode.Rune(evt.Rune())
+		} else {
+			k, ok := keymap[evt.Key()]
+			if ok {
+				return e.Mode.Key(k)
+			}
+		}
+	case *tcell.EventResize:
+		w, h := evt.Size()
+		if h > 0 {
+			h--
+		}
+		s := Size{h, w}
+		e.content = NewContent(s)
+	}
+	return nil
+}
+
+func (e *Editor) report(err error) {
 	if err != nil {
 		log.Println(err)
 	}
 }
 
 func (e *Editor) background() error {
-	e.Display.Close()
+	e.screen.Fini()
 	pid := os.Getpid()
 	process, err := os.FindProcess(pid)
 	if err != nil {
@@ -167,23 +193,59 @@ func (e *Editor) background() error {
 	}
 	process.Signal(syscall.SIGSTOP)
 	<-e.unpause
-	err = e.Display.Init()
+	e.screen, err = e.newScreen()
 	if err != nil {
-		return fmt.Errorf("error initializing display: %w", err)
+		return fmt.Errorf("error creating screen: %w", err)
+	}
+	err = e.screen.Init()
+	if err != nil {
+		return fmt.Errorf("error initializing screen: %w", err)
 	}
 	return nil
 }
 
+func (e *Editor) close() {
+	e.screen.Fini()
+}
+
 func (e *Editor) render() error {
-	e.Display.Clear(tb.ColorDefault, tb.ColorDefault)
-	width, height := e.Display.Size()
-	size := Size{L: height, C: width}
-	area := Area{R: size.C - 1, B: size.L - 1}
-	cursor, err := e.Mode.Render(e.Display, area)
+	e.content.Clear()
+	err := e.Mode.Render(e.content)
 	if err != nil {
-		return fmt.Errorf("error rendering editor: %w", err)
+		return fmt.Errorf("error on rendering: %w", err)
 	}
-	e.Display.SetCursor(cursor.C, cursor.L)
-	e.Display.Flush()
+	s := e.content.Size
+	for l := 0; l < s.L; l++ {
+		for c := 0; c < s.C; c++ {
+			r := e.content.Runes[l][c]
+			m := e.content.Marks[l][c]
+			stl := tcell.StyleDefault.Reverse(m)
+			e.screen.SetContent(c, l, r, nil, stl)
+		}
+	}
+	rs := []rune(e.content.Status)
+	rp := []rune(e.content.Prompt)
+	l := s.L
+	for c := 0; c < s.C; c++ {
+		r := ' '
+		stl := tcell.StyleDefault.Background(colors[e.content.Color])
+		if c < len(rs) {
+			r = rs[c]
+		}
+		if c >= len(rs)+1 && c < len(rs)+len(rp)+1 {
+			r = rp[c-len(rs)-1]
+			stl = stl.Reverse(true)
+		}
+		e.screen.SetContent(c, l, r, nil, stl)
+	}
+	switch e.content.Cursor {
+	case CursorNone:
+		e.screen.HideCursor()
+	case CursorContent:
+		e.screen.ShowCursor(e.content.Position.C, e.content.Position.L)
+	case CursorPrompt:
+		e.screen.ShowCursor(len(rs)+1+len(rp), l)
+	}
+	e.screen.Show()
 	return nil
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	tb "github.com/nsf/termbox-go"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,12 +9,12 @@ import (
 
 // Switch is a mode for switching files.
 type Switch struct {
-	*Editor
+	editor   *Editor
 	query    Line
 	paths    []string
 	filtered []string
-	position Position
-	window   Area
+	area     Area
+	pos      Position
 }
 
 // Show updates mode when switched to.
@@ -36,36 +35,68 @@ func (m *Switch) Hide() error {
 }
 
 // Key handles input events.
-func (m *Switch) Key(e tb.Event) error {
-	if e.Ch != 0 {
-		m.appendRune(e.Ch)
-		m.filter()
-	}
+func (m *Switch) Key(k Key) error {
 	var err error
-	switch e.Key {
-	case tb.KeyEsc:
-		if m.Files.Empty() {
-			m.Quit()
+	switch k {
+	case KeyEscape:
+		if m.editor.Files.Empty() {
+			m.editor.Quit()
 		} else {
-			m.SwitchMode(m.Command)
+			m.editor.SwitchMode(m.editor.Command)
 		}
-	case tb.KeyArrowUp:
+	case KeyUp:
 		m.moveUp()
-	case tb.KeyArrowDown:
+	case KeyDown:
 		m.moveDown()
-	case tb.KeyBackspace:
-	case tb.KeyBackspace2:
+	case KeyBackspace:
 		m.deletePreviousRune()
 		m.filter()
-	case tb.KeyEnter:
+	case KeyEnter:
 		err = m.open()
-		m.SwitchMode(m.Command)
+		m.editor.SwitchMode(m.editor.Command)
 	}
 
 	if err != nil {
-		return fmt.Errorf("error handling event %v: %w", e, err)
+		return fmt.Errorf("error handling key %v: %w", k, err)
 	}
 
+	return nil
+}
+
+// Rune handles rune input.
+func (m *Switch) Rune(r rune) error {
+	m.appendRune(r)
+	m.filter()
+	return nil
+}
+
+func (m *Switch) Render(cnt *Content) error {
+	m.area = m.area.Resize(cnt.Size).Shift(m.pos)
+	marked := len(m.filtered) > 0
+	for l := m.area.T; l < m.area.B; l++ {
+		rl := l - m.area.T
+		for c := m.area.L; c < m.area.R; c++ {
+			rc := c - m.area.L
+			if l < len(m.filtered) {
+				f := []rune(m.filtered[l])
+				if c < len(f) {
+					cnt.Runes[rl][rc] = f[c]
+				}
+			}
+			if marked && l == m.pos.L {
+				cnt.Marks[rl][rc] = true
+			}
+		}
+	}
+	status, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error getting working directory: %w", err)
+	}
+	cnt.Color = ColorBlue
+	cnt.Position = m.pos
+	cnt.Status = status
+	cnt.Prompt = string(m.query)
+	cnt.Cursor = CursorPrompt
 	return nil
 }
 
@@ -73,20 +104,21 @@ func (m *Switch) filter() {
 	query := m.query.String()
 	m.filtered = make([]string, 0, len(m.paths))
 	for _, path := range m.paths {
-		if match(path, query) {
+		if m.match(path, query) {
 			m.filtered = append(m.filtered, path)
 		}
 	}
+	m.pos = Position{}
 	return
 }
 
 func (m *Switch) open() error {
-	p := m.position
+	p := m.pos
 	path := m.query.String()
 	if p.L < len(m.filtered) {
 		path = m.filtered[p.L]
 	}
-	err := m.Open(path)
+	err := m.editor.Open(path)
 	if err != nil {
 		return fmt.Errorf("error opening file %s: %w", path, err)
 	}
@@ -102,103 +134,15 @@ func (m *Switch) deletePreviousRune() {
 }
 
 func (m *Switch) moveUp() {
-	if m.position.L > 0 {
-		m.position.L--
+	if m.pos.L > 0 {
+		m.pos.L--
 	}
 }
 
 func (m *Switch) moveDown() {
-	if m.position.L+1 < len(m.filtered) {
-		m.position.L++
+	if m.pos.L+1 < len(m.filtered) {
+		m.pos.L++
 	}
-}
-
-// Render renders list of files.
-func (m *Switch) Render(d *Display, a Area) (Position, error) {
-	paths, status := a.SplitHorizontal(-1)
-	err := m.renderPaths(d, paths)
-	if err != nil {
-		return Position{}, fmt.Errorf("error rendering paths: %w", err)
-	}
-	cursor, err := m.renderInput(d, status)
-	if err != nil {
-		return cursor, fmt.Errorf("error rendering status: %w", err)
-	}
-	return cursor, nil
-}
-
-func (m *Switch) renderPaths(d *Display, a Area) error {
-	paths := m.filtered
-	m.scroll()
-	s := a.Size()
-	m.size(s)
-	p := m.position
-	w := m.window
-	for l := w.T; l <= w.B; l++ {
-		if l >= len(paths) {
-			break
-		}
-		fg := tb.ColorDefault
-		bg := tb.ColorDefault
-		if l == p.L {
-			fg = tb.ColorBlack
-			bg = tb.ColorWhite
-		}
-		path := paths[l]
-		runes := []rune(path)
-		sl := a.T + l - w.T
-		for c := w.L; c <= w.R; c++ {
-			if c >= len(runes) {
-				break
-			}
-			r := runes[c]
-			sc := a.L + c - w.L
-			d.SetCell(sc, sl, r, fg, bg)
-		}
-	}
-	return nil
-}
-
-func (m *Switch) size(s Size) {
-	w := &m.window
-	w.B = w.T + s.L - 1
-	w.R = w.L + s.C - 1
-}
-
-func (m *Switch) scroll() {
-	p := m.position
-	w := &m.window
-	s := w.Size()
-
-	switch {
-	case p.L < w.T:
-		w.T = p.L
-		w.B = w.T + s.L - 1
-	case p.L > w.B:
-		w.B = p.L
-		w.T = w.B - s.L + 1
-	}
-
-	switch {
-	case p.C < w.L:
-		w.L = p.C
-		w.R = w.L + s.C - 1
-	case p.C > w.R:
-		w.R = p.C
-		w.L = w.R - s.C + 1
-	}
-}
-
-func (m *Switch) renderInput(d *Display, a Area) (Position, error) {
-	for c := a.L; c <= a.R; c++ {
-		i := c - a.L
-		r := ' '
-		if i < len(m.query) {
-			r = m.query[i]
-		}
-		d.SetCell(c, a.T, r, tb.ColorDefault|tb.AttrBold, tb.ColorBlue)
-	}
-	return Position{L: a.T, C: len(m.query)}, nil
 }
 
 func (m *Switch) read() ([]string, error) {
@@ -212,7 +156,7 @@ func (m *Switch) read() ([]string, error) {
 		if err != nil {
 			return err
 		}
-		if include(relpath, info) {
+		if m.include(relpath, info) {
 			paths = append(paths, relpath)
 		}
 		return nil
@@ -224,7 +168,7 @@ func (m *Switch) read() ([]string, error) {
 	return paths, nil
 }
 
-func include(path string, info os.FileInfo) bool {
+func (m *Switch) include(path string, info os.FileInfo) bool {
 	if strings.HasPrefix(path, ".") || strings.Contains(path, "/.") {
 		return false
 	}
@@ -234,7 +178,7 @@ func include(path string, info os.FileInfo) bool {
 	return true
 }
 
-func match(path, query string) bool {
+func (m *Switch) match(path, query string) bool {
 	if len(query) == 0 {
 		return true
 	}

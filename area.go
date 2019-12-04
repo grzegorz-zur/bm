@@ -1,8 +1,6 @@
 package main
 
 // Area describes a rectangular area.
-//
-// All values are inclusive.
 type Area struct {
 	// Top.
 	T int
@@ -17,23 +15,35 @@ type Area struct {
 // Size calculates the number of lines and columns in the area.
 func (a Area) Size() Size {
 	return Size{
-		L: a.B - a.T + 1,
-		C: a.R - a.L + 1,
+		L: a.B - a.T,
+		C: a.R - a.L,
 	}
 }
 
-// SplitHorizontal splits area horizontally.
-//
-// Positive argument defines size of the top area, negative defines size of the bottom area.
-func (a Area) SplitHorizontal(l int) (Area, Area) {
-	s := 0
-	if l >= 0 {
-		s = a.T + l
-	} else {
-		s = a.B + l
+// Resize resizes the area.
+func (a Area) Resize(s Size) Area {
+	return Area{
+		T: a.T,
+		B: a.T + s.L,
+		L: a.L,
+		R: a.L + s.C,
 	}
-	ah, al := a, a
-	ah.B = s
-	al.T = s + 1
-	return ah, al
+}
+
+// Shift shifts area to include position.
+func (a Area) Shift(p Position) Area {
+	s := a.Size()
+	switch {
+	case p.L < a.T:
+		a.T = p.L
+	case p.L >= a.B:
+		a.T += p.L - a.B + 1
+	}
+	switch {
+	case p.C < a.L:
+		a.L = p.C
+	case p.C >= a.R:
+		a.L += p.C - a.R + 1
+	}
+	return a.Resize(s)
 }

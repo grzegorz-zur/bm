@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	tb "github.com/nsf/termbox-go"
 	"os"
 	"time"
 )
@@ -20,8 +19,8 @@ type File struct {
 	Path string
 	Time time.Time
 	Lines
-	Position
-	Window Area
+	pos  Position
+	area Area
 	*History
 }
 
@@ -30,7 +29,7 @@ func (f *File) Motion(m Motion) {
 	if f == nil {
 		return
 	}
-	f.Position = m(*f)
+	f.pos = m(*f)
 }
 
 // Change applies change to a file.
@@ -47,7 +46,7 @@ func (f *File) Archive() {
 	if f == nil {
 		return
 	}
-	f.History.Archive(f.Lines, f.Position)
+	f.History.Archive(f.Lines, f.pos)
 }
 
 // SwitchVersion switches between versions from history.
@@ -55,39 +54,30 @@ func (f *File) SwitchVersion(dir Direction) {
 	if f == nil {
 		return
 	}
-	f.Lines, f.Position = f.History.Switch(dir)
+	f.Lines, f.pos = f.History.Switch(dir)
 }
 
-// Render renders the file contents to display.
-func (f *File) Render(d *Display, a Area) (Position, error) {
-	if f == nil {
-		return Position{}, ErrNoFile
-	}
-	f.scroll()
-	s := a.Size()
-	f.size(s)
-	w := f.Window
-	for l := w.T; l <= w.B; l++ {
-		if l >= len(f.Lines) {
-			break
-		}
-		runes := f.Lines[l]
-		sl := a.T + l - w.T
-		for c := w.L; c <= w.R; c++ {
-			if c >= len(runes) {
-				break
+func (f *File) Render(cnt *Content) error {
+	f.area = f.area.Resize(cnt.Size).Shift(f.pos)
+	for l := f.area.T; l < f.area.B; l++ {
+		rl := l - f.area.T
+		for c := f.area.L; c < f.area.R; c++ {
+			rc := c - f.area.L
+			if l < len(f.Lines) {
+				line := f.Lines[l]
+				if c < len(line) {
+					cnt.Runes[rl][rc] = line[c]
+				}
 			}
-			symbol := runes[c]
-			sc := a.L + c - w.L
-			d.SetCell(sc, sl, symbol, tb.ColorDefault, tb.ColorDefault)
 		}
 	}
-	p := f.Position
-	crs := Position{
-		L: p.L - w.T,
-		C: p.C - w.L,
+	cnt.Position = Position{
+		L: f.pos.L - f.area.T,
+		C: f.pos.C - f.area.L,
 	}
-	return crs, nil
+	cnt.Status = fmt.Sprintf("%s %d:%d", f.Path, f.pos.L+1, f.pos.C+1)
+	cnt.Cursor = CursorContent
+	return nil
 }
 
 func (f *File) update() error {
@@ -103,41 +93,4 @@ func (f *File) update() error {
 	}
 	f.Time = stat.ModTime()
 	return nil
-}
-
-func (f *File) size(s Size) {
-	if f == nil {
-		return
-	}
-	w := &f.Window
-	w.B = w.T + s.L - 1
-	w.R = w.L + s.C - 1
-	return
-}
-
-func (f *File) scroll() {
-	if f == nil {
-		return
-	}
-	p := f.Position
-	w := &f.Window
-	s := w.Size()
-
-	switch {
-	case p.L < w.T:
-		w.T = p.L
-		w.B = w.T + s.L - 1
-	case p.L > w.B:
-		w.B = p.L
-		w.T = w.B - s.L + 1
-	}
-
-	switch {
-	case p.C < w.L:
-		w.L = p.C
-		w.R = w.L + s.C - 1
-	case p.C > w.R:
-		w.R = p.C
-		w.L = w.R - s.C + 1
-	}
 }

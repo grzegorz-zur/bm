@@ -1,10 +1,5 @@
 package main
 
-import (
-	"fmt"
-	tb "github.com/nsf/termbox-go"
-)
-
 // Input is a mode for typing.
 type Input struct {
 	*Editor
@@ -21,52 +16,42 @@ func (m *Input) Hide() error {
 }
 
 // Key handles input events.
-func (m *Input) Key(e tb.Event) error {
-	if e.Ch != 0 {
-		m.Change(InsertRune(e.Ch))
-	}
-
-	switch e.Key {
-	case tb.KeyEsc:
+func (m *Input) Key(k Key) error {
+	switch k {
+	case KeyEscape:
 		m.SwitchMode(m.Editor.Command)
-	case tb.KeyArrowLeft:
+	case KeyLeft:
 		m.Motion(File.Left)
-	case tb.KeyArrowRight:
+	case KeyRight:
 		m.Motion(File.Right)
-	case tb.KeyArrowUp:
+	case KeyUp:
 		m.Motion(File.Up)
-	case tb.KeyArrowDown:
+	case KeyDown:
 		m.Motion(File.Down)
-	case tb.KeyPgup:
+	case KeyPageUp:
 		m.Motion(Paragraph(Backward))
-	case tb.KeyPgdn:
+	case KeyPageDown:
 		m.Motion(Paragraph(Forward))
-	case tb.KeySpace:
-		m.Change(InsertRune(' '))
-	case tb.KeyTab:
+	case KeyTab:
 		m.Change(InsertRune('\t'))
-	case tb.KeyEnter:
+	case KeyEnter:
 		m.Change(File.Split)
-	case tb.KeyBackspace:
-	case tb.KeyBackspace2:
+	case KeyBackspace:
 		m.Change(File.DeletePreviousRune)
-	case tb.KeyDelete:
+	case KeyDelete:
 		m.Change(File.DeleteRune)
 	}
-
 	return nil
 }
 
-// Render renders mode.
-func (m *Input) Render(d *Display, a Area) (Position, error) {
-	file, status := a.SplitHorizontal(-1)
-	cursor, err := m.File.Render(d, file)
-	if err != nil {
-		return cursor, fmt.Errorf("error rendering file: %w", err)
-	}
-	_, err = renderNameAndPosition(m.Path, m.Position, tb.ColorRed, d, status)
-	if err != nil {
-		return cursor, fmt.Errorf("error rendering status: %w", err)
-	}
-	return cursor, nil
+// Rune handles rune input.
+func (m *Input) Rune(r rune) error {
+	m.Change(InsertRune(r))
+	return nil
+}
+
+func (m *Input) Render(cnt *Content) error {
+	m.File.Render(cnt)
+	cnt.Color = ColorRed
+	return nil
 }

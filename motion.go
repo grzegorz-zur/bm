@@ -9,7 +9,7 @@ type Motion func(File) Position
 
 // Left moves cursor to the left.
 func (f File) Left() Position {
-	p := f.Position
+	p := f.pos
 	if p.C > 0 {
 		p.C--
 	}
@@ -18,23 +18,23 @@ func (f File) Left() Position {
 
 // Right moves cursor to the right.
 func (f File) Right() Position {
-	p := f.Position
+	p := f.pos
 	p.C++
 	return p
 }
 
 // Up moves cursor line up.
 func (f File) Up() Position {
-	p := f.Position
+	p := f.pos
 	if p.L > 0 {
 		p.L--
 	}
 	return p
 }
 
-//Down moves cursor line down.
+// Down moves cursor line down.
 func (f File) Down() Position {
-	p := f.Position
+	p := f.pos
 	p.L++
 	return p
 }
@@ -42,12 +42,12 @@ func (f File) Down() Position {
 // Word moves cursor to the next or previous word.
 func Word(d Direction) Motion {
 	return func(f File) Position {
-		p := f.Position
+		p := f.pos
 		for {
 			var ok bool
 			p, ok = f.nextRune(p, d)
 			if !ok {
-				return f.Position
+				return f.pos
 			}
 			if f.atWord(p) {
 				return p
@@ -59,12 +59,12 @@ func Word(d Direction) Motion {
 // Paragraph moves cursor to the next or previous paragraph.
 func Paragraph(d Direction) Motion {
 	return func(f File) Position {
-		p := f.Position
+		p := f.pos
 		for {
 			var ok bool
 			p, ok = f.nextLine(p, d)
 			if !ok {
-				return f.Position
+				return f.pos
 			}
 			p.C = 0
 			if f.atParagraph(p) {

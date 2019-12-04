@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	tb "github.com/nsf/termbox-go"
 )
 
 // Command mode.
@@ -20,11 +19,43 @@ func (m *Command) Hide() error {
 	return nil
 }
 
-// Key handles input events.
-func (m *Command) Key(e tb.Event) error {
-
+// Key handles special key.
+func (m *Command) Key(k Key) error {
 	var err error
-	switch e.Ch {
+	switch k {
+	case KeyTab:
+		m.SwitchMode(m.Editor.Switch)
+	case KeyBackspace:
+		err = m.WriteAll()
+		m.Pause()
+	case KeyDelete:
+		err = m.WriteAll()
+		m.Quit()
+	case KeyLeft:
+		m.Motion(File.Left)
+	case KeyRight:
+		m.Motion(File.Right)
+	case KeyUp:
+		m.Motion(File.Up)
+	case KeyDown:
+		m.Motion(File.Down)
+	case KeyPageUp:
+		m.Motion(Paragraph(Backward))
+	case KeyPageDown:
+		m.Motion(Paragraph(Forward))
+	}
+	if err != nil {
+		return fmt.Errorf("error handling key %v: %w", k, err)
+	}
+	return nil
+}
+
+// Rune handles runes.
+func (m *Command) Rune(r rune) error {
+	var err error
+	switch r {
+	case ' ':
+		m.SwitchMode(m.Editor.Input)
 	case 'd':
 		m.Motion(File.Left)
 	case 'f':
@@ -63,52 +94,15 @@ func (m *Command) Key(e tb.Event) error {
 	case 'M':
 		err = m.Write()
 	}
-
-	switch e.Key {
-	case tb.KeySpace:
-		m.SwitchMode(m.Editor.Input)
-	case tb.KeyTab:
-		m.SwitchMode(m.Editor.Switch)
-	case tb.KeyBackspace:
-	case tb.KeyBackspace2:
-		err = m.WriteAll()
-		m.Pause()
-	case tb.KeyDelete:
-		err = m.WriteAll()
-		m.Quit()
-	case tb.KeyArrowLeft:
-		m.Motion(File.Left)
-	case tb.KeyArrowRight:
-		m.Motion(File.Right)
-	case tb.KeyArrowUp:
-		m.Motion(File.Up)
-	case tb.KeyArrowDown:
-		m.Motion(File.Down)
-	case tb.KeyPgup:
-		m.Motion(Paragraph(Backward))
-	case tb.KeyPgdn:
-		m.Motion(Paragraph(Forward))
-	}
-
 	if err != nil {
-		return fmt.Errorf("error handling event %v: %w", e, err)
+		return fmt.Errorf("error handling rune %v: %w", r, err)
 	}
-
 	return nil
 }
 
-// Render renders mode to the screen.
-func (m *Command) Render(d *Display, a Area) (Position, error) {
-	file, status := a.SplitHorizontal(-1)
-	cursor, err := m.File.Render(d, file)
-	if err != nil {
-		err = fmt.Errorf("error renderning file: %w", err)
-		return cursor, err
-	}
-	_, err = renderNameAndPosition(m.Path, m.Position, tb.ColorGreen, d, status)
-	if err != nil {
-		err = fmt.Errorf("error renderning status: %w", err)
-		return cursor, err
-	}
-	return cursor, nil
+func (m *Command) Render(cnt *Content) error {
+	m.File.Render(cnt)
+	cnt.Color = ColorGreen
+	cnt.Prompt = ""
+	return nil
 }

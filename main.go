@@ -6,6 +6,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/gdamore/tcell"
 	"io/ioutil"
 	"log"
 	"os"
@@ -44,8 +45,8 @@ func main() {
 		ps = append(ps, p)
 	}
 
-	d := &Display{}
-	e := New(d, ps)
+	ns := func() (tcell.Screen, error) { return tcell.NewScreen() }
+	e := New(ns, ps)
 	e.Start()
 	e.Wait()
 

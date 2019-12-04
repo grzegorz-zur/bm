@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	tb "github.com/nsf/termbox-go"
+	"github.com/gdamore/tcell"
 	"io"
 	"io/ioutil"
 	"log"
@@ -63,8 +63,14 @@ func test(name, temp string) func(t *testing.T) {
 		log.SetOutput(logfile)
 		defer log.SetOutput(os.Stderr)
 
-		editor := New(nil, files)
-		editor.Start()
+		newScreen := func() (tcell.Screen, error) {
+			return tcell.NewSimulationScreen(""), nil
+		}
+		editor := New(newScreen, files)
+		err = editor.Start()
+		if err != nil {
+			t.Fatalf("error starting editor: %v", err)
+		}
 
 		err = interpret(editor, cmds)
 		if err != nil {
@@ -188,32 +194,33 @@ func interpret(editor *Editor, commands []string) (err error) {
 		runes := []rune(cmd)
 		switch {
 		case len(cmd) == 1:
-			editor.SendKey(tb.Event{Ch: runes[0]})
+			rune := runes[0]
+			sendRune(editor, rune)
 		case len(cmd) == 2 && runes[0] == '^':
 			letter := unicode.ToUpper(runes[1])
 			offset := int(letter - 'A')
-			key := tb.KeyCtrlA + tb.Key(offset)
-			editor.SendKey(tb.Event{Key: key})
+			key := tcell.KeyCtrlA + tcell.Key(offset)
+			sendKey(editor, key)
 		case cmd == "escape":
-			editor.SendKey(tb.Event{Key: tb.KeyEsc})
+			sendKey(editor, tcell.KeyEscape)
 		case cmd == "left":
-			editor.SendKey(tb.Event{Key: tb.KeyArrowLeft})
+			sendKey(editor, tcell.KeyLeft)
 		case cmd == "right":
-			editor.SendKey(tb.Event{Key: tb.KeyArrowRight})
+			sendKey(editor, tcell.KeyRight)
 		case cmd == "up":
-			editor.SendKey(tb.Event{Key: tb.KeyArrowUp})
+			sendKey(editor, tcell.KeyUp)
 		case cmd == "down":
-			editor.SendKey(tb.Event{Key: tb.KeyArrowDown})
+			sendKey(editor, tcell.KeyDown)
 		case cmd == "space":
-			editor.SendKey(tb.Event{Key: tb.KeySpace})
+			sendRune(editor, ' ')
 		case cmd == "tab":
-			editor.SendKey(tb.Event{Key: tb.KeyTab})
+			sendKey(editor, tcell.KeyTab)
 		case cmd == "enter":
-			editor.SendKey(tb.Event{Key: tb.KeyEnter})
+			sendKey(editor, tcell.KeyEnter)
 		case cmd == "backspace":
-			editor.SendKey(tb.Event{Key: tb.KeyBackspace2})
+			sendKey(editor, tcell.KeyBackspace2)
 		case cmd == "delete":
-			editor.SendKey(tb.Event{Key: tb.KeyDelete})
+			sendKey(editor, tcell.KeyDelete)
 		case cmd == "TOUCH":
 			t := time.Now().Local()
 			err = os.Chtimes(editor.File.Path, t, t)
@@ -228,6 +235,16 @@ func interpret(editor *Editor, commands []string) (err error) {
 		}
 	}
 	return
+}
+
+func sendKey(editor *Editor, key tcell.Key) {
+	ev := tcell.NewEventKey(key, 0, 0)
+	editor.events <- ev
+}
+
+func sendRune(editor *Editor, r rune) {
+	ev := tcell.NewEventKey(tcell.KeyRune, r, 0)
+	editor.events <- ev
 }
 
 func list(path string) (names []string, err error) {
