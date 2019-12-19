@@ -50,8 +50,9 @@ func (m *Input) Rune(r rune) error {
 	return nil
 }
 
+// Render renders mode to the screen.
 func (m *Input) Render(cnt *Content) error {
-	m.File.Render(cnt)
+	m.File.Render(cnt, false)
 	cnt.Color = ColorRed
 	return nil
 }

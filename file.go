@@ -20,6 +20,7 @@ type File struct {
 	Time time.Time
 	Lines
 	pos  Position
+	sel  Position
 	area Area
 	*History
 }
@@ -41,6 +42,14 @@ func (f *File) Change(c Change) {
 	f.Archive()
 }
 
+// Select sets selectin position.
+func (f *File) Select() {
+	if f == nil {
+		return
+	}
+	f.sel = f.pos
+}
+
 // Archive makes a record in history.
 func (f *File) Archive() {
 	if f == nil {
@@ -57,7 +66,14 @@ func (f *File) SwitchVersion(dir Direction) {
 	f.Lines, f.pos = f.History.Switch(dir)
 }
 
-func (f *File) Render(cnt *Content) error {
+// Selection returns selected lines.
+func (f *File) Selection() Lines {
+	s, e := Sort(f.sel, f.pos)
+	return f.Slice(s, e)
+}
+
+// Render renders file content.
+func (f *File) Render(cnt *Content, mark bool) error {
 	f.area = f.area.Resize(cnt.Size).Shift(f.pos)
 	for l := f.area.T; l < f.area.B; l++ {
 		rl := l - f.area.T
@@ -67,6 +83,10 @@ func (f *File) Render(cnt *Content) error {
 				line := f.Lines[l]
 				if c < len(line) {
 					cnt.Runes[rl][rc] = line[c]
+					if mark {
+						p := Position{l, c}
+						cnt.Marks[rl][rc] = f.marked(p)
+					}
 				}
 			}
 		}
@@ -78,6 +98,10 @@ func (f *File) Render(cnt *Content) error {
 	cnt.Status = fmt.Sprintf("%s %d:%d", f.Path, f.pos.L+1, f.pos.C+1)
 	cnt.Cursor = CursorContent
 	return nil
+}
+
+func (f *File) marked(p Position) bool {
+	return Between(p, f.sel, f.pos)
 }
 
 func (f *File) update() error {

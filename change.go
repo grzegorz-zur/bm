@@ -41,3 +41,26 @@ func (f File) Split() File {
 	f.pos.C = 0
 	return f
 }
+
+// PasteBlock inserts multiple lines at the current position as a block.
+func PasteBlock(ls Lines) Change {
+	return func(f File) File {
+		f.Lines = f.Lines.InsertBlock(f.pos, ls)
+		return f
+	}
+}
+
+// PasteInline inserts multiple lines at the current position inline.
+func PasteInline(ls Lines) Change {
+	return func(f File) File {
+		f.Lines = f.Lines.InsertInline(f.pos, ls)
+		return f
+	}
+}
+
+// Delete deletes content between positions.
+func (f File) Delete() File {
+	s, e := Sort(f.sel, f.pos)
+	f.Lines = f.Lines.Delete(s, e)
+	return f
+}

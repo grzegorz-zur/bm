@@ -6,6 +6,7 @@ type Modes struct {
 	Mode
 	Command Mode
 	Input   Mode
+	Select  Mode
 	Switch  Mode
 }
 

@@ -22,6 +22,7 @@ type Editor struct {
 	newScreen NewScreen
 	screen    tcell.Screen
 	content   *Content
+	buffer    Lines
 	events    chan tcell.Event
 	check     chan struct{}
 	pause     chan struct{}
@@ -48,6 +49,9 @@ func New(ns NewScreen, fs []string) *Editor {
 		Editor: e,
 	}
 	e.Modes.Input = &Input{
+		Editor: e,
+	}
+	e.Modes.Select = &Select{
 		Editor: e,
 	}
 	e.Modes.Switch = &Switch{
@@ -114,6 +118,21 @@ func (e *Editor) signals() {
 			e.quit <- struct{}{}
 		}
 	}
+}
+
+// Copy copies selection to buffer.
+func (e *Editor) Copy() {
+	e.buffer = e.Selection()
+}
+
+// PasteBlock pastes buffer to current file as a block.
+func (e *Editor) PasteBlock() {
+	e.Change(PasteBlock(e.buffer))
+}
+
+// PasteInline pastes buffer to current file inline.
+func (e *Editor) PasteInline() {
+	e.Change(PasteInline(e.buffer))
 }
 
 func (e *Editor) listen() {

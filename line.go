@@ -3,6 +3,26 @@ package main
 // Line represents line of characters.
 type Line []rune
 
+// Prefix returns content before column.
+func (l Line) Prefix(c int) Line {
+	if len(l) < c {
+		return l
+	}
+	ln := make(Line, 0, len(l)-c+1)
+	ln = append(ln, l[:c]...)
+	return ln
+}
+
+// Suffix returns content after column.
+func (l Line) Suffix(c int) Line {
+	if len(l) < c {
+		return Line{}
+	}
+	ln := make(Line, 0, len(l)-c+1)
+	ln = append(ln, l[c:]...)
+	return ln
+}
+
 // DeleteRune deletes a character at the a column.
 func (l Line) DeleteRune(c int) Line {
 	if c >= len(l) {

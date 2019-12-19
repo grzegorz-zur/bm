@@ -4,33 +4,26 @@ import (
 	"fmt"
 )
 
-// Command mode.
-type Command struct {
+// Select mode.
+type Select struct {
 	*Editor
 }
 
 // Show updates mode when switched to.
-func (m *Command) Show() error {
+func (m *Select) Show() error {
+	m.File.Select()
 	return nil
 }
 
 // Hide updates mode when switched from.
-func (m *Command) Hide() error {
+func (m *Select) Hide() error {
 	return nil
 }
 
 // Key handles special key.
-func (m *Command) Key(k Key) error {
+func (m *Select) Key(k Key) error {
 	var err error
 	switch k {
-	case KeyTab:
-		m.SwitchMode(m.Editor.Switch)
-	case KeyBackspace:
-		err = m.WriteAll()
-		m.Pause()
-	case KeyDelete:
-		err = m.WriteAll()
-		m.Quit()
 	case KeyLeft:
 		m.Motion(File.Left)
 	case KeyRight:
@@ -51,11 +44,9 @@ func (m *Command) Key(k Key) error {
 }
 
 // Rune handles runes.
-func (m *Command) Rune(r rune) error {
+func (m *Select) Rune(r rune) error {
 	var err error
 	switch r {
-	case ' ':
-		m.SwitchMode(m.Editor.Input)
 	case 'd':
 		m.Motion(File.Left)
 	case 'f':
@@ -72,33 +63,13 @@ func (m *Command) Rune(r rune) error {
 		m.Motion(Paragraph(Backward))
 	case 'w':
 		m.Motion(Paragraph(Forward))
-	case 'z':
-		m.SwitchVersion(Backward)
-	case 'x':
-		m.SwitchVersion(Forward)
-	case 'c':
-		m.SwitchFile(Backward)
-	case 'v':
-		m.SwitchFile(Forward)
-	case 'j':
-		m.Change(File.DeleteRune)
-	case 'J':
-		m.Change(File.DeleteLine)
 	case 'g':
-		m.SwitchMode(m.Editor.Select)
-	case 'h':
-		m.PasteBlock()
-	case 'H':
-		m.PasteInline()
-	case 'n':
-		err = m.Write()
-		m.Files.Close()
-	case 'N':
-		err = m.Reload()
-	case 'm':
-		err = m.WriteAll()
-	case 'M':
-		err = m.Write()
+		m.Copy()
+		m.SwitchMode(m.Command)
+	case 'j':
+		m.Copy()
+		m.Change(File.Delete)
+		m.SwitchMode(m.Command)
 	}
 	if err != nil {
 		return fmt.Errorf("error handling rune %v: %w", r, err)
@@ -106,10 +77,10 @@ func (m *Command) Rune(r rune) error {
 	return nil
 }
 
-// Render renders mode.
-func (m *Command) Render(cnt *Content) error {
-	m.File.Render(cnt, false)
-	cnt.Color = ColorGreen
+// Render renders select mode.
+func (m *Select) Render(cnt *Content) error {
+	m.File.Render(cnt, true)
+	cnt.Color = ColorYellow
 	cnt.Prompt = ""
 	return nil
 }

@@ -114,7 +114,7 @@ func (ls Lines) runeAt(p Position) rune {
 }
 
 func (ls Lines) atWord(p Position) bool {
-	if !ls.atText(p) {
+	if !ls.AtText(p) {
 		return false
 	}
 	r := ls.runeAt(p)
@@ -133,7 +133,7 @@ func (ls Lines) atWord(p Position) bool {
 }
 
 func (ls Lines) atParagraph(p Position) bool {
-	if !ls.atText(p) {
+	if !ls.AtText(p) {
 		return false
 	}
 	if len(ls[p.L]) == 0 {
@@ -147,14 +147,4 @@ func (ls Lines) atParagraph(p Position) bool {
 		return true
 	}
 	return false
-}
-
-func (ls Lines) atText(p Position) bool {
-	if p.L >= len(ls) {
-		return false
-	}
-	if p.C >= len(ls[p.L]) {
-		return false
-	}
-	return true
 }

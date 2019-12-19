@@ -6,3 +6,11 @@ func wrap(pos, len, step int, d Direction) int {
 	}
 	return ((pos+step*d.Value())%len + len) % len
 }
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	} else {
+		return b
+	}
+}
