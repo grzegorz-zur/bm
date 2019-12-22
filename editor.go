@@ -150,23 +150,30 @@ func (e *Editor) tick() {
 
 func (e *Editor) run() {
 	defer close(e.done)
+	render := true
 	for {
 		if e.Empty() {
 			e.SwitchMode(e.Switch)
 		}
-		err := e.render()
-		e.report(err)
+		if render {
+			err := e.render()
+			e.report(err)
+		}
 		select {
 		case ev := <-e.events:
-			err = e.handle(ev)
+			err := e.handle(ev)
 			e.report(err)
+			render = true
 		case <-e.check:
-			if !e.Empty() {
-				_, err = e.ReloadIfModified()
+			if e.Empty() {
+				render = false
+			} else {
+				r, err := e.ReloadIfModified()
+				render = r
 				e.report(err)
 			}
 		case <-e.pause:
-			err = e.background()
+			err := e.background()
 			e.report(err)
 		case <-e.quit:
 			e.close()
