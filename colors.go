@@ -4,8 +4,10 @@ import (
 	"github.com/gdamore/tcell"
 )
 
+// Color is a color used here.
 type Color int
 
+// Colors used in editor.
 const (
 	ColorNone Color = iota
 	ColorRed

@@ -31,6 +31,7 @@ type Editor struct {
 	done      chan struct{}
 }
 
+// NewScreen creates a new screen.
 type NewScreen func() (tcell.Screen, error)
 
 // New creates new editor.
@@ -187,11 +188,10 @@ func (e *Editor) handle(ev tcell.Event) error {
 	case *tcell.EventKey:
 		if evt.Key() == tcell.KeyRune {
 			return e.Mode.Rune(evt.Rune())
-		} else {
-			k, ok := keymap[evt.Key()]
-			if ok {
-				return e.Mode.Key(k)
-			}
+		}
+		k, ok := keymap[evt.Key()]
+		if ok {
+			return e.Mode.Key(k)
 		}
 	case *tcell.EventResize:
 		w, h := evt.Size()

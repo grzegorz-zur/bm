@@ -70,6 +70,7 @@ func (m *Switch) Rune(r rune) error {
 	return nil
 }
 
+// Render renders mode.
 func (m *Switch) Render(cnt *Content) error {
 	m.area = m.area.Resize(cnt.Size).Shift(m.pos)
 	marked := len(m.filtered) > 0

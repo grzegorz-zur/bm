@@ -4,8 +4,10 @@ import (
 	"github.com/gdamore/tcell"
 )
 
+// Key represends key of an keyboard.
 type Key int
 
+// Keys used in editor.
 const (
 	KeyEscape Key = iota
 	KeyTab

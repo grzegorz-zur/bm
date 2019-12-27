@@ -26,9 +26,8 @@ func Less(a, b Position) bool {
 func Sort(a, b Position) (Position, Position) {
 	if Less(a, b) {
 		return a, b
-	} else {
-		return b, a
 	}
+	return b, a
 }
 
 // Between checks if position is between positions.

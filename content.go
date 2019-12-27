@@ -1,5 +1,6 @@
 package main
 
+// Content holds data to be displayed on screen.
 type Content struct {
 	Size     Size
 	Runes    [][]rune
@@ -11,14 +12,17 @@ type Content struct {
 	Cursor   Cursor
 }
 
+// Cursor represents type of cursor.
 type Cursor int
 
+// Cursor types.
 const (
 	CursorNone Cursor = iota
 	CursorContent
 	CursorPrompt
 )
 
+// NewContent creates a new content of a given size.
 func NewContent(s Size) *Content {
 	rs := make([][]rune, s.L)
 	ms := make([][]bool, s.L)
@@ -33,6 +37,7 @@ func NewContent(s Size) *Content {
 	}
 }
 
+// Clear clears content.
 func (cnt *Content) Clear() {
 	for l := 0; l < cnt.Size.L; l++ {
 		for c := 0; c < cnt.Size.C; c++ {
