@@ -6,7 +6,7 @@ import (
 
 // Command mode.
 type Command struct {
-	*Editor
+	editor *Editor
 }
 
 // Show updates mode when switched to.
@@ -24,25 +24,19 @@ func (m *Command) Key(k Key) error {
 	var err error
 	switch k {
 	case KeyTab:
-		m.SwitchMode(m.Editor.Switch)
-	case KeyBackspace:
-		err = m.WriteAll()
-		m.Pause()
-	case KeyDelete:
-		err = m.WriteAll()
-		m.Quit()
+		m.editor.SwitchMode(m.editor.Switch)
 	case KeyLeft:
-		m.Motion(File.Left)
+		m.editor.Motion(File.Left)
 	case KeyRight:
-		m.Motion(File.Right)
+		m.editor.Motion(File.Right)
 	case KeyUp:
-		m.Motion(File.Up)
+		m.editor.Motion(File.Up)
 	case KeyDown:
-		m.Motion(File.Down)
+		m.editor.Motion(File.Down)
 	case KeyPageUp:
-		m.Motion(Paragraph(Backward))
+		m.editor.Motion(Paragraph(Backward))
 	case KeyPageDown:
-		m.Motion(Paragraph(Forward))
+		m.editor.Motion(Paragraph(Forward))
 	}
 	if err != nil {
 		return fmt.Errorf("error handling key %v: %w", k, err)
@@ -55,50 +49,56 @@ func (m *Command) Rune(r rune) error {
 	var err error
 	switch r {
 	case ' ':
-		m.SwitchMode(m.Editor.Input)
+		m.editor.SwitchMode(m.editor.Input)
 	case 'd':
-		m.Motion(File.Left)
+		m.editor.Motion(File.Left)
 	case 'f':
-		m.Motion(File.Right)
+		m.editor.Motion(File.Right)
 	case 'a':
-		m.Motion(File.Up)
+		m.editor.Motion(File.Up)
 	case 's':
-		m.Motion(File.Down)
+		m.editor.Motion(File.Down)
 	case 'e':
-		m.Motion(Word(Backward))
+		m.editor.Motion(Word(Backward))
 	case 'r':
-		m.Motion(Word(Forward))
+		m.editor.Motion(Word(Forward))
 	case 'q':
-		m.Motion(Paragraph(Backward))
+		m.editor.Motion(Paragraph(Backward))
 	case 'w':
-		m.Motion(Paragraph(Forward))
+		m.editor.Motion(Paragraph(Forward))
 	case 'z':
-		m.SwitchVersion(Backward)
+		m.editor.SwitchVersion(Backward)
 	case 'x':
-		m.SwitchVersion(Forward)
+		m.editor.SwitchVersion(Forward)
 	case 'c':
-		m.SwitchFile(Backward)
+		m.editor.SwitchFile(Backward)
 	case 'v':
-		m.SwitchFile(Forward)
+		m.editor.SwitchFile(Forward)
 	case 'j':
-		m.Change(File.DeleteRune)
+		m.editor.Change(File.DeleteRune)
 	case 'J':
-		m.Change(File.DeleteLine)
+		m.editor.Change(File.DeleteLine)
 	case 'g':
-		m.SwitchMode(m.Editor.Select)
+		m.editor.SwitchMode(m.editor.Select)
 	case 'h':
-		m.PasteBlock()
+		m.editor.PasteBlock()
 	case 'H':
-		m.PasteInline()
+		m.editor.PasteInline()
 	case 'n':
-		err = m.Write()
-		m.Files.Close()
+		err = m.editor.Write()
+		m.editor.Files.Close()
 	case 'N':
-		err = m.Reload()
+		err = m.editor.Reload()
 	case 'm':
-		err = m.WriteAll()
+		err = m.editor.WriteAll()
 	case 'M':
-		err = m.Write()
+		err = m.editor.Write()
+	case 'b':
+		err = m.editor.WriteAll()
+		m.editor.Pause()
+	case 'B':
+		err = m.editor.WriteAll()
+		m.editor.Quit()
 	}
 	if err != nil {
 		return fmt.Errorf("error handling rune %v: %w", r, err)
@@ -108,7 +108,7 @@ func (m *Command) Rune(r rune) error {
 
 // Render renders mode.
 func (m *Command) Render(cnt *Content) error {
-	m.File.Render(cnt, false)
+	m.editor.File.Render(cnt, false)
 	cnt.Color = ColorGreen
 	cnt.Prompt = ""
 	return nil

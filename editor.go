@@ -47,13 +47,13 @@ func New(ns NewScreen, fs []string) *Editor {
 		done:      make(chan struct{}),
 	}
 	e.Modes.Command = &Command{
-		Editor: e,
+		editor: e,
 	}
 	e.Modes.Input = &Input{
-		Editor: e,
+		editor: e,
 	}
 	e.Modes.Select = &Select{
-		Editor: e,
+		editor: e,
 	}
 	e.Modes.Switch = &Switch{
 		editor: e,

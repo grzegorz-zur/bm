@@ -9,8 +9,7 @@ type Key int
 
 // Keys used in editor.
 const (
-	KeyEscape Key = iota
-	KeyTab
+	KeyTab Key = iota
 	KeyEnter
 	KeyBackspace
 	KeyDelete
@@ -22,10 +21,10 @@ const (
 	KeyEnd
 	KeyPageUp
 	KeyPageDown
+	KeyCtrlSpace
 )
 
 var keymap = map[tcell.Key]Key{
-	tcell.KeyEscape:     KeyEscape,
 	tcell.KeyTab:        KeyTab,
 	tcell.KeyEnter:      KeyEnter,
 	tcell.KeyBackspace:  KeyBackspace,
@@ -39,4 +38,5 @@ var keymap = map[tcell.Key]Key{
 	tcell.KeyEnd:        KeyEnd,
 	tcell.KeyPgUp:       KeyPageUp,
 	tcell.KeyPgDn:       KeyPageDown,
+	tcell.KeyCtrlSpace:  KeyCtrlSpace,
 }

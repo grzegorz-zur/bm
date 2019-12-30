@@ -201,8 +201,6 @@ func interpret(editor *Editor, commands []string) (err error) {
 			offset := int(letter - 'A')
 			key := tcell.KeyCtrlA + tcell.Key(offset)
 			sendKey(editor, key)
-		case cmd == "escape":
-			sendKey(editor, tcell.KeyEscape)
 		case cmd == "left":
 			sendKey(editor, tcell.KeyLeft)
 		case cmd == "right":
@@ -221,6 +219,8 @@ func interpret(editor *Editor, commands []string) (err error) {
 			sendKey(editor, tcell.KeyBackspace2)
 		case cmd == "delete":
 			sendKey(editor, tcell.KeyDelete)
+		case cmd == "ctrlspace":
+			sendKey(editor, tcell.KeyCtrlSpace)
 		case cmd == "TOUCH":
 			t := time.Now().Local()
 			err = os.Chtimes(editor.File.Path, t, t)

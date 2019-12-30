@@ -38,7 +38,7 @@ func (m *Switch) Hide() error {
 func (m *Switch) Key(k Key) error {
 	var err error
 	switch k {
-	case KeyEscape:
+	case KeyTab:
 		if m.editor.Files.Empty() {
 			m.editor.Quit()
 		} else {

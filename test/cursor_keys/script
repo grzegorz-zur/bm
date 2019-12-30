@@ -1,5 +1,5 @@
 f s
-space x escape
+space x ctrlspace
 a d d
-space y escape
-escape delete 
+space y ctrlspace
+ctrlspace B 

@@ -1,15 +1,15 @@
-space x escape
-r space x escape
-r space x escape
-r space x escape
-r space x escape
-r space x escape
+space x ctrlspace
+r space x ctrlspace
+r space x ctrlspace
+r space x ctrlspace
+r space x ctrlspace
+r space x ctrlspace
 r 
-e space y escape
-e e space y escape
-e e space y escape
-e e space y escape
-e e space y escape
-e e space y escape
-escape delete
+e space y ctrlspace
+e e space y ctrlspace
+e e space y ctrlspace
+e e space y ctrlspace
+e e space y ctrlspace
+e e space y ctrlspace
+ctrlspace B
 

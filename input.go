@@ -2,7 +2,7 @@ package main
 
 // Input is a mode for typing.
 type Input struct {
-	*Editor
+	editor *Editor
 }
 
 // Show updates mode when switched to.
@@ -18,41 +18,41 @@ func (m *Input) Hide() error {
 // Key handles input events.
 func (m *Input) Key(k Key) error {
 	switch k {
-	case KeyEscape:
-		m.SwitchMode(m.Editor.Command)
 	case KeyLeft:
-		m.Motion(File.Left)
+		m.editor.Motion(File.Left)
 	case KeyRight:
-		m.Motion(File.Right)
+		m.editor.Motion(File.Right)
 	case KeyUp:
-		m.Motion(File.Up)
+		m.editor.Motion(File.Up)
 	case KeyDown:
-		m.Motion(File.Down)
+		m.editor.Motion(File.Down)
 	case KeyPageUp:
-		m.Motion(Paragraph(Backward))
+		m.editor.Motion(Paragraph(Backward))
 	case KeyPageDown:
-		m.Motion(Paragraph(Forward))
+		m.editor.Motion(Paragraph(Forward))
 	case KeyTab:
-		m.Change(InsertRune('\t'))
+		m.editor.Change(InsertRune('\t'))
 	case KeyEnter:
-		m.Change(File.Split)
+		m.editor.Change(File.Split)
 	case KeyBackspace:
-		m.Change(File.DeletePreviousRune)
+		m.editor.Change(File.DeletePreviousRune)
 	case KeyDelete:
-		m.Change(File.DeleteRune)
+		m.editor.Change(File.DeleteRune)
+	case KeyCtrlSpace:
+		m.editor.SwitchMode(m.editor.Command)
 	}
 	return nil
 }
 
 // Rune handles rune input.
 func (m *Input) Rune(r rune) error {
-	m.Change(InsertRune(r))
+	m.editor.Change(InsertRune(r))
 	return nil
 }
 
 // Render renders mode to the screen.
 func (m *Input) Render(cnt *Content) error {
-	m.File.Render(cnt, false)
+	m.editor.File.Render(cnt, false)
 	cnt.Color = ColorRed
 	return nil
 }

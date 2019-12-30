@@ -1,5 +1,5 @@
-space a escape
+space a ctrlspace
 j
-space b escape
+space b ctrlspace
 z z z
-delete
+B

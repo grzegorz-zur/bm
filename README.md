@@ -29,12 +29,25 @@ bm
 
 ### Command mode
 
-![command mode](keyboard.svg "Command mode")
+Execute commands.
+
+![command mode](command.svg "Command mode")
 
 ### Input mode
 
 Type to input text in the current file.
 
+![input mode](input.svg "Input mode")
+
+### Select mode
+
+Select text and performs operation on the selection
+
+![select mode](select.svg "Select mode")
+
 ### Switch mode
 
 Type to filter files. Navigate with cursor keys and press enter to select a file.
+
+![switch mode](switch.svg "Switch mode")
+
