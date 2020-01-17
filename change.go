@@ -62,5 +62,6 @@ func PasteInline(ls Lines) Change {
 func (f File) Delete() File {
 	s, e := Sort(f.sel, f.pos)
 	f.Lines = f.Lines.Delete(s, e)
+	f.pos = s
 	return f
 }
