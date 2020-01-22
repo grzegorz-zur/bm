@@ -100,6 +100,10 @@ func (ls Lines) nextLine(p Position, d Direction) (Position, bool) {
 	if p.L >= len(ls) && d == Forward {
 		return p, false
 	}
+	if p.L >= len(ls) && d == Backward && len(ls) > 0 {
+		p.L = len(ls) - 1
+		return p, true
+	}
 	for l := p.L + d.Value(); 0 <= l && l < len(ls); l += d.Value() {
 		if len(ls[l]) > 0 {
 			p.L = l
