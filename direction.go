@@ -9,8 +9,3 @@ const (
 	// Backward direction.
 	Backward Direction = -1
 )
-
-// Value returns increment for calculation
-func (d Direction) Value() int {
-	return int(d)
-}

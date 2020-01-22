@@ -76,7 +76,7 @@ func Paragraph(d Direction) Motion {
 
 func (ls Lines) nextRune(p Position, d Direction) (Position, bool) {
 	if p.L < len(ls) {
-		c := p.C + d.Value()
+		c := p.C + int(d)
 		if 0 <= c && c < len(ls[p.L]) {
 			p.C = c
 			return p, true
@@ -104,7 +104,7 @@ func (ls Lines) nextLine(p Position, d Direction) (Position, bool) {
 		p.L = len(ls) - 1
 		return p, true
 	}
-	for l := p.L + d.Value(); 0 <= l && l < len(ls); l += d.Value() {
+	for l := p.L + int(d); 0 <= l && l < len(ls); l += int(d) {
 		if len(ls[l]) > 0 {
 			p.L = l
 			return p, true
