@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -11,8 +12,8 @@ import (
 type Switch struct {
 	editor   *Editor
 	query    Line
-	paths    []string
-	filtered []string
+	paths    Paths
+	filtered Paths
 	area     Area
 	pos      Position
 }
@@ -109,6 +110,7 @@ func (m *Switch) filter() {
 			m.filtered = append(m.filtered, path)
 		}
 	}
+	sort.Sort(m.filtered)
 	m.pos = Position{}
 	return
 }
