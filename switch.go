@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 )
 
 // Switch is a mode for switching files.
@@ -159,7 +158,7 @@ func (m *Switch) read() ([]string, error) {
 		if err != nil {
 			return err
 		}
-		if m.include(relpath, info) {
+		if info.Mode().IsRegular() {
 			paths = append(paths, relpath)
 		}
 		return nil
@@ -169,16 +168,6 @@ func (m *Switch) read() ([]string, error) {
 		return paths, fmt.Errorf("error walking directory %s: %w", work, err)
 	}
 	return paths, nil
-}
-
-func (m *Switch) include(path string, info os.FileInfo) bool {
-	if strings.HasPrefix(path, ".") || strings.Contains(path, "/.") {
-		return false
-	}
-	if !info.Mode().IsRegular() {
-		return false
-	}
-	return true
 }
 
 func (m *Switch) match(path, query string) bool {
