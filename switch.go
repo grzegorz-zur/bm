@@ -9,83 +9,78 @@ import (
 
 // Switch is a mode for switching files.
 type Switch struct {
-	editor   *Editor
-	query    Line
-	paths    Paths
-	filtered Paths
-	area     Area
-	pos      Position
+	editor    *Editor
+	query     Line
+	paths     Paths
+	selection Paths
+	area      Area
+	position  Position
 }
 
 // Show updates mode when switched to.
-func (m *Switch) Show() error {
-	m.query = Line{}
+func (mode *Switch) Show() error {
+	mode.query = Line{}
 	var err error
-	m.paths, err = m.read()
+	mode.paths, err = mode.read()
 	if err != nil {
 		return fmt.Errorf("error showing switch mode: %w", err)
 	}
-	m.filter()
+	sort.Sort(mode.paths)
+	mode.filter()
 	return nil
 }
 
 // Hide updates mode when switched from.
-func (m *Switch) Hide() error {
+func (mode *Switch) Hide() error {
 	return nil
 }
 
 // Key handles input events.
-func (m *Switch) Key(k Key) error {
+func (mode *Switch) Key(key Key) error {
 	var err error
-	switch k {
+	switch key {
 	case KeyTab:
-		if m.editor.Files.Empty() {
-			m.editor.Quit()
-		} else {
-			m.editor.SwitchMode(m.editor.Command)
-		}
+		mode.editor.SwitchMode(mode.editor.Command)
 	case KeyUp:
-		m.moveUp()
+		mode.moveUp()
 	case KeyDown:
-		m.moveDown()
+		mode.moveDown()
 	case KeyBackspace:
-		m.deletePreviousRune()
-		m.filter()
+		mode.deletePreviousRune()
+		mode.filter()
 	case KeyEnter:
-		err = m.open()
-		m.editor.SwitchMode(m.editor.Command)
+		err = mode.open()
+		mode.editor.SwitchMode(mode.editor.Command)
 	}
-
 	if err != nil {
-		return fmt.Errorf("error handling key %v: %w", k, err)
+		return fmt.Errorf("error handling key %v: %w", key, err)
 	}
-
 	return nil
 }
 
 // Rune handles rune input.
-func (m *Switch) Rune(r rune) error {
-	m.appendRune(r)
-	m.filter()
+func (mode *Switch) Rune(rune rune) error {
+	mode.appendRune(rune)
+	mode.filter()
 	return nil
 }
 
 // Render renders mode.
-func (m *Switch) Render(cnt *Content) error {
-	m.area = m.area.Resize(cnt.Size).Shift(m.pos)
-	marked := len(m.filtered) > 0
-	for l := m.area.T; l < m.area.B; l++ {
-		rl := l - m.area.T
-		for c := m.area.L; c < m.area.R; c++ {
-			rc := c - m.area.L
-			if l < len(m.filtered) {
-				f := []rune(m.filtered[l])
+func (mode *Switch) Render(content *Content) error {
+	mode.area = mode.area.Resize(content.Size).Shift(mode.position)
+	marked := len(mode.selection) > 0
+	for l := mode.area.T; l < mode.area.B; l++ {
+		rl := l - mode.area.T
+		for c := mode.area.L; c < mode.area.R; c++ {
+			rc := c - mode.area.L
+			if l < len(mode.selection) {
+				f := []rune(mode.selection[l])
 				if c < len(f) {
-					cnt.Runes[rl][rc] = f[c]
+					content.Runes[rl][rc] = f[c]
 				}
 			}
-			if marked && l == m.pos.L {
-				cnt.Marks[rl][rc] = true
+			if marked && l == mode.position.L {
+				content.Marks[rl][rc] = true
 			}
 		}
 	}
@@ -93,62 +88,60 @@ func (m *Switch) Render(cnt *Content) error {
 	if err != nil {
 		return fmt.Errorf("error getting working directory: %w", err)
 	}
-	cnt.Color = ColorBlue
-	cnt.Position = m.pos
-	cnt.Status = status
-	cnt.Prompt = string(m.query)
-	cnt.Cursor = CursorPrompt
+	content.Color = ColorBlue
+	content.Position = mode.position
+	content.Status = status
+	content.Prompt = string(mode.query)
+	content.Cursor = CursorPrompt
 	return nil
 }
 
-func (m *Switch) filter() {
-	query := m.query.String()
-	m.filtered = make([]string, 0, len(m.paths))
-	for _, path := range m.paths {
-		if m.match(path, query) {
-			m.filtered = append(m.filtered, path)
+func (mode *Switch) filter() {
+	query := mode.query.String()
+	mode.selection = make([]string, 0, len(mode.paths))
+	for _, path := range mode.paths {
+		if mode.match(path, query) {
+			mode.selection = append(mode.selection, path)
 		}
 	}
-	sort.Sort(m.filtered)
-	m.pos = Position{}
+	mode.position = Position{}
 	return
 }
 
-func (m *Switch) open() error {
-	p := m.pos
-	path := m.query.String()
-	if p.L < len(m.filtered) {
-		path = m.filtered[p.L]
+func (mode *Switch) open() error {
+	pos := mode.position
+	path := mode.query.String()
+	if pos.L < len(mode.selection) {
+		path = mode.selection[pos.L]
 	}
-	err := m.editor.Open(path)
+	err := mode.editor.Open(path)
 	if err != nil {
 		return fmt.Errorf("error opening file %s: %w", path, err)
 	}
 	return nil
 }
 
-func (m *Switch) appendRune(r rune) {
-	m.query = m.query.AppendRune(r)
+func (mode *Switch) appendRune(rune rune) {
+	mode.query = mode.query.AppendRune(rune)
 }
 
-func (m *Switch) deletePreviousRune() {
-	m.query = m.query.DeletePreviousRune(len(m.query))
+func (mode *Switch) deletePreviousRune() {
+	mode.query = mode.query.DeletePreviousRune(len(mode.query))
 }
 
-func (m *Switch) moveUp() {
-	if m.pos.L > 0 {
-		m.pos.L--
+func (mode *Switch) moveUp() {
+	if mode.position.L > 0 {
+		mode.position.L--
 	}
 }
 
-func (m *Switch) moveDown() {
-	if m.pos.L+1 < len(m.filtered) {
-		m.pos.L++
+func (mode *Switch) moveDown() {
+	if mode.position.L+1 < len(mode.selection) {
+		mode.position.L++
 	}
 }
 
-func (m *Switch) read() ([]string, error) {
-	paths := []string{}
+func (mode *Switch) read() (paths []string, err error) {
 	work, err := os.Getwd()
 	if err != nil {
 		return paths, fmt.Errorf("error reading working directory: %w", err)
@@ -170,7 +163,7 @@ func (m *Switch) read() ([]string, error) {
 	return paths, nil
 }
 
-func (m *Switch) match(path, query string) bool {
+func (mode *Switch) match(path, query string) bool {
 	if len(query) == 0 {
 		return true
 	}

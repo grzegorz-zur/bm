@@ -10,106 +10,118 @@ type Command struct {
 }
 
 // Show updates mode when switched to.
-func (m *Command) Show() error {
+func (mode *Command) Show() error {
 	return nil
 }
 
 // Hide updates mode when switched from.
-func (m *Command) Hide() error {
+func (mode *Command) Hide() error {
 	return nil
 }
 
 // Key handles special key.
-func (m *Command) Key(k Key) error {
+func (mode *Command) Key(key Key) error {
 	var err error
-	switch k {
+	switch key {
 	case KeyTab:
-		m.editor.SwitchMode(m.editor.Switch)
+		mode.editor.SwitchMode(mode.editor.Switch)
+	}
+	if mode.editor.Empty() {
+		return nil
+	}
+	switch key {
 	case KeyLeft:
-		m.editor.Motion(File.Left)
+		mode.editor.Motion(File.Left)
 	case KeyRight:
-		m.editor.Motion(File.Right)
+		mode.editor.Motion(File.Right)
 	case KeyUp:
-		m.editor.Motion(File.Up)
+		mode.editor.Motion(File.Up)
 	case KeyDown:
-		m.editor.Motion(File.Down)
+		mode.editor.Motion(File.Down)
 	case KeyPageUp:
-		m.editor.Motion(Paragraph(Backward))
+		mode.editor.Motion(Paragraph(Backward))
 	case KeyPageDown:
-		m.editor.Motion(Paragraph(Forward))
+		mode.editor.Motion(Paragraph(Forward))
 	}
 	if err != nil {
-		return fmt.Errorf("error handling key %v: %w", k, err)
+		return fmt.Errorf("error handling key %v: %w", key, err)
 	}
 	return nil
 }
 
 // Rune handles runes.
-func (m *Command) Rune(r rune) error {
+func (mode *Command) Rune(rune rune) error {
 	var err error
-	switch r {
-	case ' ':
-		m.editor.SwitchMode(m.editor.Input)
-	case 'd':
-		m.editor.Motion(File.Left)
-	case 'f':
-		m.editor.Motion(File.Right)
-	case 'a':
-		m.editor.Motion(File.Up)
-	case 's':
-		m.editor.Motion(File.Down)
-	case 'e':
-		m.editor.Motion(Word(Backward))
-	case 'r':
-		m.editor.Motion(Word(Forward))
-	case 'q':
-		m.editor.Motion(Paragraph(Backward))
-	case 'w':
-		m.editor.Motion(Paragraph(Forward))
-	case 'z':
-		m.editor.SwitchVersion(Backward)
-	case 'x':
-		m.editor.SwitchVersion(Forward)
-	case 'c':
-		m.editor.SwitchFile(Backward)
-	case 'v':
-		m.editor.SwitchFile(Forward)
-	case 'j':
-		m.editor.Change(File.DeleteRune)
-	case 'J':
-		m.editor.Change(File.DeleteLine)
-	case 'g':
-		m.editor.SwitchMode(m.editor.Select)
-	case 'h':
-		m.editor.PasteBlock()
-	case 'H':
-		m.editor.PasteInline()
-	case 'n':
-		err = m.editor.Write()
-		m.editor.Files.Close()
-	case 'N':
-		err = m.editor.Reload()
-	case 'm':
-		err = m.editor.WriteAll()
-	case 'M':
-		err = m.editor.Write()
+	switch rune {
 	case 'b':
-		err = m.editor.WriteAll()
-		m.editor.Pause()
+		err = mode.editor.WriteAll()
+		mode.editor.Pause()
 	case 'B':
-		err = m.editor.WriteAll()
-		m.editor.Quit()
+		err = mode.editor.WriteAll()
+		mode.editor.Quit()
+	}
+	if mode.editor.Empty() {
+		return nil
+	}
+	switch rune {
+	case ' ':
+		mode.editor.SwitchMode(mode.editor.Input)
+	case 'd':
+		mode.editor.Motion(File.Left)
+	case 'f':
+		mode.editor.Motion(File.Right)
+	case 'a':
+		mode.editor.Motion(File.Up)
+	case 's':
+		mode.editor.Motion(File.Down)
+	case 'e':
+		mode.editor.Motion(Word(Backward))
+	case 'r':
+		mode.editor.Motion(Word(Forward))
+	case 'q':
+		mode.editor.Motion(Paragraph(Backward))
+	case 'w':
+		mode.editor.Motion(Paragraph(Forward))
+	case 'z':
+		mode.editor.SwitchVersion(Backward)
+	case 'x':
+		mode.editor.SwitchVersion(Forward)
+	case 'c':
+		mode.editor.SwitchFile(Backward)
+	case 'v':
+		mode.editor.SwitchFile(Forward)
+	case 'j':
+		mode.editor.Change(File.DeleteRune)
+	case 'J':
+		mode.editor.Change(File.DeleteLine)
+	case 'g':
+		mode.editor.SwitchMode(mode.editor.Select)
+	case 'h':
+		mode.editor.PasteBlock()
+	case 'H':
+		mode.editor.PasteInline()
+	case 'n':
+		err = mode.editor.Write()
+		mode.editor.Files.Close()
+	case 'N':
+		err = mode.editor.Reload()
+	case 'm':
+		err = mode.editor.WriteAll()
+	case 'M':
+		err = mode.editor.Write()
 	}
 	if err != nil {
-		return fmt.Errorf("error handling rune %v: %w", r, err)
+		return fmt.Errorf("error handling rune %v: %w", rune, err)
 	}
 	return nil
 }
 
 // Render renders mode.
-func (m *Command) Render(cnt *Content) error {
-	m.editor.File.Render(cnt, false)
-	cnt.Color = ColorGreen
-	cnt.Prompt = ""
+func (mode *Command) Render(content *Content) error {
+	if !mode.editor.Empty() {
+		mode.editor.File.Render(content, false)
+	}
+	content.Color = ColorGreen
+	content.Prompt = ""
 	return nil
 }

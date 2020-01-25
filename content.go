@@ -23,17 +23,17 @@ const (
 )
 
 // NewContent creates a new content of a given size.
-func NewContent(s Size) *Content {
-	rs := make([][]rune, s.L)
-	ms := make([][]bool, s.L)
-	for l := 0; l < s.L; l++ {
-		rs[l] = make([]rune, s.C)
-		ms[l] = make([]bool, s.C)
+func NewContent(size Size) *Content {
+	runes := make([][]rune, size.L)
+	marks := make([][]bool, size.L)
+	for l := 0; l < size.L; l++ {
+		runes[l] = make([]rune, size.C)
+		marks[l] = make([]bool, size.C)
 	}
 	return &Content{
-		Size:  s,
-		Runes: rs,
-		Marks: ms,
+		Size:  size,
+		Runes: runes,
+		Marks: marks,
 	}
 }
 
@@ -45,4 +45,9 @@ func (cnt *Content) Clear() {
 			cnt.Marks[l][c] = false
 		}
 	}
+	cnt.Position = Position{}
+	cnt.Color = ColorNone
+	cnt.Status = ""
+	cnt.Prompt = ""
+	cnt.Cursor = CursorNone
 }

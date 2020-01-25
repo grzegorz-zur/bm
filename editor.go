@@ -61,12 +61,8 @@ func New(ns NewScreen, fs []string) *Editor {
 	for _, f := range fs {
 		e.Open(f)
 	}
-	if e.Empty() {
-		e.SwitchMode(e.Switch)
-	} else {
-		e.SwitchFile(Forward)
-		e.SwitchMode(e.Command)
-	}
+	e.SwitchFile(Forward)
+	e.SwitchMode(e.Command)
 	return e
 }
 
@@ -153,9 +149,6 @@ func (e *Editor) run() {
 	defer close(e.done)
 	render := true
 	for {
-		if e.Empty() {
-			e.SwitchMode(e.Switch)
-		}
 		if render {
 			err := e.render()
 			e.report(err)
