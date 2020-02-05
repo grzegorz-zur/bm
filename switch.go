@@ -45,6 +45,10 @@ func (mode *Switch) Key(key Key) error {
 		mode.moveUp()
 	case KeyDown:
 		mode.moveDown()
+	case KeyLeft:
+		mode.moveLeft()
+	case KeyRight:
+		mode.moveRight()
 	case KeyBackspace:
 		mode.deletePreviousRune()
 		mode.filter()
@@ -139,6 +143,18 @@ func (mode *Switch) moveDown() {
 	if mode.position.L+1 < len(mode.selection) {
 		mode.position.L++
 	}
+}
+
+func (mode *Switch) moveLeft() {
+	if mode.area.L > 0 {
+		mode.position.C = mode.area.L - 1
+	} else {
+		mode.position.C = 0
+	}
+}
+
+func (mode *Switch) moveRight() {
+	mode.position.C = mode.area.R + 1
 }
 
 func (mode *Switch) read() (paths []string, err error) {
