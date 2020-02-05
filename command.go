@@ -54,10 +54,10 @@ func (mode *Command) Rune(rune rune) error {
 	var err error
 	switch rune {
 	case 'b':
-		err = mode.editor.WriteAll()
+		err = mode.editor.Write()
 		mode.editor.Pause()
 	case 'B':
-		err = mode.editor.WriteAll()
+		err = mode.editor.Write()
 		mode.editor.Quit()
 	}
 	if mode.editor.Empty() {
@@ -101,14 +101,14 @@ func (mode *Command) Rune(rune rune) error {
 	case 'H':
 		mode.editor.PasteInline()
 	case 'n':
-		err = mode.editor.Write()
+		_, err = mode.editor.File.Write()
 		mode.editor.Files.Close()
 	case 'N':
-		err = mode.editor.Reload()
+		_, err = mode.editor.Read(true)
 	case 'm':
-		err = mode.editor.WriteAll()
-	case 'M':
 		err = mode.editor.Write()
+	case 'M':
+		_, err = mode.editor.File.Write()
 	}
 	if err != nil {
 		return fmt.Errorf("error handling rune %v: %w", rune, err)

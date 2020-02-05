@@ -162,7 +162,7 @@ func (e *Editor) run() {
 			if e.Empty() {
 				render = false
 			} else {
-				r, err := e.ReloadIfModified()
+				r, err := e.Read(false)
 				render = r
 				e.report(err)
 			}

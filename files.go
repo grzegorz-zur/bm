@@ -40,16 +40,16 @@ func (fs *Files) SwitchFile(d Direction) {
 	index := fs.current()
 	index = wrap(index, len(fs.list), 1, d)
 	fs.switchFile(index)
-	fs.ReloadIfModified()
+	fs.Read(false)
 }
 
-// WriteAll writes all open files.
-func (fs *Files) WriteAll() error {
+// Write writes all open files.
+func (fs *Files) Write() error {
 	if fs.Empty() {
 		return nil
 	}
 	for _, file := range fs.list {
-		err := file.Write()
+		_, err := file.Write()
 		if err != nil {
 			return fmt.Errorf("error writing file %s: %w", file.Path, err)
 		}

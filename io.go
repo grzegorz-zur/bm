@@ -7,105 +7,84 @@ import (
 )
 
 // Open opens a file.
-func Open(path string) (File, error) {
-	file := File{
+func Open(path string) (file File, err error) {
+	file = File{
 		Path:    path,
 		History: &History{},
 	}
-	err := file.Load()
+	_, err = file.Read(false)
 	if err != nil {
 		return file, fmt.Errorf("error opening file %s: %w", path, err)
 	}
-	file.Archive()
 	return file, nil
 }
 
-// ReloadIfModified checks if file was modified outside and relaods it.
-func (f *File) ReloadIfModified() (bool, error) {
+// Read loads thie file.
+func (f *File) Read(force bool) (read bool, err error) {
 	if f == nil {
-		return false, ErrNoFile
-	}
-	modified, err := f.Modified()
-	if err != nil {
-		return modified, fmt.Errorf("error checking modification date on %s: %w", f.Path, err)
-	}
-	if !modified {
-		return modified, nil
-	}
-	err = f.Reload()
-	if err != nil {
-		return modified, fmt.Errorf("error reloading file %s: %w", f.Path, err)
-	}
-	return modified, nil
-}
-
-// Modified checks if file was modified.
-func (f *File) Modified() (bool, error) {
-	if f == nil {
-		return false, ErrNoFile
+		return false, nil
 	}
 	stat, err := os.Stat(f.Path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, fmt.Errorf("error checking file %s: %w", f.Path, err)
+	if err != nil && !os.IsNotExist(err) {
+		return false, fmt.Errorf("error reading file %s info: %w", f.Path, err)
 	}
-	return stat.ModTime() != f.Time, nil
-}
-
-// Reload reloads the file.
-func (f *File) Reload() error {
-	if f == nil {
-		return ErrNoFile
+	exists := stat != nil
+	changed := true
+	if exists {
+		changed = f.time != stat.ModTime()
 	}
-	err := f.Load()
-	if err != nil {
-		return fmt.Errorf("error reloading file: %s: %w", f.Path, err)
-	}
-	f.Archive()
-	return nil
-}
-
-// Load loads thie file.
-func (f *File) Load() error {
-	if f == nil {
-		return ErrNoFile
+	if !changed && !force {
+		return false, nil
 	}
 	flags := os.O_RDWR | os.O_CREATE
 	fx, err := os.OpenFile(f.Path, flags, perm)
 	if err != nil {
-		return fmt.Errorf("error opening file %s: %w", f.Path, err)
+		return false, fmt.Errorf("error opening file %s: %w", f.Path, err)
 	}
 	defer fx.Close()
-	err = f.update()
-	if err != nil {
-		return fmt.Errorf("error updating file information %s: %w", f.Path, err)
-	}
 	scanner := bufio.NewScanner(fx)
 	f.Lines = nil
 	for scanner.Scan() {
 		err = scanner.Err()
 		if err != nil {
-			return fmt.Errorf("error reading file %s: %w", f.Path, err)
+			return false, fmt.Errorf("error reading file %s: %w", f.Path, err)
 		}
 		line := scanner.Text()
 		runes := []rune(line)
 		f.Lines = append(f.Lines, runes)
 	}
-	return nil
+	fx.Close()
+	stat, err = os.Stat(f.Path)
+	if err != nil {
+		return true, fmt.Errorf("error reading file %s info: %w", f.Path, err)
+	}
+	f.changed = false
+	f.time = stat.ModTime()
+	f.Archive()
+	return true, nil
 }
 
 // Write writes file contents.
-func (f *File) Write() error {
+func (f *File) Write() (wrote bool, err error) {
 	if f == nil {
-		return ErrNoFile
+		return false, nil
+	}
+	stat, err := os.Stat(f.Path)
+	if err != nil && !os.IsNotExist(err) {
+		return false, fmt.Errorf("error reading file %s info: %w", f.Path, err)
+	}
+	exists := stat != nil
+	changed := true
+	if exists {
+		changed = f.time != stat.ModTime()
+	}
+	if !f.changed && !changed {
+		return false, nil
 	}
 	fx, err := os.Create(f.Path)
 	defer fx.Close()
-	defer f.update()
 	if err != nil {
-		return fmt.Errorf("error writing file %s: %w", f.Path, err)
+		return false, fmt.Errorf("error writing file %s: %w", f.Path, err)
 	}
 	for _, runes := range f.Lines {
 		line := string(runes)
@@ -113,5 +92,12 @@ func (f *File) Write() error {
 		fx.Write(bytes)
 		fx.Write(eol)
 	}
-	return nil
+	fx.Close()
+	stat, err = os.Stat(f.Path)
+	if err != nil {
+		return true, fmt.Errorf("error reading file %s info: %w", f.Path, err)
+	}
+	f.changed = false
+	f.time = stat.ModTime()
+	return true, nil
 }

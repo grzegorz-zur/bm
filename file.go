@@ -1,28 +1,26 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"time"
 )
 
 var (
-	// ErrNoFile indicates missing file.
-	ErrNoFile             = errors.New("no file")
-	eol                   = []byte("\n")
-	perm      os.FileMode = 0644
+	eol              = []byte("\n")
+	perm os.FileMode = 0644
 )
 
 // File represents open file.
 type File struct {
 	Path string
-	Time time.Time
 	Lines
-	pos  Position
-	sel  Position
-	area Area
 	*History
+	pos     Position
+	sel     Position
+	area    Area
+	time    time.Time
+	changed bool
 }
 
 // Motion applies motion to a file.
@@ -39,10 +37,11 @@ func (f *File) Change(c Change) {
 		return
 	}
 	*(f) = c(*f)
+	f.changed = true
 	f.Archive()
 }
 
-// Select sets selectin position.
+// Select sets selection position.
 func (f *File) Select() {
 	if f == nil {
 		return
@@ -102,19 +101,4 @@ func (f *File) Render(cnt *Content, mark bool) error {
 
 func (f *File) marked(p Position) bool {
 	return Between(p, f.sel, f.pos)
-}
-
-func (f *File) update() error {
-	if f == nil {
-		return ErrNoFile
-	}
-	stat, err := os.Stat(f.Path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return fmt.Errorf("error checking file %s: %w", f.Path, err)
-	}
-	f.Time = stat.ModTime()
-	return nil
 }
