@@ -151,6 +151,9 @@ func (mode *Switch) read() (paths []string, err error) {
 		if err != nil {
 			return err
 		}
+		if info == nil {
+			return nil
+		}
 		if info.Mode().IsRegular() {
 			paths = append(paths, relpath)
 		}
