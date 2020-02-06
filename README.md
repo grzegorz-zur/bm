@@ -33,12 +33,6 @@ Execute commands.
 
 ![command mode](command.svg "Command mode")
 
-### Input mode
-
-Type to input text in the current file.
-
-![input mode](input.svg "Input mode")
-
 ### Select mode
 
 Select text and performs operation on the selection
@@ -51,3 +45,8 @@ Type to filter files. Navigate with cursor keys and press enter to select a file
 
 ![switch mode](switch.svg "Switch mode")
 
+### Input mode
+
+Type to input text in the current file.
+
+![input mode](input.svg "Input mode")

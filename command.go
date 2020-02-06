@@ -38,6 +38,10 @@ func (mode *Command) Key(key Key) error {
 		mode.editor.Motion(File.Up)
 	case KeyDown:
 		mode.editor.Motion(File.Down)
+	case KeyHome:
+		mode.editor.Motion(File.LineStart)
+	case KeyEnd:
+		mode.editor.Motion(File.LineEnd)
 	case KeyPageUp:
 		mode.editor.Motion(Paragraph(Backward))
 	case KeyPageDown:
@@ -74,6 +78,14 @@ func (mode *Command) Rune(rune rune) error {
 		mode.editor.Motion(File.Up)
 	case 's':
 		mode.editor.Motion(File.Down)
+	case 'D':
+		mode.editor.Motion(File.LineStart)
+	case 'F':
+		mode.editor.Motion(File.LineEnd)
+	case 'A':
+		mode.editor.Motion(File.FileStart)
+	case 'S':
+		mode.editor.Motion(File.FileEnd)
 	case 'e':
 		mode.editor.Motion(Word(Backward))
 	case 'r':

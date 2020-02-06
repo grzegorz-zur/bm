@@ -10,77 +10,89 @@ type Select struct {
 }
 
 // Show updates mode when switched to.
-func (m *Select) Show() error {
-	m.editor.File.Select()
+func (mode *Select) Show() error {
+	mode.editor.File.Select()
 	return nil
 }
 
 // Hide updates mode when switched from.
-func (m *Select) Hide() error {
+func (mode *Select) Hide() error {
 	return nil
 }
 
 // Key handles special key.
-func (m *Select) Key(k Key) error {
+func (mode *Select) Key(key Key) error {
 	var err error
-	switch k {
+	switch key {
 	case KeyLeft:
-		m.editor.Motion(File.Left)
+		mode.editor.Motion(File.Left)
 	case KeyRight:
-		m.editor.Motion(File.Right)
+		mode.editor.Motion(File.Right)
 	case KeyUp:
-		m.editor.Motion(File.Up)
+		mode.editor.Motion(File.Up)
 	case KeyDown:
-		m.editor.Motion(File.Down)
+		mode.editor.Motion(File.Down)
+	case KeyHome:
+		mode.editor.Motion(File.LineStart)
+	case KeyEnd:
+		mode.editor.Motion(File.LineEnd)
 	case KeyPageUp:
-		m.editor.Motion(Paragraph(Backward))
+		mode.editor.Motion(Paragraph(Backward))
 	case KeyPageDown:
-		m.editor.Motion(Paragraph(Forward))
+		mode.editor.Motion(Paragraph(Forward))
 	}
 	if err != nil {
-		return fmt.Errorf("error handling key %v: %w", k, err)
+		return fmt.Errorf("error handling key %v: %w", key, err)
 	}
 	return nil
 }
 
 // Rune handles runes.
-func (m *Select) Rune(r rune) error {
+func (mode *Select) Rune(rune rune) error {
 	var err error
-	switch r {
+	switch rune {
 	case 'd':
-		m.editor.Motion(File.Left)
+		mode.editor.Motion(File.Left)
 	case 'f':
-		m.editor.Motion(File.Right)
+		mode.editor.Motion(File.Right)
 	case 'a':
-		m.editor.Motion(File.Up)
+		mode.editor.Motion(File.Up)
 	case 's':
-		m.editor.Motion(File.Down)
+		mode.editor.Motion(File.Down)
+	case 'D':
+		mode.editor.Motion(File.LineStart)
+	case 'F':
+		mode.editor.Motion(File.LineEnd)
+	case 'A':
+		mode.editor.Motion(File.FileStart)
+	case 'S':
+		mode.editor.Motion(File.FileEnd)
 	case 'e':
-		m.editor.Motion(Word(Backward))
+		mode.editor.Motion(Word(Backward))
 	case 'r':
-		m.editor.Motion(Word(Forward))
+		mode.editor.Motion(Word(Forward))
 	case 'q':
-		m.editor.Motion(Paragraph(Backward))
+		mode.editor.Motion(Paragraph(Backward))
 	case 'w':
-		m.editor.Motion(Paragraph(Forward))
+		mode.editor.Motion(Paragraph(Forward))
 	case 'g':
-		m.editor.Copy()
-		m.editor.SwitchMode(m.editor.Command)
+		mode.editor.Copy()
+		mode.editor.SwitchMode(mode.editor.Command)
 	case 'j':
-		m.editor.Copy()
-		m.editor.Change(File.Delete)
-		m.editor.SwitchMode(m.editor.Command)
+		mode.editor.Copy()
+		mode.editor.Change(File.Delete)
+		mode.editor.SwitchMode(mode.editor.Command)
 	}
 	if err != nil {
-		return fmt.Errorf("error handling rune %v: %w", r, err)
+		return fmt.Errorf("error handling rune %v: %w", rune, err)
 	}
 	return nil
 }
 
 // Render renders select mode.
-func (m *Select) Render(cnt *Content) error {
-	m.editor.File.Render(cnt, true)
-	cnt.Color = ColorYellow
-	cnt.Prompt = ""
+func (mode *Select) Render(content *Content) error {
+	mode.editor.File.Render(content, true)
+	content.Color = ColorYellow
+	content.Prompt = ""
 	return nil
 }

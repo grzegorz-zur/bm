@@ -39,6 +39,37 @@ func (f File) Down() Position {
 	return p
 }
 
+// LineStart moves cursor to the line start.
+func (f File) LineStart() Position {
+	position := f.pos
+	position.C = 0
+	return position
+}
+
+// LineEnd moves cursor to the line end.
+func (f File) LineEnd() Position {
+	position := f.pos
+	if position.L < len(f.Lines) {
+		line := f.Lines[position.L]
+		position.C = len(line)
+	} else {
+		position.C = 0
+	}
+	return position
+}
+
+// FileStart moves cursor to the file start.
+func (f File) FileStart() Position {
+	return Position{}
+}
+
+// FileEnd moves cursor to the file end.
+func (f File) FileEnd() Position {
+	return Position{
+		L: len(f.Lines),
+	}
+}
+
 // Word moves cursor to the next or previous word.
 func Word(d Direction) Motion {
 	return func(f File) Position {
