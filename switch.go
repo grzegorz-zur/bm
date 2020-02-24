@@ -10,7 +10,7 @@ import (
 // Switch is a mode for switching files.
 type Switch struct {
 	editor    *Editor
-	query     Line
+	query     string
 	paths     Paths
 	selection Paths
 	area      Area
@@ -19,7 +19,6 @@ type Switch struct {
 
 // Show updates mode when switched to.
 func (mode *Switch) Show() error {
-	mode.query = Line{}
 	var err error
 	mode.paths, err = mode.read()
 	if err != nil {
@@ -50,7 +49,7 @@ func (mode *Switch) Key(key Key) error {
 	case KeyRight:
 		mode.moveRight()
 	case KeyBackspace:
-		mode.deletePreviousRune()
+		mode.delete()
 		mode.filter()
 	case KeyEnter:
 		err = mode.open()
@@ -64,27 +63,27 @@ func (mode *Switch) Key(key Key) error {
 
 // Rune handles rune input.
 func (mode *Switch) Rune(rune rune) error {
-	mode.appendRune(rune)
+	mode.append(rune)
 	mode.filter()
 	return nil
 }
 
 // Render renders mode.
-func (mode *Switch) Render(content *Content) error {
-	mode.area = mode.area.Resize(content.Size).Shift(mode.position)
-	marked := len(mode.selection) > 0
-	for l := mode.area.T; l < mode.area.B; l++ {
-		rl := l - mode.area.T
-		for c := mode.area.L; c < mode.area.R; c++ {
-			rc := c - mode.area.L
-			if l < len(mode.selection) {
-				f := []rune(mode.selection[l])
-				if c < len(f) {
-					content.Runes[rl][rc] = f[c]
+func (mode *Switch) Render(view *View) error {
+	mode.area = mode.area.Resize(view.Size).Shift(mode.position)
+	selection := len(mode.selection) > 0
+	for line := mode.area.T; line < mode.area.B; line++ {
+		rline := line - mode.area.T
+		for col := mode.area.L; col < mode.area.R; col++ {
+			rcol := col - mode.area.L
+			if line < len(mode.selection) {
+				selected := []rune(mode.selection[line])
+				if col < len(selected) {
+					view.Content[rline][rcol] = selected[col]
 				}
 			}
-			if marked && l == mode.position.L {
-				content.Marks[rl][rc] = true
+			if selection && line == mode.position.L {
+				view.Selection[rline][rcol] = true
 			}
 		}
 	}
@@ -92,16 +91,16 @@ func (mode *Switch) Render(content *Content) error {
 	if err != nil {
 		return fmt.Errorf("error getting working directory: %w", err)
 	}
-	content.Color = ColorBlue
-	content.Position = mode.position
-	content.Status = status
-	content.Prompt = string(mode.query)
-	content.Cursor = CursorPrompt
+	view.Color = ColorBlue
+	view.Position = mode.position
+	view.Status = status
+	view.Prompt = string(mode.query)
+	view.Cursor = CursorPrompt
 	return nil
 }
 
 func (mode *Switch) filter() {
-	query := mode.query.String()
+	query := mode.query
 	mode.selection = make([]string, 0, len(mode.paths))
 	for _, path := range mode.paths {
 		if mode.match(path, query) {
@@ -114,7 +113,7 @@ func (mode *Switch) filter() {
 
 func (mode *Switch) open() error {
 	pos := mode.position
-	path := mode.query.String()
+	path := mode.query
 	if pos.L < len(mode.selection) {
 		path = mode.selection[pos.L]
 	}
@@ -125,12 +124,15 @@ func (mode *Switch) open() error {
 	return nil
 }
 
-func (mode *Switch) appendRune(rune rune) {
-	mode.query = mode.query.AppendRune(rune)
+func (mode *Switch) append(rune rune) {
+	mode.query = mode.query + string(rune)
 }
 
-func (mode *Switch) deletePreviousRune() {
-	mode.query = mode.query.DeletePreviousRune(len(mode.query))
+func (mode *Switch) delete() {
+	length := len(mode.query)
+	if length != 0 {
+		mode.query = mode.query[:length-1]
+	}
 }
 
 func (mode *Switch) moveUp() {

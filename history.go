@@ -7,7 +7,7 @@ const (
 
 // History holds latest records in a ring buffer.
 type History struct {
-	Records
+	records Records
 	bottom  int
 	current int
 	top     int
@@ -18,34 +18,34 @@ type Records []Record
 
 // Record holds content and position.
 type Record struct {
-	Lines
-	Position
+	content  string
+	location int
 }
 
 // Archive saves content and position in history and sets position to the recent entry.
-func (h *History) Archive(ls Lines, p Position) {
-	if h.Records == nil {
-		h.Records = make(Records, HistorySize)
+func (history *History) Archive(content string, location int) {
+	if history.records == nil {
+		history.records = make(Records, HistorySize)
 	} else {
-		h.top = wrap(h.top, HistorySize, 1, Forward)
-		if h.top == h.bottom {
-			h.bottom = wrap(h.bottom, HistorySize, 1, Forward)
+		history.top = wrap(history.top, HistorySize, 1, Forward)
+		if history.top == history.bottom {
+			history.bottom = wrap(history.bottom, HistorySize, 1, Forward)
 		}
 	}
-	h.current = h.top
-	r := Record{
-		Lines:    ls,
-		Position: p,
+	history.current = history.top
+	record := Record{
+		content:  content,
+		location: location,
 	}
-	h.Records[h.current] = r
+	history.records[history.current] = record
 }
 
 // Switch retrieves content and position from history and moves current position.
-func (h *History) Switch(d Direction) (Lines, Position) {
-	if d == Backward && h.current != h.bottom ||
-		d == Forward && h.current != h.top {
-		h.current = wrap(h.current, HistorySize, 1, d)
+func (history *History) Switch(dir Direction) (content string, location int) {
+	if dir == Backward && history.current != history.bottom ||
+		dir == Forward && history.current != history.top {
+		history.current = wrap(history.current, HistorySize, 1, dir)
 	}
-	r := h.Records[h.current]
-	return r.Lines, r.Position
+	record := history.records[history.current]
+	return record.content, record.location
 }

@@ -6,53 +6,57 @@ type Input struct {
 }
 
 // Show updates mode when switched to.
-func (m *Input) Show() error {
+func (mode *Input) Show() error {
 	return nil
 }
 
 // Hide updates mode when switched from.
-func (m *Input) Hide() error {
+func (mode *Input) Hide() error {
 	return nil
 }
 
 // Key handles input events.
-func (m *Input) Key(k Key) error {
-	switch k {
+func (mode *Input) Key(key Key) error {
+	switch key {
 	case KeyLeft:
-		m.editor.Motion(File.Left)
+		mode.editor.MoveLeft()
 	case KeyRight:
-		m.editor.Motion(File.Right)
+		mode.editor.MoveRight()
 	case KeyUp:
-		m.editor.Motion(File.Up)
+		mode.editor.MoveUp()
 	case KeyDown:
-		m.editor.Motion(File.Down)
+		mode.editor.MoveDown()
+	case KeyHome:
+		mode.editor.MoveLineStart()
+	case KeyEnd:
+		mode.editor.MoveLineEnd()
 	case KeyPageUp:
-		m.editor.Motion(Paragraph(Backward))
+		mode.editor.MoveParagraphPrevious()
 	case KeyPageDown:
-		m.editor.Motion(Paragraph(Forward))
+		mode.editor.MoveParagraphNext()
 	case KeyTab:
-		m.editor.Change(InsertRune('\t'))
+		mode.editor.Insert(string(Tab))
 	case KeyEnter:
-		m.editor.Change(File.Split)
+		mode.editor.Insert(string(EOL))
 	case KeyBackspace:
-		m.editor.Change(File.DeletePreviousRune)
+		mode.editor.Backspace()
 	case KeyDelete:
-		m.editor.Change(File.DeleteRune)
+		mode.editor.Delete()
 	case KeyCtrlSpace:
-		m.editor.SwitchMode(m.editor.Command)
+		mode.editor.SwitchMode(mode.editor.Command)
 	}
 	return nil
 }
 
 // Rune handles rune input.
-func (m *Input) Rune(r rune) error {
-	m.editor.Change(InsertRune(r))
+func (mode *Input) Rune(rune rune) error {
+	mode.editor.Insert(string(rune))
 	return nil
 }
 
 // Render renders mode to the screen.
-func (m *Input) Render(cnt *Content) error {
-	m.editor.File.Render(cnt, false)
-	cnt.Color = ColorRed
-	return nil
+func (mode *Input) Render(view *View) error {
+	err := mode.editor.File.Render(view, false)
+	view.Color = ColorRed
+	return err
 }

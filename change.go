@@ -1,67 +1,47 @@
 package main
 
-// Change represents a file content modification.
-type Change func(File) File
-
-// DeleteRune deletes a character at the current position.
-func (f File) DeleteRune() File {
-	f.Lines = f.Lines.DeleteRune(f.pos)
-	return f
+// Insert inserts content to the file.
+func (file *File) Insert(content string) {
+	file.content = file.content[:file.location] + content + file.content[file.location:]
+	file.location += len(content)
+	file.changed = true
+	file.Archive()
 }
 
-// DeletePreviousRune deletes a character left of the current position.
-func (f File) DeletePreviousRune() File {
-	if f.pos.C == 0 {
-		return f
+// Backspace deletes rune on the left.
+func (file *File) Backspace() {
+	if file.AtFileStart() {
+		return
 	}
-	f.Lines = f.Lines.DeletePreviousRune(f.pos)
-	f.pos.C--
-	return f
+	file.MoveLeft()
+	file.Delete()
 }
 
-// InsertRune inserts a character at the current position.
-func InsertRune(r rune) Change {
-	return func(f File) File {
-		f.Lines = f.Lines.InsertRune(f.pos, r)
-		f.pos.C++
-		return f
+// Delete removes current rune.
+func (file *File) Delete() {
+	if file.AtFileEnd() {
+		return
 	}
+	_, size := file.current()
+	from := file.location
+	to := from + size
+	file.Remove(from, to)
 }
 
-// DeleteLine deletes a line at the current position.
-func (f File) DeleteLine() File {
-	f.Lines = f.Lines.DeleteLine(f.pos.L)
-	return f
+// DeleteLine removes current line.
+func (file *File) DeleteLine() {
+	position, _ := file.Position(file.location)
+	from, _ := file.Location(position.L, 0)
+	to, _ := file.Location(position.L+1, 0)
+	file.Remove(from, to)
 }
 
-// Split splites a line at the current position.
-func (f File) Split() File {
-	f.Lines = f.Lines.Split(f.pos)
-	f.pos.L++
-	f.pos.C = 0
-	return f
-}
-
-// PasteBlock inserts multiple lines at the current position as a block.
-func PasteBlock(ls Lines) Change {
-	return func(f File) File {
-		f.Lines = f.Lines.InsertBlock(f.pos, ls)
-		return f
+// Remove deletes content from the file.
+func (file *File) Remove(from, to int) {
+	file.content = file.content[:from] + file.content[to:]
+	if file.location > from {
+		file.location = from
 	}
-}
-
-// PasteInline inserts multiple lines at the current position inline.
-func PasteInline(ls Lines) Change {
-	return func(f File) File {
-		f.Lines = f.Lines.InsertInline(f.pos, ls)
-		return f
-	}
-}
-
-// Delete deletes content between positions.
-func (f File) Delete() File {
-	s, e := Sort(f.sel, f.pos)
-	f.Lines = f.Lines.Delete(s, e)
-	f.pos = s
-	return f
+	file.changed = true
+	file.Archive()
 }

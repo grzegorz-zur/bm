@@ -25,21 +25,21 @@ func (mode *Select) Key(key Key) error {
 	var err error
 	switch key {
 	case KeyLeft:
-		mode.editor.Motion(File.Left)
+		mode.editor.MoveLeft()
 	case KeyRight:
-		mode.editor.Motion(File.Right)
+		mode.editor.MoveRight()
 	case KeyUp:
-		mode.editor.Motion(File.Up)
+		mode.editor.MoveUp()
 	case KeyDown:
-		mode.editor.Motion(File.Down)
+		mode.editor.MoveDown()
 	case KeyHome:
-		mode.editor.Motion(File.LineStart)
+		mode.editor.MoveLineStart()
 	case KeyEnd:
-		mode.editor.Motion(File.LineEnd)
+		mode.editor.MoveLineEnd()
 	case KeyPageUp:
-		mode.editor.Motion(Paragraph(Backward))
+		mode.editor.MoveParagraphPrevious()
 	case KeyPageDown:
-		mode.editor.Motion(Paragraph(Forward))
+		mode.editor.MoveParagraphNext()
 	}
 	if err != nil {
 		return fmt.Errorf("error handling key %v: %w", key, err)
@@ -52,36 +52,35 @@ func (mode *Select) Rune(rune rune) error {
 	var err error
 	switch rune {
 	case 'd':
-		mode.editor.Motion(File.Left)
+		mode.editor.MoveLeft()
 	case 'f':
-		mode.editor.Motion(File.Right)
+		mode.editor.MoveRight()
 	case 'a':
-		mode.editor.Motion(File.Up)
+		mode.editor.MoveUp()
 	case 's':
-		mode.editor.Motion(File.Down)
+		mode.editor.MoveDown()
 	case 'D':
-		mode.editor.Motion(File.LineStart)
+		mode.editor.MoveLineStart()
 	case 'F':
-		mode.editor.Motion(File.LineEnd)
+		mode.editor.MoveLineEnd()
 	case 'A':
-		mode.editor.Motion(File.FileStart)
+		mode.editor.MoveFileStart()
 	case 'S':
-		mode.editor.Motion(File.FileEnd)
-	case 'e':
-		mode.editor.Motion(Word(Backward))
-	case 'r':
-		mode.editor.Motion(Word(Forward))
+		mode.editor.MoveFileEnd()
 	case 'q':
-		mode.editor.Motion(Paragraph(Backward))
+		mode.editor.MoveParagraphPrevious()
 	case 'w':
-		mode.editor.Motion(Paragraph(Forward))
+		mode.editor.MoveParagraphNext()
+	case 'e':
+		mode.editor.MoveWordPrevious()
+	case 'r':
+		mode.editor.MoveWordNext()
 	case 'g':
-		mode.editor.Copy()
 		mode.editor.SwitchMode(mode.editor.Command)
-	case 'j':
+	case 'h':
 		mode.editor.Copy()
-		mode.editor.Change(File.Delete)
-		mode.editor.SwitchMode(mode.editor.Command)
+	case 'H':
+		mode.editor.Cut()
 	}
 	if err != nil {
 		return fmt.Errorf("error handling rune %v: %w", rune, err)
@@ -90,9 +89,9 @@ func (mode *Select) Rune(rune rune) error {
 }
 
 // Render renders select mode.
-func (mode *Select) Render(content *Content) error {
-	mode.editor.File.Render(content, true)
-	content.Color = ColorYellow
-	content.Prompt = ""
-	return nil
+func (mode *Select) Render(view *View) error {
+	err := mode.editor.File.Render(view, true)
+	view.Color = ColorYellow
+	view.Prompt = ""
+	return err
 }

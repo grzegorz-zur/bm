@@ -209,6 +209,14 @@ func interpret(editor *Editor, commands []string) (err error) {
 			sendKey(editor, tcell.KeyUp)
 		case cmd == "down":
 			sendKey(editor, tcell.KeyDown)
+		case cmd == "home":
+			sendKey(editor, tcell.KeyHome)
+		case cmd == "end":
+			sendKey(editor, tcell.KeyEnd)
+		case cmd == "pageup":
+			sendKey(editor, tcell.KeyPgUp)
+		case cmd == "pagedown":
+			sendKey(editor, tcell.KeyPgDn)
 		case cmd == "space":
 			sendRune(editor, ' ')
 		case cmd == "tab":

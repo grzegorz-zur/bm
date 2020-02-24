@@ -1,16 +1,21 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
+)
+
+var (
+	perm os.FileMode = 0644
 )
 
 // Open opens a file.
 func Open(path string) (file File, err error) {
 	file = File{
 		Path:    path,
-		History: &History{},
+		history: &History{},
 	}
 	_, err = file.Read(false)
 	if err != nil {
@@ -42,17 +47,9 @@ func (f *File) Read(force bool) (read bool, err error) {
 		return false, fmt.Errorf("error opening file %s: %w", f.Path, err)
 	}
 	defer fx.Close()
-	scanner := bufio.NewScanner(fx)
-	f.Lines = nil
-	for scanner.Scan() {
-		err = scanner.Err()
-		if err != nil {
-			return false, fmt.Errorf("error reading file %s: %w", f.Path, err)
-		}
-		line := scanner.Text()
-		runes := []rune(line)
-		f.Lines = append(f.Lines, runes)
-	}
+	buffer := &bytes.Buffer{}
+	io.Copy(buffer, fx)
+	f.content = string(buffer.Bytes())
 	fx.Close()
 	stat, err = os.Stat(f.Path)
 	if err != nil {
@@ -86,12 +83,8 @@ func (f *File) Write() (wrote bool, err error) {
 	if err != nil {
 		return false, fmt.Errorf("error writing file %s: %w", f.Path, err)
 	}
-	for _, runes := range f.Lines {
-		line := string(runes)
-		bytes := []byte(line)
-		fx.Write(bytes)
-		fx.Write(eol)
-	}
+	bytes := []byte(f.content)
+	fx.Write(bytes)
 	fx.Close()
 	stat, err = os.Stat(f.Path)
 	if err != nil {

@@ -8,5 +8,5 @@ type Mode interface {
 	Hide() error
 	Key(Key) error
 	Rune(rune) error
-	Render(*Content) error
+	Render(*View) error
 }

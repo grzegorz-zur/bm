@@ -31,21 +31,21 @@ func (mode *Command) Key(key Key) error {
 	}
 	switch key {
 	case KeyLeft:
-		mode.editor.Motion(File.Left)
+		mode.editor.MoveLeft()
 	case KeyRight:
-		mode.editor.Motion(File.Right)
+		mode.editor.MoveRight()
 	case KeyUp:
-		mode.editor.Motion(File.Up)
+		mode.editor.MoveUp()
 	case KeyDown:
-		mode.editor.Motion(File.Down)
+		mode.editor.MoveDown()
 	case KeyHome:
-		mode.editor.Motion(File.LineStart)
+		mode.editor.MoveLineStart()
 	case KeyEnd:
-		mode.editor.Motion(File.LineEnd)
+		mode.editor.MoveLineEnd()
 	case KeyPageUp:
-		mode.editor.Motion(Paragraph(Backward))
+		mode.editor.MoveParagraphPrevious()
 	case KeyPageDown:
-		mode.editor.Motion(Paragraph(Forward))
+		mode.editor.MoveParagraphNext()
 	}
 	if err != nil {
 		return fmt.Errorf("error handling key %v: %w", key, err)
@@ -54,8 +54,7 @@ func (mode *Command) Key(key Key) error {
 }
 
 // Rune handles runes.
-func (mode *Command) Rune(rune rune) error {
-	var err error
+func (mode *Command) Rune(rune rune) (err error) {
 	switch rune {
 	case 'b':
 		err = mode.editor.Write()
@@ -71,29 +70,29 @@ func (mode *Command) Rune(rune rune) error {
 	case ' ':
 		mode.editor.SwitchMode(mode.editor.Input)
 	case 'd':
-		mode.editor.Motion(File.Left)
+		mode.editor.MoveLeft()
 	case 'f':
-		mode.editor.Motion(File.Right)
+		mode.editor.MoveRight()
 	case 'a':
-		mode.editor.Motion(File.Up)
+		mode.editor.MoveUp()
 	case 's':
-		mode.editor.Motion(File.Down)
+		mode.editor.MoveDown()
 	case 'D':
-		mode.editor.Motion(File.LineStart)
+		mode.editor.MoveLineStart()
 	case 'F':
-		mode.editor.Motion(File.LineEnd)
+		mode.editor.MoveLineEnd()
 	case 'A':
-		mode.editor.Motion(File.FileStart)
+		mode.editor.MoveFileStart()
 	case 'S':
-		mode.editor.Motion(File.FileEnd)
+		mode.editor.MoveFileEnd()
 	case 'e':
-		mode.editor.Motion(Word(Backward))
+		mode.editor.MoveWordPrevious()
 	case 'r':
-		mode.editor.Motion(Word(Forward))
+		mode.editor.MoveWordNext()
 	case 'q':
-		mode.editor.Motion(Paragraph(Backward))
+		mode.editor.MoveParagraphPrevious()
 	case 'w':
-		mode.editor.Motion(Paragraph(Forward))
+		mode.editor.MoveParagraphNext()
 	case 'z':
 		mode.editor.SwitchVersion(Backward)
 	case 'x':
@@ -103,15 +102,13 @@ func (mode *Command) Rune(rune rune) error {
 	case 'v':
 		mode.editor.SwitchFile(Forward)
 	case 'j':
-		mode.editor.Change(File.DeleteRune)
+		mode.editor.Delete()
 	case 'J':
-		mode.editor.Change(File.DeleteLine)
+		mode.editor.DeleteLine()
 	case 'g':
 		mode.editor.SwitchMode(mode.editor.Select)
 	case 'h':
-		mode.editor.PasteBlock()
-	case 'H':
-		mode.editor.PasteInline()
+		mode.editor.Paste()
 	case 'n':
 		_, err = mode.editor.File.Write()
 		mode.editor.Files.Close()
@@ -129,11 +126,11 @@ func (mode *Command) Rune(rune rune) error {
 }
 
 // Render renders mode.
-func (mode *Command) Render(content *Content) error {
+func (mode *Command) Render(view *View) (err error) {
 	if !mode.editor.Empty() {
-		mode.editor.File.Render(content, false)
+		err = mode.editor.File.Render(view, false)
 	}
-	content.Color = ColorGreen
-	content.Prompt = ""
-	return nil
+	view.Color = ColorGreen
+	view.Prompt = ""
+	return err
 }

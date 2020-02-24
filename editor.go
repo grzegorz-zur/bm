@@ -21,8 +21,8 @@ type Editor struct {
 	Files
 	newScreen NewScreen
 	screen    tcell.Screen
-	content   *Content
-	buffer    Lines
+	view      *View
+	content   string
 	events    chan tcell.Event
 	check     chan struct{}
 	pause     chan struct{}
@@ -38,7 +38,7 @@ type NewScreen func() (tcell.Screen, error)
 func New(ns NewScreen, fs []string) *Editor {
 	e := &Editor{
 		newScreen: ns,
-		content:   NewContent(Size{}),
+		view:      NewView(Size{}),
 		events:    make(chan tcell.Event),
 		check:     make(chan struct{}),
 		pause:     make(chan struct{}, 1),
@@ -119,17 +119,19 @@ func (e *Editor) signals() {
 
 // Copy copies selection to buffer.
 func (e *Editor) Copy() {
-	e.buffer = e.Selection()
+	e.content = e.File.Copy()
+	e.SwitchMode(e.Command)
 }
 
-// PasteBlock pastes buffer to current file as a block.
-func (e *Editor) PasteBlock() {
-	e.Change(PasteBlock(e.buffer))
+// Cut cuts selection to buffer.
+func (e *Editor) Cut() {
+	e.content = e.File.Cut()
+	e.SwitchMode(e.Command)
 }
 
-// PasteInline pastes buffer to current file inline.
-func (e *Editor) PasteInline() {
-	e.Change(PasteInline(e.buffer))
+// Paste pastes buffer.
+func (e *Editor) Paste() {
+	e.Insert(e.content)
 }
 
 func (e *Editor) listen() {
@@ -176,23 +178,23 @@ func (e *Editor) run() {
 	}
 }
 
-func (e *Editor) handle(ev tcell.Event) error {
-	switch evt := ev.(type) {
+func (e *Editor) handle(event tcell.Event) error {
+	switch tevent := event.(type) {
 	case *tcell.EventKey:
-		if evt.Key() == tcell.KeyRune {
-			return e.Mode.Rune(evt.Rune())
+		if tevent.Key() == tcell.KeyRune {
+			return e.Mode.Rune(tevent.Rune())
 		}
-		k, ok := keymap[evt.Key()]
+		key, ok := keymap[tevent.Key()]
 		if ok {
-			return e.Mode.Key(k)
+			return e.Mode.Key(key)
 		}
 	case *tcell.EventResize:
-		w, h := evt.Size()
-		if h > 0 {
-			h--
+		width, height := tevent.Size()
+		if height > 0 {
+			height--
 		}
-		s := Size{h, w}
-		e.content = NewContent(s)
+		size := Size{height, width}
+		e.view = NewView(size)
 	}
 	return nil
 }
@@ -228,42 +230,42 @@ func (e *Editor) close() {
 }
 
 func (e *Editor) render() error {
-	e.content.Clear()
-	err := e.Mode.Render(e.content)
+	e.view.Clear()
+	err := e.Mode.Render(e.view)
 	if err != nil {
 		return fmt.Errorf("error on rendering: %w", err)
 	}
-	s := e.content.Size
-	for l := 0; l < s.L; l++ {
-		for c := 0; c < s.C; c++ {
-			r := e.content.Runes[l][c]
-			m := e.content.Marks[l][c]
-			stl := tcell.StyleDefault.Reverse(m)
-			e.screen.SetContent(c, l, r, nil, stl)
+	size := e.view.Size
+	for line := 0; line < size.L; line++ {
+		for col := 0; col < size.C; col++ {
+			rune := e.view.Content[line][col]
+			selection := e.view.Selection[line][col]
+			style := tcell.StyleDefault.Reverse(selection)
+			e.screen.SetContent(col, line, rune, nil, style)
 		}
 	}
-	rs := []rune(e.content.Status)
-	rp := []rune(e.content.Prompt)
-	l := s.L
-	for c := 0; c < s.C; c++ {
-		r := ' '
-		stl := tcell.StyleDefault.Background(colors[e.content.Color])
-		if c < len(rs) {
-			r = rs[c]
+	status := []rune(e.view.Status)
+	prompt := []rune(e.view.Prompt)
+	line := size.L
+	for col := 0; col < size.C; col++ {
+		rune := ' '
+		style := tcell.StyleDefault.Background(colors[e.view.Color])
+		if col < len(status) {
+			rune = status[col]
 		}
-		if c >= len(rs)+1 && c < len(rs)+len(rp)+1 {
-			r = rp[c-len(rs)-1]
-			stl = stl.Reverse(true)
+		if col >= len(status)+1 && col < len(status)+len(prompt)+1 {
+			rune = prompt[col-len(status)-1]
+			style = style.Reverse(true)
 		}
-		e.screen.SetContent(c, l, r, nil, stl)
+		e.screen.SetContent(col, line, rune, nil, style)
 	}
-	switch e.content.Cursor {
+	switch e.view.Cursor {
 	case CursorNone:
 		e.screen.HideCursor()
 	case CursorContent:
-		e.screen.ShowCursor(e.content.Position.C, e.content.Position.L)
+		e.screen.ShowCursor(e.view.Position.C, e.view.Position.L)
 	case CursorPrompt:
-		e.screen.ShowCursor(len(rs)+1+len(rp), l)
+		e.screen.ShowCursor(len(status)+1+len(prompt), line)
 	}
 	e.screen.Show()
 	return nil
