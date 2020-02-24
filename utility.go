@@ -6,10 +6,3 @@ func wrap(pos, len, step int, d Direction) int {
 	}
 	return ((pos+step*int(d))%len + len) % len
 }
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
