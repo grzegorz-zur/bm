@@ -134,6 +134,21 @@ func (e *Editor) Paste() {
 	e.Insert(e.content)
 }
 
+// LineAbove starts line above current line.
+func (e *Editor) LineAbove() {
+	e.MoveLineStart()
+	e.Insert(string(EOL))
+	e.MoveUp()
+	e.SwitchMode(e.Input)
+}
+
+// LineBelow starts line below current line.
+func (e *Editor) LineBelow() {
+	e.MoveLineEnd()
+	e.Insert(string(EOL))
+	e.SwitchMode(e.Input)
+}
+
 func (e *Editor) listen() {
 	for {
 		e.events <- e.screen.PollEvent()

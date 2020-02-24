@@ -105,6 +105,10 @@ func (mode *Command) Rune(rune rune) (err error) {
 		mode.editor.Delete()
 	case 'J':
 		mode.editor.DeleteLine()
+	case 'k':
+		mode.editor.LineBelow()
+	case 'K':
+		mode.editor.LineAbove()
 	case 'g':
 		mode.editor.SwitchMode(mode.editor.Select)
 	case 'h':
