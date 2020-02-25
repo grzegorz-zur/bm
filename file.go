@@ -25,41 +25,6 @@ const (
 	EOL = '\n'
 )
 
-// Position calculates position.
-func (file *File) Position(location int) (position Position, ok bool) {
-	l, c := 0, 0
-	for loc, rune := range file.content {
-		if loc == location {
-			return Position{l, c}, true
-		}
-		c++
-		if rune == EOL {
-			l++
-			c = 0
-		}
-	}
-	return Position{l, c}, false
-}
-
-// Location calculates location.
-func (file *File) Location(line, col int) (location int, ok bool) {
-	l, c := 0, 0
-	for loc, rune := range file.content {
-		location = loc
-		if l == line && c == col {
-			return location, true
-		} else if l == line && rune == EOL {
-			return location, false
-		}
-		c++
-		if rune == EOL {
-			l++
-			c = 0
-		}
-	}
-	return len(file.content), false
-}
-
 // Archive makes a record in history.
 func (file *File) Archive() {
 	if file == nil {
@@ -102,27 +67,27 @@ func (file *File) copy() (content string, from, to int) {
 	if from > to {
 		from, to = to, from
 	}
-	_, size := file.rune(to)
+	_, size := file.next(to)
 	to += size
 	return file.content[from:to], from, to
 }
 
 // Render renders file content.
 func (file *File) Render(view *View, selection bool) error {
-	position, _ := file.Position(file.location)
+	position := file.position()
 	file.area = file.area.Resize(view.Size).Shift(position)
-	for line := file.area.Top; line < file.area.Bottom; line++ {
-		rline := line - file.area.Top
-		for column := file.area.Left; column < file.area.Right; column++ {
+	line, column := 0, 0
+	for location, rune := range file.content {
+		if file.area.Contains(Position{line, column}) {
+			rline := line - file.area.Top
 			rcolumn := column - file.area.Left
-			location, ok := file.Location(line, column)
-			if ok {
-				rune, _ := utf8.DecodeRuneInString(file.content[location:])
-				view.Content[rline][rcolumn] = rune
-				view.Selection[rline][rcolumn] = selection && file.selected(location)
-			} else {
-				break
-			}
+			view.Content[rline][rcolumn] = rune
+			view.Selection[rline][rcolumn] = selection && file.selected(location)
+		}
+		column++
+		if rune == EOL {
+			line++
+			column = 0
 		}
 	}
 	view.Position = Position{
@@ -134,19 +99,38 @@ func (file *File) Render(view *View, selection bool) error {
 	return nil
 }
 
+func (file *File) position() Position {
+	line, column := 0, 0
+	for location, rune := range file.content {
+		if location == file.location {
+			break
+		}
+		column++
+		if rune == EOL {
+			line++
+			column = 0
+		}
+	}
+	return Position{line, column}
+}
+
 func (file *File) selected(location int) bool {
 	return file.mark <= location && location < file.location ||
 		file.location < location && location <= file.mark
 }
 
 func (file *File) last() (rune rune, size int) {
-	return utf8.DecodeLastRuneInString(file.content[:file.location])
+	return file.previous(file.location)
 }
 
 func (file *File) current() (rune rune, size int) {
-	return utf8.DecodeRuneInString(file.content[file.location:])
+	return file.next(file.location)
 }
 
-func (file *File) rune(location int) (rune rune, size int) {
+func (file *File) previous(location int) (rune rune, size int) {
+	return utf8.DecodeLastRuneInString(file.content[:location])
+}
+
+func (file *File) next(location int) (rune rune, size int) {
 	return utf8.DecodeRuneInString(file.content[location:])
 }

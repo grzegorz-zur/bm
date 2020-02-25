@@ -20,8 +20,7 @@ func (file *File) AtLineStart() bool {
 		return true
 	}
 	last, _ := file.last()
-	current, _ := file.current()
-	return last == EOL && current != EOL
+	return last == EOL
 }
 
 // AtLineEnd checks if cursor is at line end.
@@ -49,8 +48,11 @@ func (file *File) AtParagraph() bool {
 	if file.AtFileStart() || file.AtFileEnd() {
 		return true
 	}
-	rune, size := file.last()
+	last, size := file.last()
 	location := file.location - size
-	position, _ := file.Position(location)
-	return rune == EOL && position.Column == 0
+	if location == 0 && last == EOL {
+		return true
+	}
+	previous, _ := file.previous(location)
+	return previous == EOL && last == EOL
 }

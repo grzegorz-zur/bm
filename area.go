@@ -12,6 +12,12 @@ type Area struct {
 	Right int
 }
 
+// Contains checks if position is inside area.
+func (area Area) Contains(position Position) bool {
+	return area.Top <= position.Line && position.Line < area.Bottom &&
+		area.Left <= position.Column && position.Column < area.Right
+}
+
 // Size calculates the number of lines and columns in the area.
 func (area Area) Size() Size {
 	return Size{
@@ -32,6 +38,9 @@ func (area Area) Resize(size Size) Area {
 
 // Shift shifts area to include position.
 func (area Area) Shift(position Position) Area {
+	if area.Contains(position) {
+		return area
+	}
 	size := area.Size()
 	switch {
 	case position.Line < area.Top:
