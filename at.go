@@ -52,5 +52,5 @@ func (file *File) AtParagraph() bool {
 	rune, size := file.last()
 	location := file.location - size
 	position, _ := file.Position(location)
-	return rune == EOL && position.C == 0
+	return rune == EOL && position.Column == 0
 }

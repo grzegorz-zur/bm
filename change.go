@@ -31,8 +31,8 @@ func (file *File) Delete() {
 // DeleteLine removes current line.
 func (file *File) DeleteLine() {
 	position, _ := file.Position(file.location)
-	from, _ := file.Location(position.L, 0)
-	to, _ := file.Location(position.L+1, 0)
+	from, _ := file.Location(position.Line, 0)
+	to, _ := file.Location(position.Line+1, 0)
 	file.Remove(from, to)
 }
 

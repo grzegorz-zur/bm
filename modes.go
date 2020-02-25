@@ -11,13 +11,13 @@ type Modes struct {
 }
 
 // SwitchMode switches active mode.
-func (ms *Modes) SwitchMode(m Mode) {
-	if ms.Mode == m {
+func (modes *Modes) SwitchMode(mode Mode) {
+	if mode == modes.Mode {
 		return
 	}
-	if ms.Mode != nil {
-		ms.Mode.Hide()
+	if modes.Mode != nil {
+		modes.Mode.Hide()
 	}
-	ms.Mode = m
-	ms.Mode.Show()
+	modes.Mode = mode
+	modes.Mode.Show()
 }

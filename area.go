@@ -3,47 +3,47 @@ package main
 // Area describes a rectangular area.
 type Area struct {
 	// Top.
-	T int
+	Top int
 	// Bottom.
-	B int
+	Bottom int
 	// Left.
-	L int
+	Left int
 	// Right.
-	R int
+	Right int
 }
 
 // Size calculates the number of lines and columns in the area.
-func (a Area) Size() Size {
+func (area Area) Size() Size {
 	return Size{
-		L: a.B - a.T,
-		C: a.R - a.L,
+		Lines:   area.Bottom - area.Top,
+		Columns: area.Right - area.Left,
 	}
 }
 
 // Resize resizes the area.
-func (a Area) Resize(s Size) Area {
+func (area Area) Resize(size Size) Area {
 	return Area{
-		T: a.T,
-		B: a.T + s.L,
-		L: a.L,
-		R: a.L + s.C,
+		Top:    area.Top,
+		Bottom: area.Top + size.Lines,
+		Left:   area.Left,
+		Right:  area.Left + size.Columns,
 	}
 }
 
 // Shift shifts area to include position.
-func (a Area) Shift(p Position) Area {
-	s := a.Size()
+func (area Area) Shift(position Position) Area {
+	size := area.Size()
 	switch {
-	case p.L < a.T:
-		a.T = p.L
-	case p.L >= a.B:
-		a.T += p.L - a.B + 1
+	case position.Line < area.Top:
+		area.Top = position.Line
+	case position.Line >= area.Bottom:
+		area.Top += position.Line - area.Bottom + 1
 	}
 	switch {
-	case p.C < a.L:
-		a.L = p.C
-	case p.C >= a.R:
-		a.L += p.C - a.R + 1
+	case position.Column < area.Left:
+		area.Left = position.Column
+	case position.Column >= area.Right:
+		area.Left += position.Column - area.Right + 1
 	}
-	return a.Resize(s)
+	return area.Resize(size)
 }

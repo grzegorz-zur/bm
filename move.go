@@ -21,16 +21,16 @@ func (file *File) MoveRight() {
 // MoveUp moves cursor up.
 func (file *File) MoveUp() {
 	position, _ := file.Position(file.location)
-	if position.L == 0 {
+	if position.Line == 0 {
 		return
 	}
-	file.location, _ = file.Location(position.L-1, position.C)
+	file.location, _ = file.Location(position.Line-1, position.Column)
 }
 
 // MoveDown moves cursor down.
 func (file *File) MoveDown() {
 	position, _ := file.Position(file.location)
-	file.location, _ = file.Location(position.L+1, position.C)
+	file.location, _ = file.Location(position.Line+1, position.Column)
 }
 
 // MoveLineStart moves cursor to the start of line.

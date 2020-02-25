@@ -41,10 +41,10 @@ func (history *History) Archive(content string, location int) {
 }
 
 // Switch retrieves content and position from history and moves current position.
-func (history *History) Switch(dir Direction) (content string, location int) {
-	if dir == Backward && history.current != history.bottom ||
-		dir == Forward && history.current != history.top {
-		history.current = wrap(history.current, HistorySize, 1, dir)
+func (history *History) Switch(direction Direction) (content string, location int) {
+	if direction == Backward && history.current != history.bottom ||
+		direction == Forward && history.current != history.top {
+		history.current = wrap(history.current, HistorySize, 1, direction)
 	}
 	record := history.records[history.current]
 	return record.content, record.location

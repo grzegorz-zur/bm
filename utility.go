@@ -1,8 +1,8 @@
 package main
 
-func wrap(pos, len, step int, d Direction) int {
-	if len == 0 {
+func wrap(position, length, step int, direction Direction) int {
+	if length == 0 {
 		return 0
 	}
-	return ((pos+step*int(d))%len + len) % len
+	return ((position+step*int(direction))%length + length) % length
 }

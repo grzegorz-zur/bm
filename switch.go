@@ -18,8 +18,8 @@ type Switch struct {
 }
 
 // Show updates mode when switched to.
-func (mode *Switch) Show() error {
-	var err error
+func (mode *Switch) Show() (err error) {
+	mode.query = ""
 	mode.paths, err = mode.read()
 	if err != nil {
 		return fmt.Errorf("error showing switch mode: %w", err)
@@ -72,18 +72,18 @@ func (mode *Switch) Rune(rune rune) error {
 func (mode *Switch) Render(view *View) error {
 	mode.area = mode.area.Resize(view.Size).Shift(mode.position)
 	selection := len(mode.selection) > 0
-	for line := mode.area.T; line < mode.area.B; line++ {
-		rline := line - mode.area.T
-		for col := mode.area.L; col < mode.area.R; col++ {
-			rcol := col - mode.area.L
+	for line := mode.area.Top; line < mode.area.Bottom; line++ {
+		rline := line - mode.area.Top
+		for column := mode.area.Left; column < mode.area.Right; column++ {
+			rcolumn := column - mode.area.Left
 			if line < len(mode.selection) {
 				selected := []rune(mode.selection[line])
-				if col < len(selected) {
-					view.Content[rline][rcol] = selected[col]
+				if column < len(selected) {
+					view.Content[rline][rcolumn] = selected[column]
 				}
 			}
-			if selection && line == mode.position.L {
-				view.Selection[rline][rcol] = true
+			if selection && line == mode.position.Line {
+				view.Selection[rline][rcolumn] = true
 			}
 		}
 	}
@@ -112,10 +112,10 @@ func (mode *Switch) filter() {
 }
 
 func (mode *Switch) open() error {
-	pos := mode.position
+	position := mode.position
 	path := mode.query
-	if pos.L < len(mode.selection) {
-		path = mode.selection[pos.L]
+	if position.Line < len(mode.selection) {
+		path = mode.selection[position.Line]
 	}
 	err := mode.editor.Open(path)
 	if err != nil {
@@ -136,27 +136,27 @@ func (mode *Switch) delete() {
 }
 
 func (mode *Switch) moveUp() {
-	if mode.position.L > 0 {
-		mode.position.L--
+	if mode.position.Line > 0 {
+		mode.position.Line--
 	}
 }
 
 func (mode *Switch) moveDown() {
-	if mode.position.L+1 < len(mode.selection) {
-		mode.position.L++
+	if mode.position.Line+1 < len(mode.selection) {
+		mode.position.Line++
 	}
 }
 
 func (mode *Switch) moveLeft() {
-	if mode.area.L > 0 {
-		mode.position.C = mode.area.L - 1
+	if mode.area.Left > 0 {
+		mode.position.Column = mode.area.Left - 1
 	} else {
-		mode.position.C = 0
+		mode.position.Column = 0
 	}
 }
 
 func (mode *Switch) moveRight() {
-	mode.position.C = mode.area.R + 1
+	mode.position.Column = mode.area.Right + 1
 }
 
 func (mode *Switch) read() (paths []string, err error) {

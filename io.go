@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 var (
@@ -13,6 +14,7 @@ var (
 
 // Open opens a file.
 func Open(path string) (file File, err error) {
+	path = filepath.Clean(path)
 	file = File{
 		Path:    path,
 		history: &History{},
@@ -25,72 +27,72 @@ func Open(path string) (file File, err error) {
 }
 
 // Read loads thie file.
-func (f *File) Read(force bool) (read bool, err error) {
-	if f == nil {
+func (file *File) Read(force bool) (read bool, err error) {
+	if file == nil {
 		return false, nil
 	}
-	stat, err := os.Stat(f.Path)
+	stat, err := os.Stat(file.Path)
 	if err != nil && !os.IsNotExist(err) {
-		return false, fmt.Errorf("error reading file %s info: %w", f.Path, err)
+		return false, fmt.Errorf("error reading file %s info: %w", file.Path, err)
 	}
 	exists := stat != nil
 	changed := true
 	if exists {
-		changed = f.time != stat.ModTime()
+		changed = file.time != stat.ModTime()
 	}
 	if !changed && !force {
 		return false, nil
 	}
 	flags := os.O_RDWR | os.O_CREATE
-	fx, err := os.OpenFile(f.Path, flags, perm)
+	osFile, err := os.OpenFile(file.Path, flags, perm)
 	if err != nil {
-		return false, fmt.Errorf("error opening file %s: %w", f.Path, err)
+		return false, fmt.Errorf("error opening file %s: %w", file.Path, err)
 	}
-	defer fx.Close()
+	defer osFile.Close()
 	buffer := &bytes.Buffer{}
-	io.Copy(buffer, fx)
-	f.content = string(buffer.Bytes())
-	fx.Close()
-	stat, err = os.Stat(f.Path)
+	io.Copy(buffer, osFile)
+	file.content = string(buffer.Bytes())
+	osFile.Close()
+	stat, err = os.Stat(file.Path)
 	if err != nil {
-		return true, fmt.Errorf("error reading file %s info: %w", f.Path, err)
+		return true, fmt.Errorf("error reading file %s info: %w", file.Path, err)
 	}
-	f.changed = false
-	f.time = stat.ModTime()
-	f.Archive()
+	file.changed = false
+	file.time = stat.ModTime()
+	file.Archive()
 	return true, nil
 }
 
 // Write writes file contents.
-func (f *File) Write() (wrote bool, err error) {
-	if f == nil {
+func (file *File) Write() (wrote bool, err error) {
+	if file == nil {
 		return false, nil
 	}
-	stat, err := os.Stat(f.Path)
+	stat, err := os.Stat(file.Path)
 	if err != nil && !os.IsNotExist(err) {
-		return false, fmt.Errorf("error reading file %s info: %w", f.Path, err)
+		return false, fmt.Errorf("error reading file %s info: %w", file.Path, err)
 	}
 	exists := stat != nil
 	changed := true
 	if exists {
-		changed = f.time != stat.ModTime()
+		changed = file.time != stat.ModTime()
 	}
-	if !f.changed && !changed {
+	if !file.changed && !changed {
 		return false, nil
 	}
-	fx, err := os.Create(f.Path)
-	defer fx.Close()
+	osFile, err := os.Create(file.Path)
+	defer osFile.Close()
 	if err != nil {
-		return false, fmt.Errorf("error writing file %s: %w", f.Path, err)
+		return false, fmt.Errorf("error writing file %s: %w", file.Path, err)
 	}
-	bytes := []byte(f.content)
-	fx.Write(bytes)
-	fx.Close()
-	stat, err = os.Stat(f.Path)
+	bytes := []byte(file.content)
+	osFile.Write(bytes)
+	osFile.Close()
+	stat, err = os.Stat(file.Path)
 	if err != nil {
-		return true, fmt.Errorf("error reading file %s info: %w", f.Path, err)
+		return true, fmt.Errorf("error reading file %s info: %w", file.Path, err)
 	}
-	f.changed = false
-	f.time = stat.ModTime()
+	file.changed = false
+	file.time = stat.ModTime()
 	return true, nil
 }

@@ -24,11 +24,11 @@ const (
 
 // NewView creates a new content of a given size.
 func NewView(size Size) *View {
-	content := make([][]rune, size.L)
-	selection := make([][]bool, size.L)
-	for line := 0; line < size.L; line++ {
-		content[line] = make([]rune, size.C)
-		selection[line] = make([]bool, size.C)
+	content := make([][]rune, size.Lines)
+	selection := make([][]bool, size.Lines)
+	for line := 0; line < size.Lines; line++ {
+		content[line] = make([]rune, size.Columns)
+		selection[line] = make([]bool, size.Columns)
 	}
 	return &View{
 		Size:      size,
@@ -39,10 +39,10 @@ func NewView(size Size) *View {
 
 // Clear clears view.
 func (view *View) Clear() {
-	for line := 0; line < view.Size.L; line++ {
-		for col := 0; col < view.Size.C; col++ {
-			view.Content[line][col] = 0
-			view.Selection[line][col] = false
+	for line := 0; line < view.Size.Lines; line++ {
+		for column := 0; column < view.Size.Columns; column++ {
+			view.Content[line][column] = 0
+			view.Selection[line][column] = false
 		}
 	}
 	view.Position = Position{}

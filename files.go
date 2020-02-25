@@ -12,43 +12,43 @@ type Files struct {
 }
 
 // Empty checks if no files are open.
-func (fs *Files) Empty() bool {
-	return len(fs.list) == 0
+func (files *Files) Empty() bool {
+	return len(files.list) == 0
 }
 
 // Open opens file.
-func (fs *Files) Open(path string) error {
-	index, found := fs.find(path)
+func (files *Files) Open(path string) error {
+	position, found := files.find(path)
 	if found {
-		fs.switchFile(index)
+		files.switchFile(position)
 		return nil
 	}
 	file, err := Open(path)
 	if err != nil {
 		return fmt.Errorf("error opening file %s: %w", file.Path, err)
 	}
-	index = fs.add(&file)
-	fs.switchFile(index)
+	position = files.add(&file)
+	files.switchFile(position)
 	return nil
 }
 
 // SwitchFile switches active file.
-func (fs *Files) SwitchFile(d Direction) {
-	if fs.Empty() {
+func (files *Files) SwitchFile(direction Direction) {
+	if files.Empty() {
 		return
 	}
-	index := fs.current()
-	index = wrap(index, len(fs.list), 1, d)
-	fs.switchFile(index)
-	fs.Read(false)
+	position := files.current()
+	position = wrap(position, len(files.list), 1, direction)
+	files.switchFile(position)
+	files.Read(false)
 }
 
 // Write writes all open files.
-func (fs *Files) Write() error {
-	if fs.Empty() {
+func (files *Files) Write() error {
+	if files.Empty() {
 		return nil
 	}
-	for _, file := range fs.list {
+	for _, file := range files.list {
 		_, err := file.Write()
 		if err != nil {
 			return fmt.Errorf("error writing file %s: %w", file.Path, err)
@@ -58,49 +58,49 @@ func (fs *Files) Write() error {
 }
 
 // Close closes active file.
-func (fs *Files) Close() {
-	if fs.Empty() {
+func (files *Files) Close() {
+	if files.Empty() {
 		return
 	}
-	index := fs.current()
-	fs.remove(index)
-	index = wrap(index, len(fs.list), 0, Forward)
-	fs.switchFile(index)
+	position := files.current()
+	files.remove(position)
+	position = wrap(position, len(files.list), 0, Forward)
+	files.switchFile(position)
 }
 
-func (fs *Files) add(f *File) int {
-	fs.list = append(fs.list, f)
-	return len(fs.list) - 1
+func (files *Files) add(file *File) int {
+	files.list = append(files.list, file)
+	return len(files.list) - 1
 }
 
-func (fs *Files) remove(index int) {
-	list := make([]*File, 0, len(fs.list)-1)
-	list = append(list, fs.list[:index]...)
-	list = append(list, fs.list[index+1:]...)
-	fs.list = list
+func (files *Files) remove(position int) {
+	list := make([]*File, 0, len(files.list)-1)
+	list = append(list, files.list[:position]...)
+	list = append(list, files.list[position+1:]...)
+	files.list = list
 }
 
-func (fs *Files) switchFile(index int) {
-	if len(fs.list) != 0 {
-		fs.File = fs.list[index]
+func (files *Files) switchFile(position int) {
+	if len(files.list) != 0 {
+		files.File = files.list[position]
 	} else {
-		fs.File = nil
+		files.File = nil
 	}
 }
 
-func (fs *Files) find(path string) (int, bool) {
-	for i, file := range fs.list {
+func (files *Files) find(path string) (position int, ok bool) {
+	for position, file := range files.list {
 		if file.Path == path {
-			return i, true
+			return position, true
 		}
 	}
 	return 0, false
 }
 
-func (fs *Files) current() int {
-	for i, file := range fs.list {
-		if fs.File == file {
-			return i
+func (files *Files) current() int {
+	for position, file := range files.list {
+		if files.File == file {
+			return position
 		}
 	}
 	return 0

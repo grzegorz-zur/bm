@@ -5,7 +5,7 @@ package main
 // The values start at zero.
 type Position struct {
 	// Line.
-	L int
+	Line int
 	// Column.
-	C int
+	Column int
 }

@@ -111,25 +111,25 @@ func (file *File) copy() (content string, from, to int) {
 func (file *File) Render(view *View, selection bool) error {
 	position, _ := file.Position(file.location)
 	file.area = file.area.Resize(view.Size).Shift(position)
-	for line := file.area.T; line < file.area.B; line++ {
-		rline := line - file.area.T
-		for col := file.area.L; col < file.area.R; col++ {
-			rcol := col - file.area.L
-			location, ok := file.Location(line, col)
+	for line := file.area.Top; line < file.area.Bottom; line++ {
+		rline := line - file.area.Top
+		for column := file.area.Left; column < file.area.Right; column++ {
+			rcolumn := column - file.area.Left
+			location, ok := file.Location(line, column)
 			if ok {
 				rune, _ := utf8.DecodeRuneInString(file.content[location:])
-				view.Content[rline][rcol] = rune
-				view.Selection[rline][rcol] = selection && file.selected(location)
+				view.Content[rline][rcolumn] = rune
+				view.Selection[rline][rcolumn] = selection && file.selected(location)
 			} else {
 				break
 			}
 		}
 	}
 	view.Position = Position{
-		L: position.L - file.area.T,
-		C: position.C - file.area.L,
+		Line:   position.Line - file.area.Top,
+		Column: position.Column - file.area.Left,
 	}
-	view.Status = fmt.Sprintf("%s %d:%d", file.Path, position.L+1, position.C+1)
+	view.Status = fmt.Sprintf("%s %d:%d", file.Path, position.Line+1, position.Column+1)
 	view.Cursor = CursorContent
 	return nil
 }
