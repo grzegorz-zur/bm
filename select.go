@@ -75,11 +75,11 @@ func (mode *Select) Rune(rune rune) error {
 		mode.editor.MoveWordPrevious()
 	case 'r':
 		mode.editor.MoveWordNext()
-	case 'g':
+	case 'H':
 		mode.editor.SwitchMode(mode.editor.Command)
 	case 'h':
 		mode.editor.Copy()
-	case 'H':
+	case 'j':
 		mode.editor.Cut()
 	}
 	if err != nil {

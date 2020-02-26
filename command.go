@@ -109,7 +109,7 @@ func (mode *Command) Rune(rune rune) (err error) {
 		mode.editor.LineBelow()
 	case 'K':
 		mode.editor.LineAbove()
-	case 'g':
+	case 'H':
 		mode.editor.SwitchMode(mode.editor.Select)
 	case 'h':
 		mode.editor.Paste()
