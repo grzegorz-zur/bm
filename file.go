@@ -64,7 +64,7 @@ func (file *File) copy() (content string, from, to int) {
 }
 
 // Render renders file content.
-func (file *File) Render(view *View, selection bool) error {
+func (file *File) Render(view *View) error {
 	position := file.position()
 	file.area = file.area.Resize(view.Size).Shift(position)
 	line, column := 0, 0
@@ -72,8 +72,14 @@ func (file *File) Render(view *View, selection bool) error {
 		if file.area.Contains(Position{line, column}) {
 			rline := line - file.area.Top
 			rcolumn := column - file.area.Left
-			view.Content[rline][rcolumn] = rune
-			view.Selection[rline][rcolumn] = selection && file.selected(location)
+			if view.Visible {
+				view.Content[rline][rcolumn] = visible(rune)
+			} else {
+				view.Content[rline][rcolumn] = rune
+			}
+			if view.Select {
+				view.Selection[rline][rcolumn] = file.selected(location)
+			}
 		}
 		column++
 		if rune == EOL {

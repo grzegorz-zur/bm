@@ -3,6 +3,8 @@ package main
 // View holds data to be displayed on screen.
 type View struct {
 	Size      Size
+	Visible   bool
+	Select    bool
 	Content   [][]rune
 	Selection [][]bool
 	Position  Position
@@ -23,18 +25,23 @@ const (
 )
 
 // NewView creates a new content of a given size.
-func NewView(size Size) *View {
+func NewView(size Size, previous *View) *View {
 	content := make([][]rune, size.Lines)
 	selection := make([][]bool, size.Lines)
 	for line := 0; line < size.Lines; line++ {
 		content[line] = make([]rune, size.Columns)
 		selection[line] = make([]bool, size.Columns)
 	}
-	return &View{
+	view := &View{
 		Size:      size,
 		Content:   content,
 		Selection: selection,
 	}
+	if previous != nil {
+		view.Visible = previous.Visible
+		view.Select = previous.Select
+	}
+	return view
 }
 
 // Clear clears view.

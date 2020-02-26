@@ -38,7 +38,7 @@ type ScreenCreate func() (tcell.Screen, error)
 func New(screenCreate ScreenCreate, paths []string) *Editor {
 	editor := &Editor{
 		screenCreate: screenCreate,
-		view:         NewView(Size{}),
+		view:         NewView(Size{}, nil),
 		events:       make(chan tcell.Event),
 		check:        make(chan struct{}),
 		pause:        make(chan struct{}, 1),
@@ -106,6 +106,11 @@ func (editor *Editor) signals() {
 			editor.quit <- struct{}{}
 		}
 	}
+}
+
+// ToggleVisible changes visibility.
+func (editor *Editor) ToggleVisible() {
+	editor.view.Visible = !editor.view.Visible
 }
 
 // Copy copies selection to buffer.
@@ -201,7 +206,7 @@ func (editor *Editor) handle(event tcell.Event) error {
 			height--
 		}
 		size := Size{height, width}
-		editor.view = NewView(size)
+		editor.view = NewView(size, editor.view)
 	}
 	return nil
 }

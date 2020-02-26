@@ -122,6 +122,8 @@ func (mode *Command) Rune(rune rune) (err error) {
 		err = mode.editor.Write()
 	case 'M':
 		_, err = mode.editor.File.Write()
+	case '\\':
+		mode.editor.ToggleVisible()
 	}
 	if err != nil {
 		return fmt.Errorf("error handling rune %v: %w", rune, err)
@@ -132,7 +134,7 @@ func (mode *Command) Rune(rune rune) (err error) {
 // Render renders mode.
 func (mode *Command) Render(view *View) (err error) {
 	if !mode.editor.Empty() {
-		err = mode.editor.File.Render(view, false)
+		err = mode.editor.File.Render(view)
 	}
 	view.Color = ColorGreen
 	view.Prompt = ""

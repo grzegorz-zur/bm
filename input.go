@@ -56,7 +56,7 @@ func (mode *Input) Rune(rune rune) error {
 
 // Render renders mode to the screen.
 func (mode *Input) Render(view *View) error {
-	err := mode.editor.File.Render(view, false)
+	err := mode.editor.File.Render(view)
 	view.Color = ColorRed
 	return err
 }
