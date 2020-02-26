@@ -63,16 +63,19 @@ func test(name, temp string) func(t *testing.T) {
 		log.SetOutput(logfile)
 		defer log.SetOutput(os.Stderr)
 
-		newScreen := func() (tcell.Screen, error) {
-			return tcell.NewSimulationScreen(""), nil
+		screen := tcell.NewSimulationScreen("")
+		screenCreate := func() (tcell.Screen, error) {
+			return screen, nil
 		}
-		editor := New(newScreen, files)
+		editor := New(screenCreate, files)
 		err = editor.Start()
 		if err != nil {
 			t.Fatalf("error starting editor: %v", err)
 		}
+		sendResize(screen, 40, 25)
+		sendResize(screen, 80, 50)
 
-		err = interpret(editor, cmds)
+		err = interpret(screen, editor, cmds)
 		if err != nil {
 			t.Fatalf("error interpreting script: %s: %v", name, err)
 		}
@@ -189,46 +192,46 @@ func format(content []byte) (text string) {
 	return
 }
 
-func interpret(editor *Editor, commands []string) (err error) {
+func interpret(screen tcell.Screen, editor *Editor, commands []string) (err error) {
 	for _, cmd := range commands {
 		runes := []rune(cmd)
 		switch {
 		case len(cmd) == 1:
 			rune := runes[0]
-			sendRune(editor, rune)
+			sendRune(screen, rune)
 		case len(cmd) == 2 && runes[0] == '^':
 			letter := unicode.ToUpper(runes[1])
 			offset := int(letter - 'A')
 			key := tcell.KeyCtrlA + tcell.Key(offset)
-			sendKey(editor, key)
+			sendKey(screen, key)
 		case cmd == "left":
-			sendKey(editor, tcell.KeyLeft)
+			sendKey(screen, tcell.KeyLeft)
 		case cmd == "right":
-			sendKey(editor, tcell.KeyRight)
+			sendKey(screen, tcell.KeyRight)
 		case cmd == "up":
-			sendKey(editor, tcell.KeyUp)
+			sendKey(screen, tcell.KeyUp)
 		case cmd == "down":
-			sendKey(editor, tcell.KeyDown)
+			sendKey(screen, tcell.KeyDown)
 		case cmd == "home":
-			sendKey(editor, tcell.KeyHome)
+			sendKey(screen, tcell.KeyHome)
 		case cmd == "end":
-			sendKey(editor, tcell.KeyEnd)
+			sendKey(screen, tcell.KeyEnd)
 		case cmd == "pageup":
-			sendKey(editor, tcell.KeyPgUp)
+			sendKey(screen, tcell.KeyPgUp)
 		case cmd == "pagedown":
-			sendKey(editor, tcell.KeyPgDn)
+			sendKey(screen, tcell.KeyPgDn)
 		case cmd == "space":
-			sendRune(editor, ' ')
+			sendRune(screen, ' ')
 		case cmd == "tab":
-			sendKey(editor, tcell.KeyTab)
+			sendKey(screen, tcell.KeyTab)
 		case cmd == "enter":
-			sendKey(editor, tcell.KeyEnter)
+			sendKey(screen, tcell.KeyEnter)
 		case cmd == "backspace":
-			sendKey(editor, tcell.KeyBackspace2)
+			sendKey(screen, tcell.KeyBackspace2)
 		case cmd == "delete":
-			sendKey(editor, tcell.KeyDelete)
+			sendKey(screen, tcell.KeyDelete)
 		case cmd == "ctrlspace":
-			sendKey(editor, tcell.KeyCtrlSpace)
+			sendKey(screen, tcell.KeyCtrlSpace)
 		case cmd == "TOUCH":
 			t := time.Now().Local()
 			err = os.Chtimes(editor.File.Path, t, t)
@@ -236,7 +239,7 @@ func interpret(editor *Editor, commands []string) (err error) {
 				return
 			}
 		case cmd == "CHECK":
-			editor.Check()
+			time.Sleep(2 * TickInterval)
 		default:
 			err = errors.New("unknown command: " + cmd)
 			return
@@ -245,14 +248,19 @@ func interpret(editor *Editor, commands []string) (err error) {
 	return
 }
 
-func sendKey(editor *Editor, key tcell.Key) {
-	ev := tcell.NewEventKey(key, 0, 0)
-	editor.events <- ev
+func sendResize(screen tcell.Screen, width, height int) {
+	event := tcell.NewEventResize(width, height)
+	screen.PostEventWait(event)
 }
 
-func sendRune(editor *Editor, r rune) {
-	ev := tcell.NewEventKey(tcell.KeyRune, r, 0)
-	editor.events <- ev
+func sendKey(screen tcell.Screen, key tcell.Key) {
+	event := tcell.NewEventKey(key, 0, 0)
+	screen.PostEventWait(event)
+}
+
+func sendRune(screen tcell.Screen, rune rune) {
+	event := tcell.NewEventKey(tcell.KeyRune, rune, 0)
+	screen.PostEventWait(event)
 }
 
 func list(path string) (names []string, err error) {

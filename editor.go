@@ -195,6 +195,7 @@ func (editor *Editor) handle(event tcell.Event) error {
 			return editor.Key(key)
 		}
 	case *tcell.EventResize:
+		log.Println(tevent)
 		width, height := tevent.Size()
 		if height > 0 {
 			height--

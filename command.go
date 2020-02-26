@@ -136,5 +136,8 @@ func (mode *Command) Render(view *View) (err error) {
 	}
 	view.Color = ColorGreen
 	view.Prompt = ""
+	if mode.editor.Empty() {
+		view.Cursor = CursorNone
+	}
 	return err
 }

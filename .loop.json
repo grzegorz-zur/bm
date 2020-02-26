@@ -25,11 +25,11 @@
 		},
 		{
 			"exec": "go",
-			"args": [ "test", "-timeout", "5s" ]
+			"args": [ "test", "-timeout", "15s" ]
 		},
 		{
 			"exec": "go",
-			"args": [ "test", "-timeout", "5s", "-race", "-cover" ],
+			"args": [ "test", "-timeout", "15s", "-race", "-cover" ],
 			"env": {
 				"CGO_ENABLED": "1"
 			}

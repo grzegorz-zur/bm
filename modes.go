@@ -12,9 +12,6 @@ type Modes struct {
 
 // SwitchMode switches active mode.
 func (modes *Modes) SwitchMode(mode Mode) {
-	if mode == modes.Mode {
-		return
-	}
 	if modes.Mode != nil {
 		modes.Mode.Hide()
 	}

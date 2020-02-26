@@ -27,25 +27,16 @@ const (
 
 // Archive makes a record in history.
 func (file *File) Archive() {
-	if file == nil {
-		return
-	}
 	file.history.Archive(file.content, file.location)
 }
 
 // SwitchVersion switches between versions from history.
 func (file *File) SwitchVersion(dir Direction) {
-	if file == nil {
-		return
-	}
 	file.content, file.location = file.history.Switch(dir)
 }
 
 // Select sets selection position.
 func (file *File) Select() {
-	if file == nil {
-		return
-	}
 	file.mark = file.location
 }
 

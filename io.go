@@ -28,9 +28,6 @@ func Open(path string) (file File, err error) {
 
 // Read loads thie file.
 func (file *File) Read(force bool) (read bool, err error) {
-	if file == nil {
-		return false, nil
-	}
 	stat, err := os.Stat(file.Path)
 	if err != nil && !os.IsNotExist(err) {
 		return false, fmt.Errorf("error reading file %s info: %w", file.Path, err)
@@ -65,9 +62,6 @@ func (file *File) Read(force bool) (read bool, err error) {
 
 // Write writes file contents.
 func (file *File) Write() (wrote bool, err error) {
-	if file == nil {
-		return false, nil
-	}
 	stat, err := os.Stat(file.Path)
 	if err != nil && !os.IsNotExist(err) {
 		return false, fmt.Errorf("error reading file %s info: %w", file.Path, err)

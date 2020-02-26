@@ -49,7 +49,7 @@ func (mode *Switch) Key(key Key) error {
 	case KeyRight:
 		mode.moveRight()
 	case KeyBackspace:
-		mode.delete()
+		mode.backspace()
 		mode.filter()
 	case KeyEnter:
 		err = mode.open()
@@ -128,7 +128,7 @@ func (mode *Switch) append(rune rune) {
 	mode.query = mode.query + string(rune)
 }
 
-func (mode *Switch) delete() {
+func (mode *Switch) backspace() {
 	length := len(mode.query)
 	if length != 0 {
 		mode.query = mode.query[:length-1]
