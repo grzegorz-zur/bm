@@ -1,6 +1,6 @@
 module github.com/grzegorz-zur/bm
 
-go 1.13
+go 1.14
 
 require (
 	github.com/gdamore/tcell v1.3.0
