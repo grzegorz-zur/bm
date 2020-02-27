@@ -23,6 +23,7 @@ type Editor struct {
 	screen       tcell.Screen
 	view         *View
 	content      string
+	visible      bool
 	events       chan tcell.Event
 	check        chan struct{}
 	pause        chan struct{}
@@ -38,7 +39,7 @@ type ScreenCreate func() (tcell.Screen, error)
 func New(screenCreate ScreenCreate, paths []string) *Editor {
 	editor := &Editor{
 		screenCreate: screenCreate,
-		view:         NewView(Size{}, nil),
+		view:         NewView(Size{}),
 		events:       make(chan tcell.Event),
 		check:        make(chan struct{}),
 		pause:        make(chan struct{}, 1),
@@ -110,7 +111,7 @@ func (editor *Editor) signals() {
 
 // ToggleVisible changes visibility.
 func (editor *Editor) ToggleVisible() {
-	editor.view.Visible = !editor.view.Visible
+	editor.visible = !editor.visible
 }
 
 // Copy copies selection to buffer.
@@ -200,13 +201,12 @@ func (editor *Editor) handle(event tcell.Event) error {
 			return editor.Key(key)
 		}
 	case *tcell.EventResize:
-		log.Println(tevent)
 		width, height := tevent.Size()
 		if height > 0 {
 			height--
 		}
 		size := Size{height, width}
-		editor.view = NewView(size, editor.view)
+		editor.view = NewView(size)
 	}
 	return nil
 }
@@ -243,6 +243,7 @@ func (editor *Editor) close() {
 
 func (editor *Editor) render() error {
 	editor.view.Clear()
+	editor.view.Visible = editor.visible
 	err := editor.Mode.Render(editor.view)
 	if err != nil {
 		return fmt.Errorf("error on rendering: %w", err)

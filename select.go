@@ -92,7 +92,6 @@ func (mode *Select) Rune(rune rune) error {
 func (mode *Select) Render(view *View) error {
 	view.Select = true
 	err := mode.editor.File.Render(view)
-	view.Select = false
 	view.Color = ColorYellow
 	view.Prompt = ""
 	return err

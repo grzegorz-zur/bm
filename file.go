@@ -86,6 +86,9 @@ func (file *File) Render(view *View) error {
 			line++
 			column = 0
 		}
+		if file.area.Bottom <= line {
+			break
+		}
 	}
 	view.Position = Position{
 		Line:   position.Line - file.area.Top,

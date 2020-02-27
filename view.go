@@ -25,23 +25,18 @@ const (
 )
 
 // NewView creates a new content of a given size.
-func NewView(size Size, previous *View) *View {
+func NewView(size Size) *View {
 	content := make([][]rune, size.Lines)
 	selection := make([][]bool, size.Lines)
 	for line := 0; line < size.Lines; line++ {
 		content[line] = make([]rune, size.Columns)
 		selection[line] = make([]bool, size.Columns)
 	}
-	view := &View{
+	return &View{
 		Size:      size,
 		Content:   content,
 		Selection: selection,
 	}
-	if previous != nil {
-		view.Visible = previous.Visible
-		view.Select = previous.Select
-	}
-	return view
 }
 
 // Clear clears view.
@@ -52,6 +47,8 @@ func (view *View) Clear() {
 			view.Selection[line][column] = false
 		}
 	}
+	view.Visible = false
+	view.Select = false
 	view.Position = Position{}
 	view.Color = ColorNone
 	view.Status = ""

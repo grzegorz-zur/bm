@@ -1,15 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
-)
-
-var (
-	perm os.FileMode = 0644
 )
 
 // Open opens a file.
@@ -29,30 +24,28 @@ func Open(path string) (file File, err error) {
 // Read loads thie file.
 func (file *File) Read(force bool) (read bool, err error) {
 	stat, err := os.Stat(file.Path)
-	if err != nil && !os.IsNotExist(err) {
-		return false, fmt.Errorf("error reading file %s info: %w", file.Path, err)
+	if os.IsNotExist(err) {
+		err = ioutil.WriteFile(file.Path, []byte{}, os.ModePerm)
+		if err != nil {
+			return false, fmt.Errorf("error creating file %s info: %w", file.Path, err)
+		}
+		stat, err = os.Stat(file.Path)
 	}
-	exists := stat != nil
-	changed := true
-	if exists {
-		changed = file.time != stat.ModTime()
+	if err != nil {
+		return false, fmt.Errorf("error checking file %s info: %w", file.Path, err)
 	}
+	changed := file.time != stat.ModTime()
 	if !changed && !force {
 		return false, nil
 	}
-	flags := os.O_RDWR | os.O_CREATE
-	osFile, err := os.OpenFile(file.Path, flags, perm)
+	data, err := ioutil.ReadFile(file.Path)
 	if err != nil {
-		return false, fmt.Errorf("error opening file %s: %w", file.Path, err)
+		return false, fmt.Errorf("error reading file %s: %w", file.Path, err)
 	}
-	defer osFile.Close()
-	buffer := &bytes.Buffer{}
-	io.Copy(buffer, osFile)
-	file.content = string(buffer.Bytes())
-	osFile.Close()
+	file.content = string(data)
 	stat, err = os.Stat(file.Path)
 	if err != nil {
-		return true, fmt.Errorf("error reading file %s info: %w", file.Path, err)
+		return true, fmt.Errorf("error checking file %s info: %w", file.Path, err)
 	}
 	file.changed = false
 	file.time = stat.ModTime()
@@ -64,7 +57,7 @@ func (file *File) Read(force bool) (read bool, err error) {
 func (file *File) Write() (wrote bool, err error) {
 	stat, err := os.Stat(file.Path)
 	if err != nil && !os.IsNotExist(err) {
-		return false, fmt.Errorf("error reading file %s info: %w", file.Path, err)
+		return false, fmt.Errorf("error checking file %s info: %w", file.Path, err)
 	}
 	exists := stat != nil
 	changed := true
@@ -74,17 +67,14 @@ func (file *File) Write() (wrote bool, err error) {
 	if !file.changed && !changed {
 		return false, nil
 	}
-	osFile, err := os.Create(file.Path)
-	defer osFile.Close()
+	data := []byte(file.content)
+	err = ioutil.WriteFile(file.Path, data, os.ModePerm)
 	if err != nil {
 		return false, fmt.Errorf("error writing file %s: %w", file.Path, err)
 	}
-	bytes := []byte(file.content)
-	osFile.Write(bytes)
-	osFile.Close()
 	stat, err = os.Stat(file.Path)
 	if err != nil {
-		return true, fmt.Errorf("error reading file %s info: %w", file.Path, err)
+		return true, fmt.Errorf("error checking file %s info: %w", file.Path, err)
 	}
 	file.changed = false
 	file.time = stat.ModTime()
