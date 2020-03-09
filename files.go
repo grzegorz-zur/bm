@@ -64,6 +64,10 @@ func (files *Files) Close() {
 	}
 	position := files.current()
 	files.remove(position)
+	if files.Empty() {
+		position = 0
+		return
+	}
 	position = wrap(position, len(files.list), 0, Forward)
 	files.switchFile(position)
 }
