@@ -1,0 +1,34 @@
+name: bm
+version: '0.0.0'
+license: MIT
+title: Bare Minimum
+summary: Minimalistic text editor.
+description: |
+ Goals
+ 1. Effectively work with multiple files.
+ 2. Effectively work with external tools that modify edited files.
+
+base: core18
+grade: stable
+confinement: classic
+
+apps:
+  bm:
+    command: bm
+
+parts:
+  bm:
+    plugin: dump
+    build-snaps: 
+      - go/1.14/stable
+    build-environment:
+      - CGO_ENABLED: '0'
+    override-build: |
+       go build -o $SNAPCRAFT_PART_INSTALL/bm
+       cp README.md LICENSE *.svg $SNAPCRAFT_PART_INSTALL
+    source: ./
+    stage:
+      - bm
+      - README.md
+      - LICENSE
+      - '*.svg'

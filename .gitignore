@@ -1,5 +1,9 @@
 bm
+parts
+prime
+.snapcraft
 *.swp
 *.log
 *.out
 *.test
+*.snap
