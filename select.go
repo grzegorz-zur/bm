@@ -94,5 +94,5 @@ func (mode *Select) Render(view *View) error {
 	err := mode.editor.File.Render(view)
 	view.Color = ColorYellow
 	view.Prompt = ""
-	return err
+	return fmt.Errorf("error rendering select mode: %w", err)
 }

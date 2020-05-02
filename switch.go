@@ -167,7 +167,7 @@ func (mode *Switch) read() (paths []string, err error) {
 	walker := func(path string, info os.FileInfo, err error) error {
 		relpath, err := filepath.Rel(work, path)
 		if err != nil {
-			return err
+			return fmt.Errorf("error finding relative path %s in %s: %w", path, work, err)
 		}
 		if info == nil {
 			return nil

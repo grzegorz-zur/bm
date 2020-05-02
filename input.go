@@ -1,5 +1,9 @@
 package main
 
+import (
+	"fmt"
+)
+
 // Input is a mode for typing.
 type Input struct {
 	editor *Editor
@@ -58,5 +62,5 @@ func (mode *Input) Rune(rune rune) error {
 func (mode *Input) Render(view *View) error {
 	err := mode.editor.File.Render(view)
 	view.Color = ColorRed
-	return err
+	return fmt.Errorf("error rendering input mode: %w", err)
 }

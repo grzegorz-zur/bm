@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"errors"
+	"fmt"
 	"github.com/gdamore/tcell"
 	"io"
 	"io/ioutil"
@@ -100,19 +100,19 @@ func setup(name, temp string, t *testing.T) (work string, files []string, err er
 	in := path.Join("test", name, "in")
 	files, err = list(in)
 	if err != nil && !os.IsNotExist(err) {
-		return "", nil, err
+		return "", nil, fmt.Errorf("error listing path %s: %w", in, err)
 	}
 	work = path.Join(temp, name)
 	err = os.MkdirAll(work, os.ModePerm)
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("error creating directory %s: %w", work, err)
 	}
 	for _, file := range files {
 		src := path.Join(in, file)
 		dst := path.Join(work, file)
 		err := copy(src, dst)
 		if err != nil {
-			return "", nil, err
+			return "", nil, fmt.Errorf("error copying from %s to %s: %w", src, dst, err)
 		}
 	}
 	return
@@ -121,16 +121,16 @@ func setup(name, temp string, t *testing.T) (work string, files []string, err er
 func commands(name string) (cmds []string, err error) {
 	path := path.Join("test", name, "script")
 	file, err := os.Open(path)
-	defer file.Close()
 	if err != nil {
-		return
+		return nil, fmt.Errorf("error opening file %s: %w", path, err)
 	}
+	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanWords)
 	for scanner.Scan() {
 		err = scanner.Err()
 		if err != nil {
-			return
+			return nil, fmt.Errorf("error scanning file %s: %w", path, err)
 		}
 		cmd := scanner.Text()
 		cmds = append(cmds, cmd)
@@ -142,11 +142,11 @@ func verify(name, work string, t *testing.T) (err error) {
 	out := path.Join("test", name, "out")
 	expected, err := list(out)
 	if err != nil {
-		return
+		return fmt.Errorf("error listing path %s: %w", out, err)
 	}
 	actual, err := list(work)
 	if err != nil {
-		return
+		return fmt.Errorf("error listing path %s: %w", work, err)
 	}
 	if len(expected) != len(actual) {
 		t.Logf("expected files %v", expected)
@@ -164,12 +164,12 @@ func verify(name, work string, t *testing.T) (err error) {
 		actualPath := path.Join(work, exp)
 		actualContent, err := ioutil.ReadFile(actualPath)
 		if err != nil {
-			return err
+			return fmt.Errorf("error reading file %s: %w", actualPath, err)
 		}
 		expectedPath := path.Join("test", name, "out", exp)
 		expectedContent, err := ioutil.ReadFile(expectedPath)
 		if err != nil {
-			return err
+			return fmt.Errorf("error reading file %s: %w", expectedPath, err)
 		}
 		if bytes.Compare(actualContent, expectedContent) != 0 {
 			t.Log("comparing file " + exp)
@@ -236,13 +236,12 @@ func interpret(screen tcell.Screen, editor *Editor, commands []string) (err erro
 			t := time.Now().Local()
 			err = os.Chtimes(editor.File.Path, t, t)
 			if err != nil {
-				return
+				return fmt.Errorf("error changing time of %s: %w", editor.File.Path, err)
 			}
 		case cmd == "CHECK":
 			time.Sleep(2 * TickInterval)
 		default:
-			err = errors.New("unknown command: " + cmd)
-			return
+			return fmt.Errorf("unknown command: %s", cmd)
 		}
 	}
 	return
@@ -266,7 +265,7 @@ func sendRune(screen tcell.Screen, rune rune) {
 func list(path string) (names []string, err error) {
 	files, err := ioutil.ReadDir(path)
 	if err != nil && !os.IsNotExist(err) {
-		return
+		return nil, fmt.Errorf("error reading directory %s: %w", path, err)
 	}
 	for _, file := range files {
 		name := file.Name()
@@ -278,19 +277,19 @@ func list(path string) (names []string, err error) {
 func copy(src, dst string) (err error) {
 	in, err := os.Open(src)
 	if err != nil {
-		return err
+		return fmt.Errorf("error opening file %s: %w", src, err)
 	}
 	defer in.Close()
 
 	out, err := os.Create(dst)
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating file %s: %w", src, err)
 	}
 	defer out.Close()
 
 	_, err = io.Copy(out, in)
 	if err != nil {
-		return err
+		return fmt.Errorf("error copying from %s to %s: %w", src, dst, err)
 	}
 	return out.Close()
 }

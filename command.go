@@ -141,5 +141,5 @@ func (mode *Command) Render(view *View) (err error) {
 	if mode.editor.Empty() {
 		view.Cursor = CursorNone
 	}
-	return err
+	return fmt.Errorf("error rendering command mode: %w", err)
 }
