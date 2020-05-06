@@ -50,6 +50,12 @@ func (file *File) Read(force bool) (read bool, err error) {
 	file.changed = false
 	file.time = stat.ModTime()
 	file.Archive()
+	if file.location > len(file.content) {
+		file.location = len(file.content)
+	}
+	if file.mark > len(file.content) {
+		file.mark = len(file.content)
+	}
 	return true, nil
 }
 
