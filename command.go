@@ -135,11 +135,14 @@ func (mode *Command) Rune(rune rune) (err error) {
 func (mode *Command) Render(view *View) (err error) {
 	if !mode.editor.Empty() {
 		err = mode.editor.File.Render(view)
+		if err != nil {
+			return fmt.Errorf("error rendering command mode: %w", err)
+		}
 	}
 	view.Color = ColorGreen
 	view.Prompt = ""
 	if mode.editor.Empty() {
 		view.Cursor = CursorNone
 	}
-	return fmt.Errorf("error rendering command mode: %w", err)
+	return nil
 }
