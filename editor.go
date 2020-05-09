@@ -25,6 +25,7 @@ type Editor struct {
 	content      string
 	visible      bool
 	events       chan tcell.Event
+	deaf         chan struct{}
 	check        chan struct{}
 	pause        chan struct{}
 	unpause      chan struct{}
@@ -41,6 +42,7 @@ func New(screenCreate ScreenCreate, paths []string) *Editor {
 		screenCreate: screenCreate,
 		view:         NewView(Size{}),
 		events:       make(chan tcell.Event),
+		deaf:         make(chan struct{}),
 		check:        make(chan struct{}),
 		pause:        make(chan struct{}, 1),
 		unpause:      make(chan struct{}),
@@ -148,8 +150,14 @@ func (editor *Editor) LineBelow() {
 
 func (editor *Editor) listen() {
 	for {
-		editor.events <- editor.screen.PollEvent()
+		event := editor.screen.PollEvent()
+		if event != nil {
+			editor.events <- event
+		} else {
+			break
+		}
 	}
+	editor.deaf <- struct{}{}
 }
 
 func (editor *Editor) tick() {
@@ -163,7 +171,7 @@ func (editor *Editor) run() {
 	defer close(editor.done)
 	render := true
 	for {
-		if render {
+		if render && editor.screen != nil {
 			err := editor.render()
 			editor.report(err)
 		}
@@ -182,6 +190,9 @@ func (editor *Editor) run() {
 			}
 		case <-editor.pause:
 			err := editor.background()
+			editor.report(err)
+		case <-editor.unpause:
+			err := editor.foreground()
 			editor.report(err)
 		case <-editor.quit:
 			editor.close()
@@ -219,13 +230,20 @@ func (editor *Editor) report(err error) {
 
 func (editor *Editor) background() error {
 	editor.screen.Fini()
+	<-editor.deaf
 	pid := os.Getpid()
 	process, err := os.FindProcess(pid)
 	if err != nil {
 		return fmt.Errorf("error pausing process %+v: %w", process, err)
 	}
-	process.Signal(syscall.SIGSTOP)
-	<-editor.unpause
+	err = process.Signal(syscall.SIGSTOP)
+	if err != nil {
+		return fmt.Errorf("error signalling process %+v: %w", process, err)
+	}
+	return nil
+}
+
+func (editor *Editor) foreground() (err error) {
 	editor.screen, err = editor.screenCreate()
 	if err != nil {
 		return fmt.Errorf("error creating screen: %w", err)
@@ -234,11 +252,13 @@ func (editor *Editor) background() error {
 	if err != nil {
 		return fmt.Errorf("error initializing screen: %w", err)
 	}
+	go editor.listen()
 	return nil
 }
 
 func (editor *Editor) close() {
 	editor.screen.Fini()
+	<-editor.deaf
 }
 
 func (editor *Editor) render() error {
